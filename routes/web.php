@@ -36,6 +36,7 @@ Route::post('/switch-business/{uuid}', [AuthController::class, 'switchBusiness']
 
 // Holding Status Views
 Route::get('/pending-approval', [AuthController::class, 'pending'])->name('tenant.pending');
+Route::post('/pending-approval/approve', [AuthController::class, 'demoApprove'])->name('tenant.pending.approve');
 Route::get('/rejected', [AuthController::class, 'rejected'])->name('tenant.rejected');
 Route::get('/suspended', [AuthController::class, 'suspended'])->name('tenant.suspended');
 

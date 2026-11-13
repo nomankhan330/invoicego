@@ -164,6 +164,20 @@ class AuthController extends Controller
         return view('tenant.pending', compact('business'));
     }
 
+    public function demoApprove()
+    {
+        $business = $this->tenantService->getActiveBusiness();
+        if ($business && $business->isPending()) {
+            $business->update([
+                'status' => 'approved',
+                'approved_at' => now(),
+            ]);
+            return redirect()->route('tenant.dashboard')->with('success', "Business '{$business->name}' has been approved! Welcome to your InvoiceGO Dashboard.");
+        }
+
+        return redirect()->route('tenant.dashboard');
+    }
+
     public function rejected()
     {
         $business = $this->tenantService->getActiveBusiness();

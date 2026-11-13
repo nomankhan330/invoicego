@@ -70,13 +70,18 @@ try {
     $app = require_once __DIR__ . '/../bootstrap/app.php';
     $app->useStoragePath('/tmp/storage');
 
-    // 5. Run migrations on cold start if SQLite database is fresh
-    if ($isNewDb && (getenv('DB_CONNECTION') === 'sqlite' || !getenv('DB_CONNECTION'))) {
+    // 5. Run migrations & seed super-admin on cold start if SQLite database is fresh or unseeded
+    if (getenv('DB_CONNECTION') === 'sqlite' || !getenv('DB_CONNECTION')) {
         try {
             $kernel = $app->make(\Illuminate\Contracts\Console\Kernel::class);
-            $kernel->call('migrate', ['--force' => true]);
+            if ($isNewDb) {
+                $kernel->call('migrate', ['--force' => true]);
+            }
+            if (!\App\Models\User::where('email', 'admin@invoicego.pk')->exists()) {
+                $kernel->call('db:seed', ['--force' => true]);
+            }
         } catch (\Throwable $e) {
-            error_log('Vercel cold start migration: ' . $e->getMessage());
+            error_log('Vercel cold start db setup: ' . $e->getMessage());
         }
     }
 

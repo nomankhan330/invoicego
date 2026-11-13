@@ -41,14 +41,34 @@
                         To protect the integrity of official FBR fiscalization credentials, new tenant businesses require administrative validation before the business portal and FBR integration can be unlocked.
                     </p>
 
-                    <div class="d-flex justify-content-center gap-3">
-                        <a href="{{ route('tenant.pending') }}" class="btn btn-ig-primary px-4">
+                    <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+                        <form method="POST" action="{{ route('tenant.pending.approve') }}">
+                            @csrf
+                            <button type="submit" class="btn btn-success px-4 fw-semibold">
+                                <i class="bi bi-check2-circle me-1"></i> Approve Business (Instant Demo)
+                            </button>
+                        </form>
+                        <a href="{{ route('tenant.pending') }}" class="btn btn-outline-primary px-3">
                             <i class="bi bi-arrow-clockwise me-1"></i> Check Status
                         </a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" class="btn btn-outline-secondary px-4">Sign out</button>
+                            <button type="submit" class="btn btn-outline-secondary px-3">Sign out</button>
                         </form>
+                    </div>
+
+                    <div class="rounded-3 p-3 text-start small border" style="background: #F8FAFC;">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <i class="bi bi-shield-lock-fill text-primary"></i>
+                            <strong class="text-dark">Super Admin Portal (/admin)</strong>
+                        </div>
+                        <div class="text-secondary mb-2" style="font-size: 12px;">
+                            You can also log in to the full Super Admin panel at <a href="{{ url('/admin/login') }}" class="fw-semibold text-primary" target="_blank">/admin <i class="bi bi-box-arrow-up-right small"></i></a> to review or approve businesses:
+                        </div>
+                        <div class="small bg-white p-2 rounded border text-dark font-monospace" style="font-size: 11.5px;">
+                            <div><strong>Email:</strong> admin@invoicego.pk</div>
+                            <div><strong>Password:</strong> AdminPass123!</div>
+                        </div>
                     </div>
                 </div>
             </div>
