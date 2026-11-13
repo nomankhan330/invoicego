@@ -32,7 +32,7 @@ try {
     $bootstrapCache = '/tmp/bootstrap/cache';
     $envOverrides = [
         'APP_ENV' => getenv('APP_ENV') ?: 'production',
-        'APP_DEBUG' => getenv('APP_DEBUG') ?: 'true',
+        'APP_DEBUG' => getenv('APP_DEBUG') ?: 'false',
         'APP_KEY' => getenv('APP_KEY') ?: 'base64:thVoqnDOi6ATwz6gx/uIiEul1sfNELiQx5N4o+HBAHE=',
         'APP_STORAGE' => '/tmp/storage',
         'APP_PACKAGES_CACHE' => $bootstrapCache . '/packages.php',

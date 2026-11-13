@@ -34,7 +34,7 @@
   ],
   "env": {
     "APP_ENV": "production",
-    "APP_DEBUG": "true",
+    "APP_DEBUG": "false",
     "APP_KEY": "base64:thVoqnDOi6ATwz6gx/uIiEul1sfNELiQx5N4o+HBAHE=",
     "APP_STORAGE": "/tmp/storage",
     "APP_PACKAGES_CACHE": "/tmp/bootstrap/cache/packages.php",
