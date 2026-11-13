@@ -19,11 +19,11 @@
 
     <!-- Left Sidebar -->
     <aside class="tenant-sidebar">
-        <div>
+        <div class="d-flex flex-column flex-grow-1">
             <!-- Brand Logo -->
-            <div class="d-flex align-items-center gap-2 mb-4 px-2">
-                <div class="bg-primary text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: #5850EC !important;">
-                    <i class="bi bi-file-earmark-arrow-up-fill fs-5"></i>
+            <div class="d-flex align-items-center gap-2 mb-3 px-1">
+                <div class="bg-primary text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; background: #5850EC !important;">
+                    <i class="bi bi-file-earmark-arrow-up-fill fs-6"></i>
                 </div>
                 <span class="font-display fw-bold text-dark fs-5">InvoiceGO</span>
             </div>
@@ -141,7 +141,7 @@
         </div>
 
         <!-- Sidebar Footer Note (Screenshot 4) -->
-        <div class="border-top pt-3 mt-4 text-muted small" style="font-size: 11px; line-height: 1.45;">
+        <div class="border-top pt-2 mt-3 text-muted" style="font-size: 10.5px; line-height: 1.4; flex-shrink: 0;">
             <div class="d-flex gap-2">
                 <i class="bi bi-file-earmark-check fs-6 text-secondary flex-shrink-0"></i>
                 <span>Implements PRAL DI API spec v1.12. InvoiceGO is not an FBR certified or FBR-approved product.</span>

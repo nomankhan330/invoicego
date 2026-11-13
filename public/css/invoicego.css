@@ -155,16 +155,35 @@ body {
     width: 260px;
     background: #FFFFFF;
     border-right: 1px solid #F1F5F9;
-    min-height: 100vh;
+    height: 100vh;
+    max-height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 20px 16px;
+    padding: 14px 12px;
     position: fixed;
     top: 0;
     left: 0;
     bottom: 0;
     z-index: 1000;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
+/* Slim scrollbar for sidebar */
+.tenant-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+.tenant-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.tenant-sidebar::-webkit-scrollbar-thumb {
+    background: #E2E8F0;
+    border-radius: 4px;
+}
+.tenant-sidebar::-webkit-scrollbar-thumb:hover {
+    background: #CBD5E1;
 }
 
 .tenant-main-content {
@@ -188,18 +207,18 @@ body {
     background: #FFFFFF;
     border: 1px solid #E2E8F0;
     border-radius: 12px;
-    padding: 12px 14px;
-    margin-bottom: 20px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
 }
 
 .business-switcher-card .business-name {
     font-weight: 600;
-    font-size: 15px;
+    font-size: 14.5px;
     color: #0F172A;
 }
 
 .business-switcher-card .business-meta {
-    font-size: 12px;
+    font-size: 11.5px;
     color: #64748B;
 }
 
@@ -223,21 +242,21 @@ body {
 
 /* Nav links in sidebar */
 .nav-section-title {
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 700;
     letter-spacing: 0.05em;
     color: #94A3B8;
     text-transform: uppercase;
-    margin: 16px 0 8px 12px;
+    margin: 10px 0 4px 8px;
 }
 
 .nav-link-ig {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 9px 12px;
+    gap: 10px;
+    padding: 6.5px 10px;
     color: #475569;
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 500;
     border-radius: 8px;
     text-decoration: none;
