@@ -22,38 +22,64 @@ try {
 
     // 2. Prepare writable SQLite database in /tmp
     $dbFile = '/tmp/database.sqlite';
-    $isNewDb = !file_exists($dbFile);
+    $isNewDb = !file_exists($dbFile) || filesize($dbFile) === 0;
     if ($isNewDb) {
         @touch($dbFile);
         @chmod($dbFile, 0666);
     }
 
     // 3. Set environment overrides for Vercel
-    putenv('VIEW_COMPILED_PATH=/tmp/storage/framework/views');
-    putenv('SESSION_DRIVER=cookie');
-    putenv('CACHE_STORE=array');
-    putenv('CACHE_DRIVER=array');
-    $_ENV['VIEW_COMPILED_PATH'] = '/tmp/storage/framework/views';
-    $_ENV['SESSION_DRIVER'] = 'cookie';
-    $_ENV['CACHE_STORE'] = 'array';
-    $_ENV['CACHE_DRIVER'] = 'array';
+    $bootstrapCache = '/tmp/bootstrap/cache';
+    $envOverrides = [
+        'APP_ENV' => getenv('APP_ENV') ?: 'production',
+        'APP_DEBUG' => getenv('APP_DEBUG') ?: 'true',
+        'APP_KEY' => getenv('APP_KEY') ?: 'base64:thVoqnDOi6ATwz6gx/uIiEul1sfNELiQx5N4o+HBAHE=',
+        'APP_STORAGE' => '/tmp/storage',
+        'APP_PACKAGES_CACHE' => $bootstrapCache . '/packages.php',
+        'APP_SERVICES_CACHE' => $bootstrapCache . '/services.php',
+        'APP_CONFIG_CACHE' => $bootstrapCache . '/config.php',
+        'APP_ROUTES_CACHE' => $bootstrapCache . '/routes-v7.php',
+        'APP_EVENTS_CACHE' => $bootstrapCache . '/events.php',
+        'VIEW_COMPILED_PATH' => '/tmp/storage/framework/views',
+        'SESSION_DRIVER' => 'cookie',
+        'CACHE_STORE' => 'array',
+        'CACHE_DRIVER' => 'array',
+        'LOG_CHANNEL' => 'stderr',
+    ];
+
+    if (isset($_SERVER['HTTP_HOST'])) {
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ? 'https' : 'http';
+        $envOverrides['APP_URL'] = $scheme . '://' . $_SERVER['HTTP_HOST'];
+    }
 
     if (getenv('DB_CONNECTION') === 'sqlite' || !getenv('DB_CONNECTION')) {
-        putenv('DB_CONNECTION=sqlite');
-        putenv('DB_DATABASE=' . $dbFile);
-        $_ENV['DB_CONNECTION'] = 'sqlite';
-        $_ENV['DB_DATABASE'] = $dbFile;
+        $envOverrides['DB_CONNECTION'] = 'sqlite';
+        $envOverrides['DB_DATABASE'] = $dbFile;
+    }
+
+    foreach ($envOverrides as $key => $val) {
+        putenv("{$key}={$val}");
+        $_ENV[$key] = $val;
+        $_SERVER[$key] = $val;
     }
 
     // 4. Autoload and Bootstrap Laravel
     require __DIR__ . '/../vendor/autoload.php';
 
+    /** @var \Illuminate\Foundation\Application $app */
     $app = require_once __DIR__ . '/../bootstrap/app.php';
+    $app->useStoragePath('/tmp/storage');
+
+    // Force HTTPS for generated URLs on Vercel
+    if ((isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') || (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')) {
+        \Illuminate\Support\Facades\URL::forceScheme('https');
+    }
 
     // 5. Run migrations on cold start if SQLite database is fresh
     if ($isNewDb && (getenv('DB_CONNECTION') === 'sqlite' || !getenv('DB_CONNECTION'))) {
         try {
-            \Illuminate\Support\Facades\Artisan::call('migrate --force');
+            $kernel = $app->make(\Illuminate\Contracts\Console\Kernel::class);
+            $kernel->call('migrate', ['--force' => true]);
         } catch (\Throwable $e) {
             error_log('Vercel cold start migration: ' . $e->getMessage());
         }

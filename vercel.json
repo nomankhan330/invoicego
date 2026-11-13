@@ -32,10 +32,16 @@
       "dest": "/api/index.php"
     }
   ],
-  "outputDirectory": "public",
   "env": {
     "APP_ENV": "production",
     "APP_DEBUG": "true",
+    "APP_KEY": "base64:thVoqnDOi6ATwz6gx/uIiEul1sfNELiQx5N4o+HBAHE=",
+    "APP_STORAGE": "/tmp/storage",
+    "APP_PACKAGES_CACHE": "/tmp/bootstrap/cache/packages.php",
+    "APP_SERVICES_CACHE": "/tmp/bootstrap/cache/services.php",
+    "APP_CONFIG_CACHE": "/tmp/bootstrap/cache/config.php",
+    "APP_ROUTES_CACHE": "/tmp/bootstrap/cache/routes-v7.php",
+    "APP_EVENTS_CACHE": "/tmp/bootstrap/cache/events.php",
     "VIEW_COMPILED_PATH": "/tmp/storage/framework/views",
     "CACHE_STORE": "array",
     "CACHE_DRIVER": "array",
@@ -43,4 +49,3 @@
     "LOG_CHANNEL": "stderr"
   }
 }
-
