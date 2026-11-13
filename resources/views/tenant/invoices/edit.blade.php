@@ -5,23 +5,75 @@
 @push('styles')
 <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
 <style>
-    .ts-control {
-        border-radius: 0.375rem !important;
+    /* TomSelect Single-Select Alignment & Styling */
+    .ts-wrapper.single .ts-control {
+        display: flex !important;
+        align-items: center !important;
+        flex-wrap: nowrap !important;
+        height: 31px !important;
+        min-height: 31px !important;
+        max-height: 31px !important;
+        padding: 0.25rem 0.5rem !important;
+        padding-right: 1.75rem !important;
         font-size: 0.875rem !important;
+        border-radius: 0.375rem !important;
         border-color: #E2E8F0 !important;
-        min-height: 33px !important;
-        padding: 4px 10px !important;
+        cursor: pointer !important;
+        overflow: hidden !important;
+        line-height: 1.5 !important;
+        background-color: #FFFFFF !important;
     }
-    .ts-wrapper.focus .ts-control {
+    .ts-wrapper.single.focus .ts-control,
+    .ts-wrapper.single.dropdown-active .ts-control {
         border-color: #5850EC !important;
         box-shadow: 0 0 0 2px rgba(88, 80, 236, 0.15) !important;
     }
+    .ts-wrapper.single .ts-control > .item {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 100% !important;
+        line-height: 1.5 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        color: #0F172A !important;
+    }
+    /* Hide the default inline input from the main box so no cursor or wrapping occurs */
+    .ts-wrapper.single .ts-control > input {
+        display: none !important;
+    }
+    /* Dedicated search input inside the dropdown */
+    .plugin-dropdown_input .dropdown-input {
+        border: 1px solid #E2E8F0 !important;
+        border-radius: 0.375rem !important;
+        margin: 6px 8px !important;
+        width: calc(100% - 16px) !important;
+        padding: 5px 10px !important;
+        font-size: 0.813rem !important;
+        background-color: #F8FAFC !important;
+    }
+    .plugin-dropdown_input .dropdown-input:focus {
+        border-color: #5850EC !important;
+        background-color: #FFFFFF !important;
+        box-shadow: 0 0 0 2px rgba(88, 80, 236, 0.15) !important;
+        outline: none !important;
+    }
     .ts-dropdown {
-        font-size: 0.875rem !important;
+        font-size: 0.813rem !important;
         border-radius: 0.5rem !important;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
         border-color: #E2E8F0 !important;
-        z-index: 1050 !important;
+        z-index: 1055 !important;
+        margin-top: 2px !important;
+    }
+    .ts-dropdown .option {
+        padding: 6px 12px !important;
+        font-size: 0.813rem !important;
+    }
+    .ts-dropdown .option.active,
+    .ts-dropdown .option:hover {
+        background-color: #EEF2FF !important;
+        color: #4338CA !important;
     }
     .card-section {
         background: #FFFFFF;
@@ -416,9 +468,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const customerSelectEl = document.getElementById('saved_customer_select');
     if (customerSelectEl) {
         new TomSelect(customerSelectEl, {
+            plugins: ['dropdown_input'],
             create: false,
             placeholder: 'Search customers...',
             allowEmptyOption: true,
+            closeAfterSelect: true,
             onChange: function (val) {
                 if (!val) {
                     return;
@@ -675,9 +729,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const sroSelect = card.querySelector('.sro-select');
 
         const prodTs = new TomSelect(prodSelect, {
+            plugins: ['dropdown_input'],
             create: false,
             placeholder: 'Choose a saved product (optional)',
             allowEmptyOption: true,
+            closeAfterSelect: true,
             onChange: function (pId) {
                 if (!pId) return;
                 const opt = prodSelect.querySelector(`option[value="${pId}"]`);
@@ -701,10 +757,34 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        const saleTs = new TomSelect(saleSelect, { create: false, placeholder: 'Choose the sale type' });
-        const hsTs = new TomSelect(hsSelect, { create: false, placeholder: '0000.0000' });
-        const uomTs = new TomSelect(uomSelect, { create: false, placeholder: 'Unit of measure' });
-        const sroTs = new TomSelect(sroSelect, { create: false, placeholder: 'If an SRO applies', allowEmptyOption: true });
+        const saleTs = new TomSelect(saleSelect, {
+            plugins: ['dropdown_input'],
+            create: false,
+            placeholder: 'Choose the sale type',
+            closeAfterSelect: true
+        });
+
+        const hsTs = new TomSelect(hsSelect, {
+            plugins: ['dropdown_input'],
+            create: false,
+            placeholder: '0000.0000',
+            closeAfterSelect: true
+        });
+
+        const uomTs = new TomSelect(uomSelect, {
+            plugins: ['dropdown_input'],
+            create: false,
+            placeholder: 'Unit of measure',
+            closeAfterSelect: true
+        });
+
+        const sroTs = new TomSelect(sroSelect, {
+            plugins: ['dropdown_input'],
+            create: false,
+            placeholder: 'If an SRO applies',
+            allowEmptyOption: true,
+            closeAfterSelect: true
+        });
 
         tomSelectInstances[`item_${index}`] = { prodTs, saleTs, hsTs, uomTs, sroTs };
 
