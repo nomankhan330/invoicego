@@ -49,6 +49,8 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::get('/', [InvoiceController::class, 'index'])->name('index');
         Route::get('/create', [InvoiceController::class, 'create'])->name('create');
         Route::post('/', [InvoiceController::class, 'store'])->name('store');
+        Route::post('/validate-draft', [InvoiceController::class, 'validateDraft'])->name('validate-draft');
+        Route::get('/verify-buyer', [InvoiceController::class, 'verifyBuyer'])->name('verify-buyer');
         Route::get('/{uuid}', [InvoiceController::class, 'show'])->name('show');
         Route::get('/{uuid}/edit', [InvoiceController::class, 'edit'])->name('edit');
         Route::put('/{uuid}', [InvoiceController::class, 'update'])->name('update');

@@ -58,8 +58,10 @@ class FbrValidationService implements FbrValidationServiceInterface
         $stWithheldAmount = round(($salesTaxAmount * $stWithheldRate) / 100, 2);
 
         $discountAmount = round((float) ($itemData['discount_amount'] ?? 0.00), 2);
+        $extraTaxAmount = round((float) ($itemData['extra_tax_amount'] ?? 0.00), 2);
+        $fedPayableAmount = round((float) ($itemData['fed_payable_amount'] ?? 0.00), 2);
 
-        $totalInclTax = round($valueExclTax + $salesTaxAmount + $furtherTaxAmount - $discountAmount, 2);
+        $totalInclTax = round($valueExclTax + $salesTaxAmount + $furtherTaxAmount + $extraTaxAmount + $fedPayableAmount - $discountAmount, 2);
 
         return [
             'quantity' => $quantity,
@@ -69,6 +71,8 @@ class FbrValidationService implements FbrValidationServiceInterface
             'sales_tax_amount' => $salesTaxAmount,
             'further_tax_rate' => $furtherTaxRate,
             'further_tax_amount' => $furtherTaxAmount,
+            'extra_tax_amount' => $extraTaxAmount,
+            'fed_payable_amount' => $fedPayableAmount,
             'st_withheld_rate' => $stWithheldRate,
             'st_withheld_amount' => $stWithheldAmount,
             'discount_amount' => $discountAmount,
@@ -83,6 +87,8 @@ class FbrValidationService implements FbrValidationServiceInterface
         $totalExcl = 0.00;
         $totalSalesTax = 0.00;
         $totalFurtherTax = 0.00;
+        $totalExtraTax = 0.00;
+        $totalFed = 0.00;
         $totalSTWithheld = 0.00;
         $totalDiscount = 0.00;
         $grossTotal = 0.00;
@@ -91,17 +97,24 @@ class FbrValidationService implements FbrValidationServiceInterface
             $totalExcl += (float) $item->value_excl_tax;
             $totalSalesTax += (float) $item->sales_tax_amount;
             $totalFurtherTax += (float) $item->further_tax_amount;
+            $totalExtraTax += (float) ($item->extra_tax_amount ?? 0);
+            $totalFed += (float) ($item->fed_payable_amount ?? 0);
             $totalSTWithheld += (float) $item->st_withheld_amount;
             $totalDiscount += (float) $item->discount_amount;
             $grossTotal += (float) $item->total_value_incl_tax;
         }
 
+        $netReceivable = $grossTotal - $totalSTWithheld;
+
         $invoice->sales_value_excl_tax = round($totalExcl, 2);
         $invoice->sales_tax_amount = round($totalSalesTax, 2);
         $invoice->further_tax_amount = round($totalFurtherTax, 2);
+        $invoice->extra_tax_amount = round($totalExtraTax, 2);
+        $invoice->fed_amount = round($totalFed, 2);
         $invoice->st_withheld_amount = round($totalSTWithheld, 2);
         $invoice->discount_amount = round($totalDiscount, 2);
         $invoice->total_invoice_value = round($grossTotal, 2);
+        $invoice->net_receivable_amount = round($netReceivable, 2);
 
         $invoice->save();
 

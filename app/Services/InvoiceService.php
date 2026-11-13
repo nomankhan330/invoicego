@@ -21,8 +21,25 @@ class InvoiceService implements InvoiceServiceInterface
     public function createInvoice(array $data, Business $business, int $userId): Invoice
     {
         return DB::transaction(function () use ($data, $business, $userId) {
-            $customer = Customer::findOrFail($data['customer_id']);
-            $isUnregistered = !$customer->isRegistered();
+            if (!empty($data['customer_id'])) {
+                $customer = Customer::find($data['customer_id']);
+            } else {
+                $customer = Customer::firstOrCreate(
+                    [
+                        'business_id' => $business->id,
+                        'name' => $data['buyer_name'] ?? 'Walk-in Customer',
+                    ],
+                    [
+                        'ntn_cnic' => $data['buyer_ntn_cnic'] ?? '',
+                        'province' => $data['buyer_province'] ?? 'Punjab',
+                        'address' => $data['buyer_address'] ?? 'N/A',
+                        'registration_type' => ($data['buyer_type'] ?? 'unregistered') === 'registered' ? 'registered' : 'unregistered',
+                    ]
+                );
+            }
+
+            $buyerType = $data['buyer_type'] ?? ($customer ? ($customer->isRegistered() ? 'registered' : 'unregistered') : 'unregistered');
+            $isUnregistered = ($buyerType === 'unregistered');
 
             $environment = $data['environment'] ?? $business->current_environment ?? 'sandbox';
 
@@ -33,10 +50,18 @@ class InvoiceService implements InvoiceServiceInterface
                 'uuid' => (string) Str::uuid(),
                 'business_id' => $business->id,
                 'customer_id' => $customer->id,
+                'buyer_name' => $data['buyer_name'] ?? $customer->name,
+                'buyer_ntn_cnic' => $data['buyer_ntn_cnic'] ?? $customer->ntn_cnic,
+                'buyer_province' => $data['buyer_province'] ?? $customer->province,
+                'buyer_address' => $data['buyer_address'] ?? $customer->address,
+                'buyer_type' => $buyerType,
                 'invoice_number' => $invoiceNumber,
                 'invoice_type' => $data['invoice_type'] ?? 'standard',
                 'environment' => $environment,
                 'invoice_date' => $data['invoice_date'] ?? Carbon::now('Asia/Karachi')->format('Y-m-d'),
+                'invoice_time' => $data['invoice_time'] ?? Carbon::now('Asia/Karachi')->format('h:i A'),
+                'payment_mode' => $data['payment_mode'] ?? 'Cash',
+                'reference_invoice_no' => $data['reference_invoice_no'] ?? null,
                 'status' => 'draft',
                 'created_by' => $userId,
             ]);
@@ -52,15 +77,23 @@ class InvoiceService implements InvoiceServiceInterface
                     'product_description' => $itemData['product_description'] ?? 'Item',
                     'quantity' => $calc['quantity'],
                     'uom' => $itemData['uom'] ?? 'NOS',
+                    'sale_type' => $itemData['sale_type'] ?? 'Goods (Standard)',
                     'unit_price' => $calc['unit_price'],
+                    'retail_price' => $itemData['retail_price'] ?? null,
+                    'fixed_notified_value' => $itemData['fixed_notified_value'] ?? null,
                     'value_excl_tax' => $calc['value_excl_tax'],
                     'tax_rate' => $calc['tax_rate'],
                     'sales_tax_amount' => $calc['sales_tax_amount'],
                     'further_tax_rate' => $calc['further_tax_rate'],
                     'further_tax_amount' => $calc['further_tax_amount'],
+                    'extra_tax_amount' => $calc['extra_tax_amount'],
+                    'send_extra_tax_as_empty' => !empty($itemData['send_extra_tax_as_empty']),
+                    'fed_payable_amount' => $calc['fed_payable_amount'],
                     'st_withheld_rate' => $calc['st_withheld_rate'],
                     'st_withheld_amount' => $calc['st_withheld_amount'],
                     'discount_amount' => $calc['discount_amount'],
+                    'sro_schedule_no' => $itemData['sro_schedule_no'] ?? null,
+                    'sro_item_serial' => $itemData['sro_item_serial'] ?? null,
                     'total_value_incl_tax' => $calc['total_value_incl_tax'],
                 ]);
             }
@@ -76,13 +109,22 @@ class InvoiceService implements InvoiceServiceInterface
         }
 
         return DB::transaction(function () use ($invoice, $data) {
-            $customer = isset($data['customer_id']) ? Customer::findOrFail($data['customer_id']) : $invoice->customer;
-            $isUnregistered = !$customer->isRegistered();
+            $customer = !empty($data['customer_id']) ? Customer::find($data['customer_id']) : $invoice->customer;
+            $buyerType = $data['buyer_type'] ?? ($customer ? ($customer->isRegistered() ? 'registered' : 'unregistered') : 'unregistered');
+            $isUnregistered = ($buyerType === 'unregistered');
 
             $invoice->update([
-                'customer_id' => $customer->id,
+                'customer_id' => $customer ? $customer->id : $invoice->customer_id,
+                'buyer_name' => $data['buyer_name'] ?? $invoice->buyer_name,
+                'buyer_ntn_cnic' => $data['buyer_ntn_cnic'] ?? $invoice->buyer_ntn_cnic,
+                'buyer_province' => $data['buyer_province'] ?? $invoice->buyer_province,
+                'buyer_address' => $data['buyer_address'] ?? $invoice->buyer_address,
+                'buyer_type' => $buyerType,
                 'invoice_type' => $data['invoice_type'] ?? $invoice->invoice_type,
                 'invoice_date' => $data['invoice_date'] ?? $invoice->invoice_date,
+                'invoice_time' => $data['invoice_time'] ?? $invoice->invoice_time,
+                'payment_mode' => $data['payment_mode'] ?? $invoice->payment_mode,
+                'reference_invoice_no' => $data['reference_invoice_no'] ?? $invoice->reference_invoice_no,
             ]);
 
             if (isset($data['items'])) {
@@ -95,19 +137,27 @@ class InvoiceService implements InvoiceServiceInterface
                         'invoice_id' => $invoice->id,
                         'business_id' => $invoice->business_id,
                         'product_id' => $itemData['product_id'] ?? null,
-                        'hs_code' => $itemData['hs_code'],
-                        'product_description' => $itemData['product_description'],
+                        'hs_code' => $itemData['hs_code'] ?? '8471.30.00',
+                        'product_description' => $itemData['product_description'] ?? 'Item',
                         'quantity' => $calc['quantity'],
                         'uom' => $itemData['uom'] ?? 'NOS',
+                        'sale_type' => $itemData['sale_type'] ?? 'Goods (Standard)',
                         'unit_price' => $calc['unit_price'],
+                        'retail_price' => $itemData['retail_price'] ?? null,
+                        'fixed_notified_value' => $itemData['fixed_notified_value'] ?? null,
                         'value_excl_tax' => $calc['value_excl_tax'],
                         'tax_rate' => $calc['tax_rate'],
                         'sales_tax_amount' => $calc['sales_tax_amount'],
                         'further_tax_rate' => $calc['further_tax_rate'],
                         'further_tax_amount' => $calc['further_tax_amount'],
+                        'extra_tax_amount' => $calc['extra_tax_amount'],
+                        'send_extra_tax_as_empty' => !empty($itemData['send_extra_tax_as_empty']),
+                        'fed_payable_amount' => $calc['fed_payable_amount'],
                         'st_withheld_rate' => $calc['st_withheld_rate'],
                         'st_withheld_amount' => $calc['st_withheld_amount'],
                         'discount_amount' => $calc['discount_amount'],
+                        'sro_schedule_no' => $itemData['sro_schedule_no'] ?? null,
+                        'sro_item_serial' => $itemData['sro_item_serial'] ?? null,
                         'total_value_incl_tax' => $calc['total_value_incl_tax'],
                     ]);
                 }
