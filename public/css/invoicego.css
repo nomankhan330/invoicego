@@ -1,0 +1,345 @@
+:root {
+    --ig-purple-primary: #5850EC;
+    --ig-purple-dark: #3B28CC;
+    --ig-purple-deep: #2A1F8F;
+    --ig-purple-light: #EEF2FF;
+    --ig-purple-border: #E0E7FF;
+    --ig-purple-hover: #4F46E5;
+    --ig-text-main: #1E293B;
+    --ig-text-muted: #64748B;
+    --ig-bg-light: #F8FAFC;
+    --ig-card-bg: #FFFFFF;
+    --ig-card-border: #E2E8F0;
+    --ig-success: #10B981;
+    --ig-warning: #F59E0B;
+    --ig-danger: #EF4444;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--ig-text-main);
+    background-color: var(--ig-bg-light);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Typography */
+.font-display {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Brand Buttons */
+.btn-ig-primary {
+    background-color: var(--ig-purple-primary);
+    border-color: var(--ig-purple-primary);
+    color: #FFFFFF;
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 9px 18px;
+    transition: all 0.2s ease;
+}
+
+.btn-ig-primary:hover, .btn-ig-primary:focus {
+    background-color: var(--ig-purple-hover);
+    border-color: var(--ig-purple-hover);
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(88, 80, 236, 0.25);
+}
+
+.btn-ig-outline {
+    background-color: #FFFFFF;
+    border: 1px solid var(--ig-card-border);
+    color: var(--ig-text-main);
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 8px 16px;
+    transition: all 0.2s ease;
+}
+
+.btn-ig-outline:hover {
+    background-color: #F8FAFC;
+    border-color: #CBD5E1;
+    color: var(--ig-text-main);
+}
+
+/* Split-Screen Auth (Screenshots 2 & 3) */
+.auth-split-wrapper {
+    min-height: 100vh;
+    display: flex;
+}
+
+.auth-brand-pane {
+    width: 42%;
+    background: linear-gradient(135deg, #2D1A8E 0%, #432BB3 45%, #593CD4 100%);
+    color: #FFFFFF;
+    padding: 50px 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.auth-form-pane {
+    width: 58%;
+    background-color: #F8FAFC;
+    padding: 40px 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+}
+
+.auth-card {
+    background: #FFFFFF;
+    border: 1px solid #EEF2F6;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+    padding: 40px;
+    width: 100%;
+    max-width: 580px;
+}
+
+.auth-feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 40px 0;
+}
+
+.auth-feature-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.auth-feature-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+/* Input Form Controls */
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid #CBD5E1;
+    padding: 9px 14px;
+    font-size: 14px;
+    color: var(--ig-text-main);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--ig-purple-primary);
+    box-shadow: 0 0 0 3px rgba(88, 80, 236, 0.15);
+}
+
+.form-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #475569;
+    margin-bottom: 6px;
+}
+
+.form-text {
+    font-size: 12px;
+    color: #94A3B8;
+}
+
+/* Dashboard Sidebar (Screenshot 4) */
+.tenant-sidebar {
+    width: 260px;
+    background: #FFFFFF;
+    border-right: 1px solid #F1F5F9;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px 16px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1000;
+}
+
+.tenant-main-content {
+    margin-left: 260px;
+    min-height: 100vh;
+    background-color: #F8FAFC;
+    padding: 0 32px 40px 32px;
+}
+
+.tenant-topbar {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #F1F5F9;
+    margin-bottom: 24px;
+}
+
+/* Business Switcher Card */
+.business-switcher-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 20px;
+}
+
+.business-switcher-card .business-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: #0F172A;
+}
+
+.business-switcher-card .business-meta {
+    font-size: 12px;
+    color: #64748B;
+}
+
+.badge-sandbox {
+    background-color: #FEF3C7;
+    color: #D97706;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+}
+
+.badge-production {
+    background-color: #DCFCE7;
+    color: #15803D;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+}
+
+/* Nav links in sidebar */
+.nav-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #94A3B8;
+    text-transform: uppercase;
+    margin: 16px 0 8px 12px;
+}
+
+.nav-link-ig {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 12px;
+    color: #475569;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.nav-link-ig:hover {
+    color: var(--ig-purple-primary);
+    background-color: #F8FAFC;
+}
+
+.nav-link-ig.active {
+    color: var(--ig-purple-primary);
+    background-color: #EEF2FF;
+    font-weight: 600;
+}
+
+/* KPI Cards (Screenshot 4) */
+.ig-kpi-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 18px 20px;
+    min-height: 104px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.ig-kpi-card .kpi-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #64748B;
+    text-transform: uppercase;
+}
+
+.ig-kpi-card .kpi-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: #0F172A;
+    line-height: 1;
+}
+
+.ig-kpi-card .kpi-value.text-green {
+    color: #10B981;
+}
+
+.ig-kpi-card .kpi-subtext {
+    font-size: 11px;
+    color: #94A3B8;
+    margin-top: 4px;
+}
+
+/* Wide Cards */
+.ig-content-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.ig-content-card .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0F172A;
+    margin-bottom: 18px;
+}
+
+/* Sales breakdown row */
+.sales-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed #F1F5F9;
+    font-size: 13px;
+}
+
+.sales-row:last-child {
+    border-bottom: none;
+    font-weight: 600;
+    font-size: 14px;
+    padding-top: 12px;
+}
+
+.sales-row .sales-label {
+    color: #475569;
+}
+
+.sales-row .sales-val {
+    font-weight: 600;
+    color: #0F172A;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Printable A4 invoice */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    .print-container {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+}
