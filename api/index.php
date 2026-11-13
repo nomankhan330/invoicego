@@ -70,11 +70,6 @@ try {
     $app = require_once __DIR__ . '/../bootstrap/app.php';
     $app->useStoragePath('/tmp/storage');
 
-    // Force HTTPS for generated URLs on Vercel
-    if ((isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') || (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')) {
-        \Illuminate\Support\Facades\URL::forceScheme('https');
-    }
-
     // 5. Run migrations on cold start if SQLite database is fresh
     if ($isNewDb && (getenv('DB_CONNECTION') === 'sqlite' || !getenv('DB_CONNECTION'))) {
         try {
