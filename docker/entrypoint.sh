@@ -33,3 +33,4 @@ fi
 
 echo "Starting Apache on port ${PORT}..."
 exec apache2-foreground
+

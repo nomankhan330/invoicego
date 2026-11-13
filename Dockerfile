@@ -57,3 +57,4 @@ ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 EXPOSE 80
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+

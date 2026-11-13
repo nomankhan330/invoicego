@@ -66,3 +66,4 @@ When the container boots on Render, `/usr/local/bin/entrypoint.sh` automatically
 3. Runs `php artisan config:cache`, `php artisan route:cache`, and `php artisan view:cache`.
 4. Executes `php artisan migrate --force` to migrate database tables.
 5. Starts the Apache server.
+
