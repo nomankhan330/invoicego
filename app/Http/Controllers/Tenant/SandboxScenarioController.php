@@ -36,3 +36,4 @@ class SandboxScenarioController extends Controller
         return back()->with('success', "Scenario {$scenario->scenario_code} executed and verified by PRAL sandbox validator!");
     }
 }
+

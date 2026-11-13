@@ -15,3 +15,4 @@ interface TenantServiceInterface
     public function canAccessBusiness(User $user, int $businessId): bool;
     public function registerBusiness(array $userData, array $businessData): Business;
 }
+

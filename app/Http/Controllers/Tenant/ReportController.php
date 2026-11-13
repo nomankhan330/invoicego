@@ -34,3 +34,4 @@ class ReportController extends Controller
         return view('tenant.reports.index', compact('business', 'acceptedInvoices', 'monthlyTotalSales', 'monthlyTotalTax', 'monthlyGross'));
     }
 }
+

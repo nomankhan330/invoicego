@@ -20,3 +20,4 @@ class TenantScope implements Scope
         }
     }
 }
+

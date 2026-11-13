@@ -104,6 +104,11 @@
                                 <a href="{{ route('tenant.invoices.show', $inv->uuid) }}" class="btn btn-outline-secondary" title="View Details">
                                     <i class="bi bi-eye"></i>
                                 </a>
+                                @if (!$inv->isAccepted())
+                                    <a href="{{ route('tenant.invoices.edit', $inv->uuid) }}" class="btn btn-outline-secondary" title="Edit Invoice">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                @endif
                                 @if ($inv->isAccepted())
                                     <a href="{{ route('tenant.invoices.print', $inv->uuid) }}" target="_blank" class="btn btn-outline-primary" title="Print Official A4">
                                         <i class="bi bi-printer"></i>
@@ -113,6 +118,15 @@
                                         @csrf
                                         <button type="submit" class="btn btn-outline-success" title="Submit to FBR">
                                             <i class="bi bi-send"></i>
+                                        </button>
+                                    </form>
+                                @endif
+                                @if ($inv->status === 'draft')
+                                    <form method="POST" action="{{ route('tenant.invoices.destroy', $inv->uuid) }}" class="d-inline" onsubmit="return confirm('Delete draft invoice {{ $inv->invoice_number }}?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-outline-danger" title="Delete Draft">
+                                            <i class="bi bi-trash"></i>
                                         </button>
                                     </form>
                                 @endif
@@ -146,3 +160,4 @@
     @endif
 </div>
 @endsection
+

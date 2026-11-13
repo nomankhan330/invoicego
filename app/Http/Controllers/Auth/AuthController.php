@@ -176,3 +176,4 @@ class AuthController extends Controller
         return view('tenant.suspended', compact('business'));
     }
 }
+

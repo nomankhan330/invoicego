@@ -50,6 +50,9 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::get('/create', [InvoiceController::class, 'create'])->name('create');
         Route::post('/', [InvoiceController::class, 'store'])->name('store');
         Route::get('/{uuid}', [InvoiceController::class, 'show'])->name('show');
+        Route::get('/{uuid}/edit', [InvoiceController::class, 'edit'])->name('edit');
+        Route::put('/{uuid}', [InvoiceController::class, 'update'])->name('update');
+        Route::delete('/{uuid}', [InvoiceController::class, 'destroy'])->name('destroy');
         Route::post('/{uuid}/submit', [InvoiceController::class, 'submitToFbr'])->name('submit');
         Route::post('/{uuid}/reconcile', [InvoiceController::class, 'reconcile'])->name('reconcile');
         Route::get('/{uuid}/print', [InvoiceController::class, 'printA4'])->name('print');
@@ -60,6 +63,8 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::get('/', [CustomerController::class, 'index'])->name('index');
         Route::get('/create', [CustomerController::class, 'create'])->name('create');
         Route::post('/', [CustomerController::class, 'store'])->name('store');
+        Route::put('/{id}', [CustomerController::class, 'update'])->name('update');
+        Route::delete('/{id}', [CustomerController::class, 'destroy'])->name('destroy');
     });
 
     // Products Module
@@ -67,6 +72,8 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::get('/', [ProductController::class, 'index'])->name('index');
         Route::get('/create', [ProductController::class, 'create'])->name('create');
         Route::post('/', [ProductController::class, 'store'])->name('store');
+        Route::put('/{id}', [ProductController::class, 'update'])->name('update');
+        Route::delete('/{id}', [ProductController::class, 'destroy'])->name('destroy');
     });
 
     // HS / PCT Codes Module

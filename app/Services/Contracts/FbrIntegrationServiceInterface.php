@@ -14,3 +14,4 @@ interface FbrIntegrationServiceInterface
     public function checkBuyerRegistration(string $ntnCnic, Business $business): array;
     public function reconcileInvoice(Invoice $invoice): array;
 }
+

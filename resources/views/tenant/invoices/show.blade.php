@@ -30,6 +30,11 @@
         <a href="{{ route('tenant.invoices.index') }}" class="btn btn-ig-outline">
             <i class="bi bi-arrow-left me-1"></i> Back
         </a>
+        @if (!$invoice->isAccepted())
+            <a href="{{ route('tenant.invoices.edit', $invoice->uuid) }}" class="btn btn-ig-outline d-flex align-items-center gap-1">
+                <i class="bi bi-pencil"></i> Edit
+            </a>
+        @endif
         @if ($invoice->isAccepted())
             <a href="{{ route('tenant.invoices.print', $invoice->uuid) }}" target="_blank" class="btn btn-ig-primary d-flex align-items-center gap-1">
                 <i class="bi bi-printer"></i> Print Official A4
@@ -175,3 +180,4 @@
     </div>
 </div>
 @endsection
+

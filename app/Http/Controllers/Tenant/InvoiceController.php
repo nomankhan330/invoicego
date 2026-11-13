@@ -157,6 +157,92 @@ class InvoiceController extends Controller
         return back()->with('error', $result['message'] ?? 'Reconciliation could not be completed.');
     }
 
+    public function edit(string $uuid)
+    {
+        $business = $this->tenantService->getActiveBusiness();
+        $invoice = $business->invoices()->where('uuid', $uuid)->with(['customer', 'items'])->firstOrFail();
+
+        if ($invoice->isAccepted()) {
+            return redirect()->route('tenant.invoices.show', $invoice->uuid)
+                ->with('error', 'Invoices accepted by FBR are locked and cannot be edited.');
+        }
+
+        $customers = $business->customers()->orderBy('name')->get();
+        $products = $business->products()->where('is_active', true)->orderBy('sku')->get();
+        $hsCodes = HsCode::where('is_active', true)->orderBy('pct_code')->get();
+
+        $pktNow = Carbon::now('Asia/Karachi');
+        $minDate = $pktNow->copy()->startOfMonth()->format('Y-m-d');
+        $maxDate = $pktNow->copy()->endOfMonth()->format('Y-m-d');
+
+        return view('tenant.invoices.edit', compact('business', 'invoice', 'customers', 'products', 'hsCodes', 'minDate', 'maxDate'));
+    }
+
+    public function update(Request $request, string $uuid)
+    {
+        $business = $this->tenantService->getActiveBusiness();
+        $invoice = $business->invoices()->where('uuid', $uuid)->firstOrFail();
+
+        if ($invoice->isAccepted()) {
+            return redirect()->route('tenant.invoices.show', $invoice->uuid)
+                ->with('error', 'Invoices accepted by FBR are locked and cannot be edited.');
+        }
+
+        $validated = $request->validate([
+            'customer_id' => ['required', 'exists:customers,id'],
+            'invoice_date' => ['required', 'date'],
+            'invoice_type' => ['required', 'in:standard,credit_note,debit_note'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.hs_code' => ['required', 'string'],
+            'items.*.product_description' => ['required', 'string'],
+            'items.*.quantity' => ['required', 'numeric', 'min:0.001'],
+            'items.*.uom' => ['required', 'string'],
+            'items.*.unit_price' => ['required', 'numeric', 'min:0'],
+            'items.*.tax_rate' => ['required', 'numeric', 'min:0', 'max:100'],
+            'items.*.further_tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'items.*.st_withheld_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'items.*.discount_amount' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        if (!$this->validator->isCurrentMonthInPakistan($validated['invoice_date'])) {
+            return back()->withInput()->withErrors([
+                'invoice_date' => 'FBR Business Rule: Invoices can only be dated for the current calendar month in Pakistan Standard Time.',
+            ]);
+        }
+
+        $this->invoiceService->updateInvoice($invoice, $validated);
+
+        if ($request->has('submit_to_fbr')) {
+            $fbrResult = $this->fbrService->submitInvoice($invoice);
+            if ($fbrResult['success']) {
+                return redirect()->route('tenant.invoices.show', $invoice->uuid)
+                    ->with('success', "Invoice updated and accepted by FBR! FBR Invoice Number: {$fbrResult['fbr_invoice_number']}");
+            } else {
+                return redirect()->route('tenant.invoices.show', $invoice->uuid)
+                    ->with('error', "FBR Submission failed: " . implode('; ', $fbrResult['errors'] ?? []));
+            }
+        }
+
+        return redirect()->route('tenant.invoices.show', $invoice->uuid)
+            ->with('success', "Invoice '{$invoice->invoice_number}' updated successfully.");
+    }
+
+    public function destroy(string $uuid)
+    {
+        $business = $this->tenantService->getActiveBusiness();
+        $invoice = $business->invoices()->where('uuid', $uuid)->firstOrFail();
+
+        if ($invoice->isAccepted()) {
+            return back()->with('error', 'Accepted invoices cannot be deleted.');
+        }
+
+        $num = $invoice->invoice_number;
+        $this->invoiceService->deleteInvoice($invoice);
+
+        return redirect()->route('tenant.invoices.index')
+            ->with('success', "Invoice '{$num}' deleted.");
+    }
+
     public function printA4(string $uuid)
     {
         $business = $this->tenantService->getActiveBusiness();
@@ -165,3 +251,4 @@ class InvoiceController extends Controller
         return view('tenant.invoices.print', compact('business', 'invoice'));
     }
 }
+

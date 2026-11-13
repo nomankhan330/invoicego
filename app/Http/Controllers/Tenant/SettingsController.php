@@ -35,3 +35,4 @@ class SettingsController extends Controller
         return back()->with('success', 'Business settings updated successfully.');
     }
 }
+

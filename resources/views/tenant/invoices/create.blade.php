@@ -99,7 +99,17 @@
                 <tbody id="itemsBody">
                     <tr class="item-row">
                         <td>
-                            <input type="text" class="form-control form-control-sm mb-1 item-desc" name="items[0][product_description]" placeholder="Item description" required value="Standard Taxable Goods">
+                            @if ($products->isNotEmpty())
+                                <select class="form-select form-select-sm mb-1 item-picker" style="font-size: 11px; background-color: #F8FAFC;">
+                                    <option value="">-- Autofill from product --</option>
+                                    @foreach ($products as $pr)
+                                        <option value="{{ $pr->id }}" data-desc="{{ $pr->description }}" data-hs="{{ $pr->hs_code ?? $pr->hsCode?->pct_code ?? '' }}" data-uom="{{ $pr->uom }}" data-price="{{ $pr->unit_price }}" data-tax="{{ $pr->default_tax_rate }}">
+                                            {{ $pr->sku }} &mdash; {{ Str::limit($pr->description, 25) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            @endif
+                            <input type="text" class="form-control form-control-sm item-desc" name="items[0][product_description]" placeholder="Item description" required value="Standard Taxable Goods">
                         </td>
                         <td>
                             <input type="text" class="form-control form-control-sm item-hs" name="items[0][hs_code]" placeholder="8471.30.00" value="8471.30.00" required>
@@ -249,6 +259,21 @@ document-addEventListener('DOMContentLoaded', function () {
 
     tableBody.addEventListener('input', calculateTotals);
 
+    tableBody.addEventListener('change', function (e) {
+        if (e.target.classList.contains('item-picker')) {
+            const row = e.target.closest('.item-row');
+            const opt = e.target.options[e.target.selectedIndex];
+            if (opt && opt.value) {
+                row.querySelector('.item-desc').value = opt.getAttribute('data-desc') || '';
+                row.querySelector('.item-hs').value = opt.getAttribute('data-hs') || '';
+                row.querySelector('.item-uom').value = opt.getAttribute('data-uom') || 'NOS';
+                row.querySelector('.item-price').value = opt.getAttribute('data-price') || '0.00';
+                row.querySelector('.item-tax').value = opt.getAttribute('data-tax') || '18.00';
+                calculateTotals();
+            }
+        }
+    });
+
     document.getElementById('addRowBtn').addEventListener('click', function () {
         const isUnreg = isCustomerUnregistered();
         const furtherRate = isUnreg ? '4.00' : '0.00';
@@ -307,3 +332,4 @@ document-addEventListener('DOMContentLoaded', function () {
 </script>
 @endpush
 @endsection
+

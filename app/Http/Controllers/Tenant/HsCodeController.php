@@ -31,3 +31,4 @@ class HsCodeController extends Controller
         return view('tenant.hscodes.index', compact('business', 'hsCodes'));
     }
 }
+

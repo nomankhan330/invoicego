@@ -15,18 +15,24 @@ class Product extends Model
     protected $fillable = [
         'business_id',
         'hs_code_id',
+        'hs_code',
         'name',
         'sku',
         'description',
         'uom',
+        'sale_type',
         'unit_price',
         'default_tax_rate',
+        'sro_schedule_no',
+        'sro_item_serial',
+        'retail_price',
         'is_active',
     ];
 
     protected $casts = [
         'unit_price' => 'decimal:2',
         'default_tax_rate' => 'decimal:2',
+        'retail_price' => 'decimal:2',
         'is_active' => 'boolean',
     ];
 

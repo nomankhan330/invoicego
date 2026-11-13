@@ -14,3 +14,4 @@ interface InvoiceServiceInterface
     public function getRecentInvoices(Business $business, int $limit = 5);
     public function getRecentFbrActivity(Business $business, int $limit = 5);
 }
+

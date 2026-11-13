@@ -18,6 +18,7 @@ class Customer extends Model
         'strn',
         'address',
         'province',
+        'category',
         'registration_type',
         'fbr_verification_status',
         'contact_person',
@@ -35,3 +36,4 @@ class Customer extends Model
         return $this->registration_type === 'registered';
     }
 }
+

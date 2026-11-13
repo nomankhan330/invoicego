@@ -28,3 +28,4 @@ class DashboardController extends Controller
         return view('tenant.dashboard', compact('business', 'metrics', 'recentInvoices', 'recentFbrActivity'));
     }
 }
+

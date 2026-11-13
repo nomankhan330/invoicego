@@ -366,3 +366,4 @@ class FbrIntegrationService implements FbrIntegrationServiceInterface
         ]);
     }
 }
+

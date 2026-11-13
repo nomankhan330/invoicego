@@ -48,3 +48,4 @@ class FbrIntegrationController extends Controller
         return back()->with('success', 'FBR Integration settings updated securely.');
     }
 }
+

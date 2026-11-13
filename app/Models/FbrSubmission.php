@@ -37,3 +37,4 @@ class FbrSubmission extends Model
         return $this->belongsTo(Invoice::class);
     }
 }
+

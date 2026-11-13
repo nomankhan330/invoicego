@@ -53,3 +53,4 @@ class HsCode extends Model
         return $this->hasMany(Product::class);
     }
 }
+

@@ -15,3 +15,4 @@ interface FbrValidationServiceInterface
     public function recalculateInvoiceTotals(Invoice $invoice): Invoice;
     public function validateInvoicePayload(Invoice $invoice): array;
 }
+
