@@ -67,58 +67,15 @@ class InvoiceController extends Controller
         $defaultDate = $pktNow->format('Y-m-d');
         $currentTime = $pktNow->format('h:i A');
 
-        $provinces = [
-            'PUNJAB',
-            'SINDH',
-            'KHYBER PAKHTUNKHWA',
-            'BALOCHISTAN',
-            'ISLAMABAD CAPITAL TERRITORY',
-            'AZAD JAMMU AND KASHMIR',
-            'GILGIT BALTISTAN',
-        ];
-
-        $saleTypes = [
-            'Goods (Standard)',
-            'Services (Standard)',
-            '3rd Schedule Goods',
-            'Zero Rated Goods',
-            'Exempt Goods',
-            'Electricity / Gas',
-            'Reduced Rate Goods',
-            'Cotton Ginners',
-            'Steel Melting / Re-rolling',
-            'Telecom Services',
-            'Toll Manufacturing',
-            'Other',
-        ];
-
-        $uomList = [
-            'NOS' => 'Numbers (NOS)',
-            'KG' => 'Kilograms (KG)',
-            'MTR' => 'Meters (MTR)',
-            'LTR' => 'Litres (LTR)',
-            'PKT' => 'Packets (PKT)',
-            'TON' => 'Tons (TON)',
-            'DOZ' => 'Dozens (DOZ)',
-            'PRS' => 'Pairs (PRS)',
-            'BAG' => 'Bags (BAG)',
-            'SET' => 'Sets (SET)',
-            'BOX' => 'Boxes (BOX)',
-            'OTH' => 'Other (OTH)',
-        ];
-
-        $sroList = [
-            'SRO 212(I)/2020',
-            'SRO 497(I)/2021',
-            'SRO 587(I)/2022',
-            'Fifth Schedule',
-            'Sixth Schedule Table-I',
-            'Sixth Schedule Table-II',
-            'Eighth Schedule Table-I',
-            'Other',
-        ];
-
-        $taxRates = ['18%', '0%', '1%', '2%', '3%', '5%', '10%', '12%', '15%', '16%', '17%', 'Exempt'];
+        $provinces = \App\Constants\FbrLookups::PROVINCES;
+        $destinations = \App\Constants\FbrLookups::DESTINATIONS;
+        $saleTypes = \App\Constants\FbrLookups::SALE_TYPES;
+        $uomList = \App\Constants\FbrLookups::UOM_LIST;
+        $sroList = \App\Constants\FbrLookups::SRO_LIST;
+        $itemSerials = \App\Constants\FbrLookups::ITEM_SERIALS;
+        $taxRates = \App\Constants\FbrLookups::TAX_RATES;
+        $invoiceTypes = \App\Constants\FbrLookups::INVOICE_TYPES;
+        $buyerTypes = \App\Constants\FbrLookups::BUYER_TYPES;
         $paymentModes = ['Cash', 'Bank Transfer', 'Cheque', 'Credit Card', 'Debit Card', 'Online / Other'];
 
         return compact(
@@ -131,10 +88,14 @@ class InvoiceController extends Controller
             'defaultDate',
             'currentTime',
             'provinces',
+            'destinations',
             'saleTypes',
             'uomList',
             'sroList',
+            'itemSerials',
             'taxRates',
+            'invoiceTypes',
+            'buyerTypes',
             'paymentModes'
         );
     }
@@ -161,10 +122,22 @@ class InvoiceController extends Controller
             }
         }
 
+        $typeMap = [
+            'Sale Invoice' => 'standard',
+            'Credit Note' => 'credit_note',
+            'Debit Note' => 'debit_note',
+            'STWH (Sales Tax Withheld)' => 'stwh',
+        ];
+        if (isset($typeMap[$request->input('invoice_type')])) {
+            $request->merge(['invoice_type' => $typeMap[$request->input('invoice_type')]]);
+        }
+
         $request->mergeIfMissing([
             'buyer_type' => 'unregistered',
-            'buyer_province' => 'PUNJAB',
+            'buyer_province' => 'Punjab',
             'buyer_address' => 'N/A',
+            'supplier_province' => $business->province ?? 'Punjab',
+            'destination_of_supply' => 'Punjab',
         ]);
 
         $validated = $request->validate([
@@ -172,13 +145,15 @@ class InvoiceController extends Controller
             'buyer_name' => ['required', 'string', 'max:255'],
             'buyer_ntn_cnic' => ['nullable', 'string', 'max:20'],
             'buyer_province' => ['required', 'string', 'max:100'],
+            'supplier_province' => ['nullable', 'string', 'max:100'],
+            'destination_of_supply' => ['nullable', 'string', 'max:100'],
             'buyer_address' => ['required', 'string'],
-            'buyer_type' => ['required', 'in:registered,unregistered'],
+            'buyer_type' => ['required', 'in:registered,unregistered,Registered,Unregistered'],
             'invoice_date' => ['required', 'date'],
             'invoice_time' => ['nullable', 'string', 'max:20'],
             'payment_mode' => ['nullable', 'string', 'max:50'],
             'reference_invoice_no' => ['nullable', 'string', 'max:100'],
-            'invoice_type' => ['required', 'in:standard,credit_note,debit_note'],
+            'invoice_type' => ['required', 'in:standard,credit_note,debit_note,stwh,Sale Invoice,Credit Note,Debit Note,STWH (Sales Tax Withheld)'],
             'environment' => ['nullable', 'in:sandbox,production'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['nullable', 'exists:products,id'],
@@ -194,6 +169,7 @@ class InvoiceController extends Controller
             'items.*.extra_tax_amount' => ['nullable', 'numeric', 'min:0'],
             'items.*.send_extra_tax_as_empty' => ['nullable', 'boolean'],
             'items.*.further_tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'items.*.cancel_further_tax' => ['nullable', 'boolean'],
             'items.*.fed_payable_amount' => ['nullable', 'numeric', 'min:0'],
             'items.*.st_withheld_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'items.*.discount_amount' => ['nullable', 'numeric', 'min:0'],
@@ -201,10 +177,21 @@ class InvoiceController extends Controller
             'items.*.sro_item_serial' => ['nullable', 'string'],
         ]);
 
-        // Convert tax_rate if passed as string e.g. "18%"
+        $validated['buyer_type'] = strtolower($validated['buyer_type']);
+        if (isset($typeMap[$validated['invoice_type']])) {
+            $validated['invoice_type'] = $typeMap[$validated['invoice_type']];
+        }
+
+        // Convert tax_rate if passed as string e.g. "18.00%" or special tariff
         foreach ($validated['items'] as $i => $item) {
-            $taxRateVal = str_replace('%', '', $item['tax_rate']);
-            $validated['items'][$i]['tax_rate'] = is_numeric($taxRateVal) ? (float) $taxRateVal : 0.00;
+            $taxRateStr = (string) $item['tax_rate'];
+            if (preg_match('/^([0-9]+(?:\.[0-9]+)?)\s*%/i', $taxRateStr, $m)) {
+                $validated['items'][$i]['tax_rate'] = (float) $m[1];
+            } elseif (is_numeric($taxRateStr)) {
+                $validated['items'][$i]['tax_rate'] = (float) $taxRateStr;
+            } else {
+                $validated['items'][$i]['tax_rate'] = 0.00;
+            }
         }
 
         // Enforce current month in Pakistan Standard Time
@@ -368,11 +355,23 @@ class InvoiceController extends Controller
             }
         }
 
+        $typeMap = [
+            'Sale Invoice' => 'standard',
+            'Credit Note' => 'credit_note',
+            'Debit Note' => 'debit_note',
+            'STWH (Sales Tax Withheld)' => 'stwh',
+        ];
+        if (isset($typeMap[$request->input('invoice_type')])) {
+            $request->merge(['invoice_type' => $typeMap[$request->input('invoice_type')]]);
+        }
+
         $request->mergeIfMissing([
             'buyer_name' => $invoice->buyer_name ?? $invoice->customer?->name ?? 'Buyer',
-            'buyer_province' => $invoice->buyer_province ?? 'PUNJAB',
+            'buyer_province' => $invoice->buyer_province ?? 'Punjab',
             'buyer_address' => $invoice->buyer_address ?? 'N/A',
             'buyer_type' => $invoice->buyer_type ?? 'unregistered',
+            'supplier_province' => $invoice->supplier_province ?? ($business->province ?? 'Punjab'),
+            'destination_of_supply' => $invoice->destination_of_supply ?? 'Punjab',
         ]);
 
         $validated = $request->validate([
@@ -380,13 +379,15 @@ class InvoiceController extends Controller
             'buyer_name' => ['required', 'string', 'max:255'],
             'buyer_ntn_cnic' => ['nullable', 'string', 'max:20'],
             'buyer_province' => ['required', 'string', 'max:100'],
+            'supplier_province' => ['nullable', 'string', 'max:100'],
+            'destination_of_supply' => ['nullable', 'string', 'max:100'],
             'buyer_address' => ['required', 'string'],
-            'buyer_type' => ['required', 'in:registered,unregistered'],
+            'buyer_type' => ['required', 'in:registered,unregistered,Registered,Unregistered'],
             'invoice_date' => ['required', 'date'],
             'invoice_time' => ['nullable', 'string', 'max:20'],
             'payment_mode' => ['nullable', 'string', 'max:50'],
             'reference_invoice_no' => ['nullable', 'string', 'max:100'],
-            'invoice_type' => ['required', 'in:standard,credit_note,debit_note'],
+            'invoice_type' => ['required', 'in:standard,credit_note,debit_note,stwh,Sale Invoice,Credit Note,Debit Note,STWH (Sales Tax Withheld)'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['nullable', 'exists:products,id'],
             'items.*.sale_type' => ['nullable', 'string'],
@@ -401,6 +402,7 @@ class InvoiceController extends Controller
             'items.*.extra_tax_amount' => ['nullable', 'numeric', 'min:0'],
             'items.*.send_extra_tax_as_empty' => ['nullable', 'boolean'],
             'items.*.further_tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'items.*.cancel_further_tax' => ['nullable', 'boolean'],
             'items.*.fed_payable_amount' => ['nullable', 'numeric', 'min:0'],
             'items.*.st_withheld_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'items.*.discount_amount' => ['nullable', 'numeric', 'min:0'],
@@ -408,9 +410,20 @@ class InvoiceController extends Controller
             'items.*.sro_item_serial' => ['nullable', 'string'],
         ]);
 
+        $validated['buyer_type'] = strtolower($validated['buyer_type']);
+        if (isset($typeMap[$validated['invoice_type']])) {
+            $validated['invoice_type'] = $typeMap[$validated['invoice_type']];
+        }
+
         foreach ($validated['items'] as $i => $item) {
-            $taxRateVal = str_replace('%', '', $item['tax_rate']);
-            $validated['items'][$i]['tax_rate'] = is_numeric($taxRateVal) ? (float) $taxRateVal : 0.00;
+            $taxRateStr = (string) $item['tax_rate'];
+            if (preg_match('/^([0-9]+(?:\.[0-9]+)?)\s*%/i', $taxRateStr, $m)) {
+                $validated['items'][$i]['tax_rate'] = (float) $m[1];
+            } elseif (is_numeric($taxRateStr)) {
+                $validated['items'][$i]['tax_rate'] = (float) $taxRateStr;
+            } else {
+                $validated['items'][$i]['tax_rate'] = 0.00;
+            }
         }
 
         if (!$this->validator->isCurrentMonthInPakistan($validated['invoice_date'])) {

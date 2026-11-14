@@ -15,9 +15,9 @@
         max-height: 31px !important;
         padding: 0.25rem 0.5rem !important;
         padding-right: 1.75rem !important;
-        font-size: 0.875rem !important;
+        font-size: 0.813rem !important;
         border-radius: 0.375rem !important;
-        border-color: #E2E8F0 !important;
+        border-color: #CBD5E1 !important;
         cursor: pointer !important;
         overflow: hidden !important;
         line-height: 1.5 !important;
@@ -38,13 +38,11 @@
         padding: 0 !important;
         color: #0F172A !important;
     }
-    /* Hide the default inline input from the main box so no cursor or wrapping occurs */
     .ts-wrapper.single .ts-control > input {
         display: none !important;
     }
-    /* Dedicated search input inside the dropdown */
     .plugin-dropdown_input .dropdown-input {
-        border: 1px solid #E2E8F0 !important;
+        border: 1px solid #CBD5E1 !important;
         border-radius: 0.375rem !important;
         margin: 6px 8px !important;
         width: calc(100% - 16px) !important;
@@ -62,7 +60,7 @@
         font-size: 0.813rem !important;
         border-radius: 0.5rem !important;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
-        border-color: #E2E8F0 !important;
+        border-color: #CBD5E1 !important;
         z-index: 1055 !important;
         margin-top: 2px !important;
     }
@@ -138,46 +136,28 @@
         color: #64748B;
         margin-top: 0.2rem;
     }
-    .totals-preview-card {
-        background: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 0.75rem;
-        padding: 1.25rem 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-    .totals-metric-label {
-        font-size: 0.75rem;
-        color: #64748B;
-        margin-bottom: 0.25rem;
-    }
-    .totals-metric-value {
-        font-size: 0.92rem;
-        font-weight: 700;
-        color: #0F172A;
-    }
     .action-bar-sticky {
         position: sticky;
         bottom: 0;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(8px);
+        background: #FFFFFF;
         border-top: 1px solid #E2E8F0;
-        padding: 1rem 1.5rem;
-        margin: 0 -1.5rem -1.5rem -1.5rem;
-        z-index: 100;
-        border-bottom-left-radius: 0.75rem;
-        border-bottom-right-radius: 0.75rem;
+        padding: 0.85rem 1.5rem;
         display: flex;
         justify-content: flex-end;
-        gap: 0.75rem;
         align-items: center;
+        gap: 0.75rem;
+        z-index: 1020;
+        margin-left: -1.5rem;
+        margin-right: -1.5rem;
+        margin-bottom: -1.5rem;
+        border-bottom-left-radius: 0.75rem;
+        border-bottom-right-radius: 0.75rem;
     }
 </style>
 @endpush
 
 @section('content')
-<div class="container-fluid px-0 pb-4">
-
-    <!-- Top Page Header matching screenshot -->
+<div class="container-fluid px-0">
     <div class="d-flex justify-content-between align-items-start mb-3">
         <div>
             <h1 class="fw-bold text-dark fs-3 mb-1 font-display">Create invoice</h1>
@@ -196,7 +176,6 @@
         </div>
     </div>
 
-    <!-- Production warning banner matching screenshot -->
     @if (!$business->production_submissions_enabled || $business->current_environment === 'sandbox')
         <div class="alert border-0 p-3 mb-4 rounded-3 d-flex align-items-start gap-2 shadow-sm" style="background-color: #FFFBEB; border: 1px solid #FDE68A !important; color: #92400E;">
             <i class="bi bi-exclamation-triangle-fill fs-5 mt-n1" style="color: #D97706 !important;"></i>
@@ -228,21 +207,28 @@
     <form method="POST" action="{{ route('tenant.invoices.store') }}" id="invoiceForm">
         @csrf
 
-        <!-- SECTION 1: INVOICE DETAILS -->
+        <!-- SECTION 1: INVOICE DETAILS & PROVINCES -->
         <div class="card-section">
             <div class="section-title">Invoice details</div>
             <div class="row g-3">
                 <div class="col-md-3">
-                    <label class="form-label-xs">Type <span class="text-danger">*</span></label>
+                    <label class="form-label-xs">Invoice Type (DROPDOWN) <span class="text-danger">*</span></label>
                     <select name="invoice_type" id="invoice_type" class="form-select form-select-sm" required>
-                        <option value="standard" selected>Sale Invoice</option>
-                        <option value="debit_note">Debit Note</option>
-                        <option value="credit_note">Credit Note</option>
+                        <option value="standard" {{ old('invoice_type') === 'standard' ? 'selected' : '' }}>Sale Invoice</option>
+                        <option value="credit_note" {{ old('invoice_type') === 'credit_note' ? 'selected' : '' }}>Credit Note</option>
+                        <option value="debit_note" {{ old('invoice_type') === 'debit_note' ? 'selected' : '' }}>Debit Note</option>
+                        <option value="stwh" {{ old('invoice_type') === 'stwh' ? 'selected' : '' }}>STWH (Sales Tax Withheld)</option>
                     </select>
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label-xs">Date <span class="text-danger">*</span></label>
+                    <label class="form-label-xs">Invoice No</label>
+                    <input type="text" name="invoice_number" id="invoice_number" class="form-control form-control-sm" value="{{ old('invoice_number') }}" placeholder="Auto-generated if empty">
+                    <div class="form-helper-xs text-muted">Shown on the invoice; not sent to FBR</div>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label-xs">Date with calendar (DD.MM.YY) <span class="text-danger">*</span></label>
                     <input type="date" name="invoice_date" id="invoice_date" class="form-control form-control-sm" value="{{ old('invoice_date', $defaultDate) }}" min="{{ $minDate }}" max="{{ $maxDate }}" required>
                     <div class="form-helper-xs">Current month only ({{ $minDate }} to {{ $maxDate }}, PKT)</div>
                 </div>
@@ -253,7 +239,24 @@
                         <input type="text" name="invoice_time" id="invoice_time" class="form-control form-control-sm" value="{{ old('invoice_time', $currentTime) }}">
                         <span class="input-group-text bg-white text-muted"><i class="bi bi-clock"></i></span>
                     </div>
-                    <div class="form-helper-xs">Shown on the invoice; not sent to FBR</div>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label-xs">Province of Supplier (Dropdown with Search) <span class="text-danger">*</span></label>
+                    <select name="supplier_province" id="supplier_province" class="searchable-select" data-placeholder="Select Supplier Province..." required>
+                        @foreach ($provinces as $prov)
+                            <option value="{{ $prov }}" {{ old('supplier_province', $business->province ?? 'Punjab') === $prov ? 'selected' : '' }}>{{ $prov }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label-xs">Destination of Supply (Dropdown with Search) <span class="text-danger">*</span></label>
+                    <select name="destination_of_supply" id="destination_of_supply" class="searchable-select" data-placeholder="Select Destination..." required>
+                        @foreach ($destinations as $dest)
+                            <option value="{{ $dest }}" {{ old('destination_of_supply', 'Punjab') === $dest ? 'selected' : '' }}>{{ $dest }}</option>
+                        @endforeach
+                    </select>
                 </div>
 
                 <div class="col-md-3">
@@ -263,13 +266,13 @@
                             <option value="{{ $pm }}" {{ old('payment_mode', 'Cash') === $pm ? 'selected' : '' }}>{{ $pm }}</option>
                         @endforeach
                     </select>
-                    <div class="form-helper-xs">How the buyer pays; not sent to FBR</div>
+                    <div class="form-helper-xs text-muted">How the buyer pays; not sent to FBR</div>
                 </div>
 
                 <div class="col-md-3">
                     <label class="form-label-xs">Reference invoice no.</label>
-                    <input type="text" name="reference_invoice_no" id="reference_invoice_no" class="form-control form-control-sm" value="{{ old('reference_invoice_no') }}" placeholder="">
-                    <div class="form-helper-xs">Only for debit notes</div>
+                    <input type="text" name="reference_invoice_no" id="reference_invoice_no" class="form-control form-control-sm" value="{{ old('reference_invoice_no') }}" placeholder="For credit/debit notes">
+                    <div class="form-helper-xs text-muted">Only for debit notes</div>
                 </div>
             </div>
         </div>
@@ -295,8 +298,8 @@
                 </div>
                 <div class="col-md-3 col-6">
                     <div class="info-tile">
-                        <div class="info-tile-label">Province</div>
-                        <div class="info-tile-value">{{ $business->province }}</div>
+                        <div class="info-tile-label">STRN</div>
+                        <div class="info-tile-value">{{ $business->strn ?: 'N/A' }}</div>
                     </div>
                 </div>
                 <div class="col-md-3 col-6">
@@ -312,7 +315,7 @@
         <div class="card-section">
             <div class="section-title">Buyer details</div>
             <div class="row g-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label-xs">Saved customer</label>
                     <select id="saved_customer_select" name="customer_id" class="searchable-select" data-placeholder="Search customers...">
                         <option value="">New buyer</option>
@@ -330,23 +333,31 @@
                     <div class="form-helper-xs">Search and select, or type a new buyer below</div>
                 </div>
 
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label-xs">Buyer NTN / CNIC</label>
-                    <input type="text" name="buyer_ntn_cnic" id="buyer_ntn_cnic" class="form-control form-control-sm" value="{{ old('buyer_ntn_cnic') }}" placeholder="">
+                    <input type="text" name="buyer_ntn_cnic" id="buyer_ntn_cnic" class="form-control form-control-sm" value="{{ old('buyer_ntn_cnic') }}" placeholder="7-digit NTN or 13-digit CNIC">
                     <div class="form-helper-xs">7-digit NTN or 13-digit CNIC; optional for unregistered buyers</div>
                 </div>
 
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label-xs">Buyer name <span class="text-danger">*</span></label>
                     <input type="text" name="buyer_name" id="buyer_name" class="form-control form-control-sm" value="{{ old('buyer_name') }}" required>
                 </div>
 
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label-xs">Buyer province <span class="text-danger">*</span></label>
-                    <select name="buyer_province" id="buyer_province" class="form-select form-select-sm" required>
+                    <select name="buyer_province" id="buyer_province" class="searchable-select" data-placeholder="Select Province..." required>
                         @foreach ($provinces as $prov)
-                            <option value="{{ $prov }}" {{ old('buyer_province', 'PUNJAB') === $prov ? 'selected' : '' }}>{{ $prov }}</option>
+                            <option value="{{ $prov }}" {{ old('buyer_province', 'Punjab') === $prov ? 'selected' : '' }}>{{ $prov }}</option>
                         @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label-xs">Buyer type <span class="text-danger">*</span></label>
+                    <select name="buyer_type" id="buyer_type" class="form-select form-select-sm" required>
+                        <option value="registered" {{ old('buyer_type') === 'registered' ? 'selected' : '' }}>Registered</option>
+                        <option value="unregistered" {{ old('buyer_type', 'unregistered') === 'unregistered' ? 'selected' : '' }}>Unregistered</option>
                     </select>
                     <div class="d-flex align-items-center justify-content-between mt-1">
                         <a href="javascript:void(0)" id="verifyBuyerBtn" class="text-primary small text-decoration-none fw-semibold" style="font-size: 11px;">
@@ -356,34 +367,26 @@
                     </div>
                 </div>
 
-                <div class="col-md-4">
-                    <label class="form-label-xs">Buyer address <span class="text-danger">*</span></label>
+                <div class="col-md-9">
+                    <label class="form-label-xs">Buyer Address <span class="text-danger">*</span></label>
                     <input type="text" name="buyer_address" id="buyer_address" class="form-control form-control-sm" value="{{ old('buyer_address', 'Pakistan') }}" required>
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label-xs">Buyer type <span class="text-danger">*</span></label>
-                    <div class="btn-group w-100" role="group">
-                        <input type="radio" class="btn-check" name="buyer_type" id="buyer_type_registered" value="registered" autocomplete="off" {{ old('buyer_type') === 'registered' ? 'checked' : '' }}>
-                        <label class="btn btn-outline-primary btn-sm py-1" for="buyer_type_registered" style="font-size: 13px;">Registered</label>
-
-                        <input type="radio" class="btn-check" name="buyer_type" id="buyer_type_unregistered" value="unregistered" autocomplete="off" {{ old('buyer_type', 'unregistered') === 'unregistered' ? 'checked' : '' }}>
-                        <label class="btn btn-outline-primary btn-sm py-1" for="buyer_type_unregistered" style="font-size: 13px;">Unregistered</label>
-                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- SECTION 4: ITEMS DETAILS -->
+        <!-- SECTION 4: ITEMS ENTRY TABLE (THE CORE) -->
         <div class="card-section">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="section-title mb-0">Items details</div>
+                <div>
+                    <div class="section-title mb-0">Items details</div>
+                    <div class="text-muted small">Items Entry Table (The Core) — Configure products, HS codes, tax rates, SRO/Schedule and item serial numbers</div>
+                </div>
                 <div class="d-flex align-items-center gap-3">
                     <div class="form-check form-check-inline m-0">
                         <input class="form-check-input" type="checkbox" id="autoCalcCheckbox" checked>
                         <label class="form-check-label small fw-semibold text-dark" for="autoCalcCheckbox">Automatic calculation</label>
                     </div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary px-3" id="addItemBtn">
+                    <button type="button" class="btn btn-sm btn-primary px-3 fw-semibold shadow-sm" id="addItemBtn" style="background-color: #2563EB; border-color: #2563EB;">
                         <i class="bi bi-plus-lg me-1"></i> Add item
                     </button>
                 </div>
@@ -391,44 +394,50 @@
 
             <!-- Items Container -->
             <div id="itemsContainer">
-                <!-- Template Item 1 will be injected / rendered here -->
+                <!-- Dynamic Items will be rendered here -->
             </div>
         </div>
 
-        <!-- SECTION 5: TOTALS PREVIEW -->
-        <div class="totals-preview-card">
-            <div class="section-title">Totals preview</div>
-            <div class="row g-3 py-2 border-bottom">
-                <div class="col">
-                    <div class="totals-metric-label">Value excl. ST</div>
-                    <div class="totals-metric-value" id="previewValExcl">Rs 0.00</div>
-                </div>
-                <div class="col">
-                    <div class="totals-metric-label">Sales tax</div>
-                    <div class="totals-metric-value" id="previewSalesTax">Rs 0.00</div>
-                </div>
-                <div class="col">
-                    <div class="totals-metric-label">Further tax</div>
-                    <div class="totals-metric-value" id="previewFurtherTax">Rs 0.00</div>
-                </div>
-                <div class="col">
-                    <div class="totals-metric-label">Extra tax + FED</div>
-                    <div class="totals-metric-value" id="previewExtraFed">Rs 0.00</div>
-                </div>
-                <div class="col">
-                    <div class="totals-metric-label">ST withheld</div>
-                    <div class="totals-metric-value" id="previewSTWithheld">Rs 0.00</div>
-                </div>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-end pt-3">
-                <div>
-                    <div class="text-muted small fw-medium">Gross invoice value (incl. taxes)</div>
-                    <div class="fs-3 fw-bold text-dark font-display" id="previewGrossTotal">Rs 0.00</div>
-                </div>
-                <div class="text-end">
-                    <div class="text-muted small fw-medium">Net receivable (after ST withheld)</div>
-                    <div class="fs-4 fw-bold text-dark font-display" id="previewNetReceivable">Rs 0.00</div>
+        <!-- TAX SUMMARY FOOTER -->
+        <div class="row justify-content-end mb-4">
+            <div class="col-md-6 col-lg-5">
+                <div class="card border shadow-sm rounded-3 p-3 bg-white">
+                    <div class="fw-bold text-dark pb-2 mb-2 border-bottom d-flex align-items-center justify-content-between">
+                        <span><i class="bi bi-calculator me-1 text-primary"></i> Totals preview</span>
+                        <span class="badge bg-light text-muted border" id="summaryItemCount">1 item</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 small text-secondary">
+                        <span>Total Quantity</span>
+                        <span class="fw-semibold text-dark" id="summaryTotalQty">0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 small text-secondary">
+                        <span>Value excl. ST</span>
+                        <span class="fw-semibold text-dark" id="summaryValExcl">Rs 0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 small text-secondary">
+                        <span>Sales tax</span>
+                        <span class="fw-semibold text-dark" id="summarySalesTax">Rs 0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 small text-secondary">
+                        <span>Further tax</span>
+                        <span class="fw-semibold text-danger" id="summaryFurtherTax">Rs 0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 small text-secondary">
+                        <span>Extra tax + FED</span>
+                        <span class="fw-semibold text-dark" id="summaryExtraFed">Rs 0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 small text-secondary border-bottom pb-2">
+                        <span>ST withheld</span>
+                        <span class="fw-semibold text-dark" id="summarySTWithheld">Rs 0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center pt-2">
+                        <span class="fw-bold text-dark fs-6">Gross invoice value (incl. taxes)</span>
+                        <span class="fw-bold text-primary fs-4 font-display" id="summaryGrandTotal">Rs 0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center pt-1 small text-secondary">
+                        <span>Net receivable (after ST withheld)</span>
+                        <span class="fw-semibold text-dark" id="summaryNetReceivable">Rs 0.00</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -440,10 +449,16 @@
                 <i class="bi bi-file-earmark me-1"></i> Save as draft
             </button>
             <button type="button" id="validateDraftBtn" class="btn btn-outline-primary px-3 btn-sm fw-medium">
-                <i class="bi bi-check2-circle me-1"></i> Validate
+                <i class="bi bi-shield-check me-1"></i> Validate with FBR
             </button>
-            <button type="submit" name="submit_to_fbr" value="1" class="btn btn-ig-primary px-4 btn-sm fw-semibold">
+            <button type="button" class="btn btn-outline-secondary px-3 btn-sm fw-medium" disabled title="Save invoice first to download PDF">
+                <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
+            </button>
+            <button type="submit" name="submit_to_fbr" value="1" class="btn btn-primary px-4 btn-sm fw-semibold shadow-sm" style="background-color: #2563EB; border-color: #2563EB;">
                 <i class="bi bi-send-fill me-1"></i> Submit to FBR
+            </button>
+        </div>
+                <i class="bi bi-send-fill me-1"></i> Submit to FBR (Blue)
             </button>
         </div>
     </form>
@@ -457,7 +472,12 @@
         saleTypes: @json($saleTypes),
         uomList: @json($uomList),
         sroList: @json($sroList),
+        itemSerials: @json($itemSerials),
         taxRates: @json($taxRates),
+        provinces: @json($provinces),
+        destinations: @json($destinations),
+        invoiceTypes: @json($invoiceTypes),
+        buyerTypes: @json($buyerTypes),
         validateUrl: @json(route('tenant.invoices.validate-draft')),
         verifyBuyerUrl: @json(route('tenant.invoices.verify-buyer')),
         csrfToken: '{{ csrf_token() }}'
@@ -473,10 +493,31 @@ document.addEventListener('DOMContentLoaded', function () {
     let itemCount = 0;
     const tomSelectInstances = {};
 
-    // 1. Initialize TomSelect on Saved Customer
+    // 1. Initialize TomSelect on Province of Supplier & Destination of Supply
+    const supplierProvEl = document.getElementById('supplier_province');
+    if (supplierProvEl) {
+        new TomSelect(supplierProvEl, {
+            plugins: ['dropdown_input'],
+            create: false,
+            placeholder: 'Select Supplier Province...',
+            closeAfterSelect: true
+        });
+    }
+
+    const destSupplyEl = document.getElementById('destination_of_supply');
+    if (destSupplyEl) {
+        new TomSelect(destSupplyEl, {
+            plugins: ['dropdown_input'],
+            create: false,
+            placeholder: 'Select Destination of Supply...',
+            closeAfterSelect: true
+        });
+    }
+
+    // 2. Initialize TomSelect on Saved Customer
     const customerSelectEl = document.getElementById('saved_customer_select');
     if (customerSelectEl) {
-        const customerTom = new TomSelect(customerSelectEl, {
+        new TomSelect(customerSelectEl, {
             plugins: ['dropdown_input'],
             create: false,
             placeholder: 'Search customers...',
@@ -484,11 +525,11 @@ document.addEventListener('DOMContentLoaded', function () {
             closeAfterSelect: true,
             onChange: function (val) {
                 if (!val) {
-                    // New buyer selected or cleared
                     document.getElementById('buyer_name').value = '';
                     document.getElementById('buyer_ntn_cnic').value = '';
                     document.getElementById('buyer_address').value = '';
-                    setBuyerType('unregistered');
+                    document.getElementById('buyer_type').value = 'unregistered';
+                    recalculateAll();
                     return;
                 }
                 const opt = customerSelectEl.querySelector(`option[value="${val}"]`);
@@ -497,32 +538,24 @@ document.addEventListener('DOMContentLoaded', function () {
                     document.getElementById('buyer_ntn_cnic').value = opt.getAttribute('data-ntn') || '';
                     document.getElementById('buyer_address').value = opt.getAttribute('data-address') || '';
                     const prov = opt.getAttribute('data-province');
-                    if (prov) {
-                        document.getElementById('buyer_province').value = prov;
+                    if (prov && destSupplyEl && destSupplyEl.tomselect) {
+                        destSupplyEl.tomselect.setValue(prov);
                     }
                     const regType = opt.getAttribute('data-type');
-                    setBuyerType(regType === 'registered' ? 'registered' : 'unregistered');
+                    document.getElementById('buyer_type').value = (regType === 'registered' ? 'registered' : 'unregistered');
                 }
                 recalculateAll();
             }
         });
     }
 
-    // Buyer Type Switcher Helper
-    function setBuyerType(type) {
-        if (type === 'registered') {
-            document.getElementById('buyer_type_registered').checked = true;
-        } else {
-            document.getElementById('buyer_type_unregistered').checked = true;
-        }
-        recalculateAll();
+    // Buyer Type Dropdown Change Listener
+    const buyerTypeEl = document.getElementById('buyer_type');
+    if (buyerTypeEl) {
+        buyerTypeEl.addEventListener('change', recalculateAll);
     }
 
-    document.querySelectorAll('input[name="buyer_type"]').forEach(radio => {
-        radio.addEventListener('change', recalculateAll);
-    });
-
-    // 2. Buyer ATL Verification Button
+    // 3. Buyer ATL Verification Button
     const verifyBuyerBtn = document.getElementById('verifyBuyerBtn');
     const verifyBadge = document.getElementById('buyerVerificationBadge');
     if (verifyBuyerBtn) {
@@ -545,7 +578,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     verifyBadge.className = 'text-success fw-semibold small';
                     verifyBadge.innerHTML = `<i class="bi bi-check-circle-fill"></i> ${data.status}`;
                     if (data.registration_type) {
-                        setBuyerType(data.registration_type);
+                        document.getElementById('buyer_type').value = data.registration_type;
+                        recalculateAll();
                     }
                 } else {
                     verifyBadge.className = 'text-danger small';
@@ -559,7 +593,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // 3. Item Management: Add Item Function
+    // 4. Dynamic Item Row Generator
     function addItem(initialData = {}) {
         itemCount++;
         const index = itemCount;
@@ -573,16 +607,16 @@ document.addEventListener('DOMContentLoaded', function () {
         card.innerHTML = `
             <div class="item-badge-header">
                 <span>Item <span class="item-number-text">${index}</span></span>
-                <button type="button" class="btn btn-link text-danger p-0 delete-item-btn" title="Remove item" style="${index === 1 ? 'display:none;' : ''}">
-                    <i class="bi bi-trash3 me-1"></i> Remove
+                <button type="button" class="btn btn-link text-danger p-0 delete-item-btn" title="Delete this item" style="${index === 1 ? 'display:none;' : ''}">
+                    <i class="bi bi-trash3-fill fs-5"></i>
                 </button>
             </div>
 
             <!-- Row 1: Saved Product, Sale Type, HS Code, Tax Rate -->
             <div class="row g-2 mb-2">
                 <div class="col-md-3">
-                    <label class="form-label-xs">Saved product</label>
-                    <select name="items[${index}][product_id]" class="product-select" data-placeholder="Choose a saved product (optional)">
+                    <label class="form-label-xs">Saved product (optional)</label>
+                    <select name="items[${index}][product_id]" class="product-select" data-placeholder="Choose saved product...">
                         <option value="">Choose a saved product (optional)</option>
                         ${config.products.map(p => `
                             <option value="${p.id}"
@@ -590,9 +624,9 @@ document.addEventListener('DOMContentLoaded', function () {
                                 data-desc="${p.description || p.name}"
                                 data-price="${p.unit_price || 0}"
                                 data-hscode="${p.hs_code || ''}"
-                                data-uom="${p.uom || 'NOS'}"
-                                data-saletype="${p.sale_type || 'Goods (Standard)'}"
-                                data-taxrate="${p.default_tax_rate || '18%'}"
+                                data-uom="${p.uom || 'MT'}"
+                                data-saletype="${p.sale_type || 'Goods at Standard Rate (Default)'}"
+                                data-taxrate="${p.default_tax_rate ? p.default_tax_rate + '%' : '18.00%'}"
                                 data-sro="${p.sro_schedule_no || ''}"
                                 data-sroserial="${p.sro_item_serial || ''}"
                                 data-retail="${p.retail_price || ''}">
@@ -603,40 +637,39 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label-xs">Sale type <span class="text-danger">*</span></label>
-                    <select name="items[${index}][sale_type]" class="saletype-select" data-placeholder="Choose the sale type" required>
-                        ${config.saleTypes.map(st => `<option value="${st}" ${st === 'Goods (Standard)' ? 'selected' : ''}>${st}</option>`).join('')}
+                    <label class="form-label-xs">Sale Type (Dropdown with Search) <span class="text-danger">*</span></label>
+                    <select name="items[${index}][sale_type]" class="saletype-select" data-placeholder="Choose Sale Type..." required>
+                        ${config.saleTypes.map(st => `<option value="${st}" ${st.includes('Standard') ? 'selected' : ''}>${st}</option>`).join('')}
                     </select>
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label-xs">HS code <span class="text-danger">*</span></label>
-                    <select name="items[${index}][hs_code]" class="hscode-select" data-placeholder="0000.0000" required>
+                    <label class="form-label-xs">HS Code (Dropdown with Search) <span class="text-danger">*</span></label>
+                    <select name="items[${index}][hs_code]" class="hscode-select" data-placeholder="Search HS Code..." required>
                         <option value="">Search HS / PCT Code...</option>
-                        ${config.hsCodes.map(h => `<option value="${h.pct_code}">${h.pct_code} — ${h.description.substring(0, 45)}</option>`).join('')}
+                        ${config.hsCodes.map(h => `<option value="${h.pct_code}">${h.pct_code} — ${h.description.substring(0, 40)}</option>`).join('')}
                     </select>
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label-xs">Tax rate <span class="text-danger">*</span></label>
-                    <select name="items[${index}][tax_rate]" class="form-select form-select-sm item-tax-rate" required>
-                        ${config.taxRates.map(tr => `<option value="${tr}" ${tr === '18%' ? 'selected' : ''}>${tr}</option>`).join('')}
+                    <label class="form-label-xs">Tax Rate (%) (Dropdown with Search) <span class="text-danger">*</span></label>
+                    <select name="items[${index}][tax_rate]" class="taxrate-select item-tax-rate" data-placeholder="Select Tax Rate..." required>
+                        ${config.taxRates.map(tr => `<option value="${tr}" ${tr === '18.00%' ? 'selected' : ''}>${tr}</option>`).join('')}
                     </select>
-                    <div class="form-helper-xs text-muted">e.g. 18% standard rate</div>
                 </div>
             </div>
 
             <!-- Row 2: Product Description, UOM, Quantity, Unit Price -->
             <div class="row g-2 mb-2">
                 <div class="col-md-3">
-                    <label class="form-label-xs">Product description <span class="text-danger">*</span></label>
-                    <input type="text" name="items[${index}][product_description]" class="form-control form-control-sm item-desc" placeholder="" required>
+                    <label class="form-label-xs">Product Description <span class="text-danger">*</span></label>
+                    <input type="text" name="items[${index}][product_description]" class="form-control form-control-sm item-desc" placeholder="Product details" required>
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label-xs">UOM <span class="text-danger">*</span></label>
-                    <select name="items[${index}][uom]" class="uom-select" data-placeholder="Unit of measure" required>
-                        ${Object.entries(config.uomList).map(([code, name]) => `<option value="${code}" ${code === 'NOS' ? 'selected' : ''}>${name}</option>`).join('')}
+                    <label class="form-label-xs">UoM (Dropdown with Search) <span class="text-danger">*</span></label>
+                    <select name="items[${index}][uom]" class="uom-select" data-placeholder="Select UoM..." required>
+                        ${Object.entries(config.uomList).map(([code, name]) => `<option value="${code}" ${code === 'MT' || code === 'SET' || code === 'KG' ? 'selected' : ''}>${name}</option>`).join('')}
                     </select>
                 </div>
 
@@ -656,33 +689,35 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="col-md-2">
                     <label class="form-label-xs">Discount</label>
                     <input type="number" step="0.01" min="0" name="items[${index}][discount_amount]" class="form-control form-control-sm item-discount" value="0.00">
-                    <div class="form-helper-xs">Amount; deducted once</div>
+                    <div class="form-helper-xs">Deducted once</div>
                 </div>
 
                 <div class="col-md-2">
-                    <label class="form-label-xs">Value of sales (excl. tax)</label>
-                    <input type="text" class="form-control form-control-sm bg-light item-val-excl" value="0.00" readonly>
-                    <div class="form-helper-xs text-muted">Calculated</div>
+                    <label class="form-label-xs">VALUE OF SALES (EXCL. TAX)</label>
+                    <input type="text" class="form-control form-control-sm bg-light item-val-excl fw-semibold text-dark" value="0.00" readonly>
+                    <div class="form-helper-xs text-muted">Auto: Qty &times; Price</div>
                 </div>
 
                 <div class="col-md-2">
-                    <label class="form-label-xs">Sales tax</label>
+                    <label class="form-label-xs">Sales Tax</label>
                     <input type="number" step="0.01" min="0" name="items[${index}][sales_tax_amount]" class="form-control form-control-sm item-sales-tax" value="0.00">
+                    <div class="form-helper-xs text-muted">Auto: Val &times; Tax Rate %</div>
                 </div>
 
                 <div class="col-md-2">
-                    <label class="form-label-xs">Retail price / unit</label>
-                    <input type="number" step="0.01" min="0" name="items[${index}][retail_price]" class="form-control form-control-sm item-retail-price">
-                    <div class="form-helper-xs">Third Schedule goods</div>
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label-xs">Fixed / notified value</label>
+                    <label class="form-label-xs">Fixed / Notified Value</label>
                     <input type="number" step="0.01" min="0" name="items[${index}][fixed_notified_value]" class="form-control form-control-sm item-fixed-val">
+                    <div class="form-helper-xs">Fixed tariff value</div>
                 </div>
 
                 <div class="col-md-2">
-                    <label class="form-label-xs">Extra tax</label>
+                    <label class="form-label-xs">Retail Price (MRP)</label>
+                    <input type="number" step="0.01" min="0" name="items[${index}][retail_price]" class="form-control form-control-sm item-retail-price">
+                    <div class="form-helper-xs">3rd Schedule items</div>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label-xs">Extra Tax</label>
                     <input type="number" step="0.01" min="0" name="items[${index}][extra_tax_amount]" class="form-control form-control-sm item-extra-tax" value="0.00">
                     <div class="form-check small mt-1">
                         <input class="form-check-input item-send-empty" type="checkbox" name="items[${index}][send_extra_tax_as_empty]" value="1" id="empty_extra_${index}">
@@ -691,12 +726,34 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             </div>
 
-            <!-- Row 4: Further tax, FED payable, ST withheld, SRO schedule, Item S No, Total -->
+            <!-- Row 4: Further tax, SRO / Schedule No, Item S. No, FED, ST Withheld, Total -->
             <div class="row g-2">
                 <div class="col-md-2">
-                    <label class="form-label-xs">Further tax</label>
-                    <input type="number" step="0.01" min="0" name="items[${index}][further_tax_amount]" class="form-control form-control-sm item-further-tax" value="0.00">
-                    <div class="form-helper-xs" id="further_note_${index}">4% for unregistered</div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label class="form-label-xs mb-0">Further Tax (4%)</label>
+                        <div class="form-check form-switch m-0" title="Option to cancel further tax">
+                            <input class="form-check-input item-cancel-further" type="checkbox" name="items[${index}][cancel_further_tax]" value="1" id="cancel_further_${index}">
+                            <label class="form-check-label" for="cancel_further_${index}" style="font-size: 10.5px; color: #DC2626; font-weight: 600;">Cancel</label>
+                        </div>
+                    </div>
+                    <input type="number" step="0.01" min="0" name="items[${index}][further_tax_amount]" class="form-control form-control-sm item-further-tax mt-1" value="0.00">
+                    <div class="form-helper-xs text-muted" id="further_note_${index}">Auto 4% for unregistered</div>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label-xs">SRO No/Schedule No</label>
+                    <select name="items[${index}][sro_schedule_no]" class="sro-select" data-placeholder="Select SRO...">
+                        <option value="">None / Not Applicable</option>
+                        ${config.sroList.map(s => `<option value="${s}">${s}</option>`).join('')}
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label-xs">Item S. No (Dropdown)</label>
+                    <select name="items[${index}][sro_item_serial]" class="serial-select item-sro-serial" data-placeholder="Select S. No...">
+                        <option value="">None / S. No...</option>
+                        ${config.itemSerials.map(s => `<option value="${s}">${s}</option>`).join('')}
+                    </select>
                 </div>
 
                 <div class="col-md-2">
@@ -707,25 +764,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="col-md-2">
                     <label class="form-label-xs">ST withheld at source</label>
                     <input type="number" step="0.01" min="0" name="items[${index}][st_withheld_amount]" class="form-control form-control-sm item-st-withheld" value="0.00">
-                    <div class="form-helper-xs">0 or equal to sales tax</div>
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label-xs">SRO / schedule no.</label>
-                    <select name="items[${index}][sro_schedule_no]" class="sro-select" data-placeholder="If an SRO applies">
-                        <option value="">None</option>
-                        ${config.sroList.map(s => `<option value="${s}">${s}</option>`).join('')}
-                    </select>
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label-xs">Item S. No.</label>
-                    <input type="text" name="items[${index}][sro_item_serial]" class="form-control form-control-sm item-sro-serial" placeholder="SRO item serial">
                 </div>
 
                 <div class="col-md-2">
                     <label class="form-label-xs">Total (incl. taxes)</label>
-                    <input type="text" class="form-control form-control-sm bg-light item-total-incl fw-bold" value="0.00" readonly>
+                    <input type="text" class="form-control form-control-sm bg-light item-total-incl fw-bold text-dark" value="0.00" readonly>
                     <div class="form-helper-xs text-muted">Calculated</div>
                 </div>
             </div>
@@ -737,13 +780,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const prodSelect = card.querySelector('.product-select');
         const saleSelect = card.querySelector('.saletype-select');
         const hsSelect = card.querySelector('.hscode-select');
+        const taxSelect = card.querySelector('.taxrate-select');
         const uomSelect = card.querySelector('.uom-select');
         const sroSelect = card.querySelector('.sro-select');
+        const serialSelect = card.querySelector('.serial-select');
 
         const prodTs = new TomSelect(prodSelect, {
             plugins: ['dropdown_input'],
             create: false,
-            placeholder: 'Choose a saved product (optional)',
+            placeholder: 'Choose saved product...',
             allowEmptyOption: true,
             closeAfterSelect: true,
             onChange: function (pId) {
@@ -760,8 +805,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (st && saleTs) saleTs.setValue(st);
                     const sro = opt.getAttribute('data-sro');
                     if (sro && sroTs) sroTs.setValue(sro);
+                    const sroSerial = opt.getAttribute('data-sroserial');
+                    if (sroSerial && serialTs) serialTs.setValue(sroSerial);
                     const tr = opt.getAttribute('data-taxrate');
-                    if (tr) card.querySelector('.item-tax-rate').value = tr;
+                    if (tr && taxTs) taxTs.setValue(tr);
                     const retail = opt.getAttribute('data-retail');
                     if (retail) card.querySelector('.item-retail-price').value = retail;
                 }
@@ -772,33 +819,53 @@ document.addEventListener('DOMContentLoaded', function () {
         const saleTs = new TomSelect(saleSelect, {
             plugins: ['dropdown_input'],
             create: false,
-            placeholder: 'Choose the sale type',
+            placeholder: 'Choose Sale Type...',
             closeAfterSelect: true
         });
 
         const hsTs = new TomSelect(hsSelect, {
             plugins: ['dropdown_input'],
             create: false,
-            placeholder: '0000.0000',
+            placeholder: 'Search HS Code...',
+            maxOptions: 100,
             closeAfterSelect: true
+        });
+
+        const taxTs = new TomSelect(taxSelect, {
+            plugins: ['dropdown_input'],
+            create: false,
+            placeholder: 'Select Tax Rate...',
+            maxOptions: 200,
+            closeAfterSelect: true,
+            onChange: () => recalculateCard(card)
         });
 
         const uomTs = new TomSelect(uomSelect, {
             plugins: ['dropdown_input'],
             create: false,
-            placeholder: 'Unit of measure',
+            placeholder: 'Select UoM...',
             closeAfterSelect: true
         });
 
         const sroTs = new TomSelect(sroSelect, {
             plugins: ['dropdown_input'],
             create: false,
-            placeholder: 'If an SRO applies',
+            placeholder: 'Select SRO...',
             allowEmptyOption: true,
+            maxOptions: 200,
             closeAfterSelect: true
         });
 
-        tomSelectInstances[`item_${index}`] = { prodTs, saleTs, hsTs, uomTs, sroTs };
+        const serialTs = new TomSelect(serialSelect, {
+            plugins: ['dropdown_input'],
+            create: false,
+            placeholder: 'Select S. No...',
+            allowEmptyOption: true,
+            maxOptions: 500,
+            closeAfterSelect: true
+        });
+
+        tomSelectInstances[`item_${index}`] = { prodTs, saleTs, hsTs, taxTs, uomTs, sroTs, serialTs };
 
         // Attach event listeners for calculations
         const inputs = card.querySelectorAll('input, select');
@@ -806,6 +873,12 @@ document.addEventListener('DOMContentLoaded', function () {
             input.addEventListener('input', () => recalculateCard(card));
             input.addEventListener('change', () => recalculateCard(card));
         });
+
+        // Cancel Further Tax checkbox listener
+        const cancelFurtherCb = card.querySelector('.item-cancel-further');
+        if (cancelFurtherCb) {
+            cancelFurtherCb.addEventListener('change', () => recalculateCard(card));
+        }
 
         // Delete button listener
         const delBtn = card.querySelector('.delete-item-btn');
@@ -832,10 +905,11 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // 4. Calculations Engine
+    // 5. Real-Time Calculation Engine
     function recalculateCard(card) {
         const autoCalc = document.getElementById('autoCalcCheckbox').checked;
-        const isRegistered = document.getElementById('buyer_type_registered').checked;
+        const buyerTypeVal = document.getElementById('buyer_type').value;
+        const isRegistered = (buyerTypeVal === 'registered');
 
         const qty = parseFloat(card.querySelector('.item-qty').value) || 0;
         const unitPrice = parseFloat(card.querySelector('.item-unit-price').value) || 0;
@@ -851,18 +925,32 @@ document.addEventListener('DOMContentLoaded', function () {
         const stWithheld = parseFloat(card.querySelector('.item-st-withheld').value) || 0;
 
         if (autoCalc) {
-            const taxRateStr = card.querySelector('.item-tax-rate').value || '18%';
-            const taxRateNum = parseFloat(taxRateStr.replace('%', '')) || 0;
+            const taxRateStr = card.querySelector('.item-tax-rate').value || '18.00%';
+            let taxRateNum = 0;
+            const pctMatch = taxRateStr.match(/^([0-9]+(?:\.[0-9]+)?)\s*%/);
+            if (pctMatch) {
+                taxRateNum = parseFloat(pctMatch[1]);
+            } else if (!isNaN(parseFloat(taxRateStr))) {
+                taxRateNum = parseFloat(taxRateStr);
+            }
+
             salesTax = (valExcl * taxRateNum) / 100;
             card.querySelector('.item-sales-tax').value = salesTax.toFixed(2);
 
-            // Further tax applies only if buyer is unregistered (4% standard under Section 3(1A))
-            if (!isRegistered) {
+            // Further Tax 4% auto-applied for unregistered buyers, unless cancelled
+            const cancelFurther = card.querySelector('.item-cancel-further').checked;
+            const furtherNote = card.querySelector('[id^="further_note_"]');
+
+            if (!isRegistered && !cancelFurther) {
                 furtherTax = (valExcl * 4.00) / 100;
                 card.querySelector('.item-further-tax').value = furtherTax.toFixed(2);
+                if (furtherNote) furtherNote.innerText = '4% applied (unregistered)';
             } else {
                 furtherTax = 0.00;
                 card.querySelector('.item-further-tax').value = '0.00';
+                if (furtherNote) {
+                    furtherNote.innerText = cancelFurther ? 'Cancelled (0%)' : '0% (registered buyer)';
+                }
             }
         }
 
@@ -883,8 +971,11 @@ document.addEventListener('DOMContentLoaded', function () {
         let totalExtraFed = 0;
         let totalSTWithheld = 0;
         let grandGross = 0;
+        let totalQty = 0;
+        const cards = document.querySelectorAll('.item-card');
 
-        document.querySelectorAll('.item-card').forEach(card => {
+        cards.forEach(card => {
+            const qty = parseFloat(card.querySelector('.item-qty').value) || 0;
             const valExcl = parseFloat(card.querySelector('.item-val-excl').value) || 0;
             const salesTax = parseFloat(card.querySelector('.item-sales-tax').value) || 0;
             const furtherTax = parseFloat(card.querySelector('.item-further-tax').value) || 0;
@@ -893,6 +984,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const stWithheld = parseFloat(card.querySelector('.item-st-withheld').value) || 0;
             const totalIncl = parseFloat(card.querySelector('.item-total-incl').value) || 0;
 
+            totalQty += qty;
             totalValExcl += valExcl;
             totalSalesTax += salesTax;
             totalFurtherTax += furtherTax;
@@ -901,16 +993,18 @@ document.addEventListener('DOMContentLoaded', function () {
             grandGross += totalIncl;
         });
 
+        const countText = `${cards.length} ${cards.length === 1 ? 'item' : 'items'}`;
+        document.getElementById('summaryItemCount').innerText = countText;
+        document.getElementById('summaryTotalQty').innerText = totalQty.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 });
+        document.getElementById('summaryValExcl').innerText = 'Rs ' + formatMoney(totalValExcl);
+        document.getElementById('summarySalesTax').innerText = 'Rs ' + formatMoney(totalSalesTax);
+        document.getElementById('summaryFurtherTax').innerText = 'Rs ' + formatMoney(totalFurtherTax);
+        document.getElementById('summaryExtraFed').innerText = 'Rs ' + formatMoney(totalExtraFed);
+        document.getElementById('summarySTWithheld').innerText = 'Rs ' + formatMoney(totalSTWithheld);
+        document.getElementById('summaryGrandTotal').innerText = 'Rs ' + formatMoney(grandGross);
         const netReceivable = Math.max(0, grandGross - totalSTWithheld);
-
-        document.getElementById('previewValExcl').innerText = 'Rs ' + formatMoney(totalValExcl);
-        document.getElementById('previewSalesTax').innerText = 'Rs ' + formatMoney(totalSalesTax);
-        document.getElementById('previewFurtherTax').innerText = 'Rs ' + formatMoney(totalFurtherTax);
-        document.getElementById('previewExtraFed').innerText = 'Rs ' + formatMoney(totalExtraFed);
-        document.getElementById('previewSTWithheld').innerText = 'Rs ' + formatMoney(totalSTWithheld);
-
-        document.getElementById('previewGrossTotal').innerText = 'Rs ' + formatMoney(grandGross);
-        document.getElementById('previewNetReceivable').innerText = 'Rs ' + formatMoney(netReceivable);
+        const netEl = document.getElementById('summaryNetReceivable');
+        if (netEl) netEl.innerText = 'Rs ' + formatMoney(netReceivable);
     }
 
     function formatMoney(num) {
@@ -923,7 +1017,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Add Item Button
     document.getElementById('addItemBtn').addEventListener('click', () => addItem());
 
-    // 5. Pre-Submission Validate Button
+    // 6. Pre-Submission Validate Button
     const validateDraftBtn = document.getElementById('validateDraftBtn');
     const alertBox = document.getElementById('validationResultAlert');
     if (validateDraftBtn) {
@@ -946,7 +1040,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(res => res.json().then(data => ({ status: res.status, body: data })))
             .then(res => {
                 validateDraftBtn.disabled = false;
-                validateDraftBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Validate';
+                validateDraftBtn.innerHTML = '<i class="bi bi-shield-check me-1"></i> Validate with FBR';
                 alertBox.style.display = 'block';
 
                 if (res.status === 200 && res.body.valid) {
@@ -962,7 +1056,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(() => {
                 validateDraftBtn.disabled = false;
-                validateDraftBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Validate';
+                validateDraftBtn.innerHTML = '<i class="bi bi-shield-check me-1"></i> Validate with FBR';
                 alertBox.style.display = 'block';
                 alertBox.className = 'alert alert-danger py-2 px-3 small rounded-3';
                 alertBox.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i> Network error occurred while validating.';

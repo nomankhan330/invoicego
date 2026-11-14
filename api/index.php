@@ -74,9 +74,7 @@ try {
     if (getenv('DB_CONNECTION') === 'sqlite' || !getenv('DB_CONNECTION')) {
         try {
             $kernel = $app->make(\Illuminate\Contracts\Console\Kernel::class);
-            if ($isNewDb) {
-                $kernel->call('migrate', ['--force' => true]);
-            }
+            $kernel->call('migrate', ['--force' => true]);
             if (!\App\Models\User::where('email', 'admin@invoicego.pk')->exists()) {
                 $kernel->call('db:seed', ['--force' => true]);
             }

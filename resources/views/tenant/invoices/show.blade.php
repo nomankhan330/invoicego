@@ -35,6 +35,9 @@
                 <i class="bi bi-pencil"></i> Edit
             </a>
         @endif
+        <a href="{{ route('tenant.invoices.print', $invoice->uuid) }}" target="_blank" class="btn btn-outline-primary d-flex align-items-center gap-1">
+            <i class="bi bi-file-earmark-pdf"></i> Download PDF
+        </a>
         @if ($invoice->isAccepted())
             <a href="{{ route('tenant.invoices.print', $invoice->uuid) }}" target="_blank" class="btn btn-ig-primary d-flex align-items-center gap-1">
                 <i class="bi bi-printer"></i> Print Official A4

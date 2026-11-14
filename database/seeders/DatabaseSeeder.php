@@ -60,8 +60,15 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Link User to Business as Owner
+        // Link Users to Business as Owner
         $demoUser->businesses()->syncWithoutDetaching([
+            $demoBusiness->id => [
+                'role' => 'owner',
+                'is_default' => true,
+            ]
+        ]);
+
+        $superAdmin->businesses()->syncWithoutDetaching([
             $demoBusiness->id => [
                 'role' => 'owner',
                 'is_default' => true,

@@ -62,6 +62,8 @@ class InvoiceService implements InvoiceServiceInterface
                 'invoice_time' => $data['invoice_time'] ?? Carbon::now('Asia/Karachi')->format('h:i A'),
                 'payment_mode' => $data['payment_mode'] ?? 'Cash',
                 'reference_invoice_no' => $data['reference_invoice_no'] ?? null,
+                'supplier_province' => $data['supplier_province'] ?? ($business->province ?? 'Punjab'),
+                'destination_of_supply' => $data['destination_of_supply'] ?? ($data['buyer_province'] ?? ($customer->province ?? 'Punjab')),
                 'status' => 'draft',
                 'created_by' => $userId,
             ]);
@@ -77,7 +79,7 @@ class InvoiceService implements InvoiceServiceInterface
                     'product_description' => $itemData['product_description'] ?? 'Item',
                     'quantity' => $calc['quantity'],
                     'uom' => $itemData['uom'] ?? 'NOS',
-                    'sale_type' => $itemData['sale_type'] ?? 'Goods (Standard)',
+                    'sale_type' => $itemData['sale_type'] ?? 'Goods at Standard Rate (Default)',
                     'unit_price' => $calc['unit_price'],
                     'retail_price' => $itemData['retail_price'] ?? null,
                     'fixed_notified_value' => $itemData['fixed_notified_value'] ?? null,
@@ -86,6 +88,7 @@ class InvoiceService implements InvoiceServiceInterface
                     'sales_tax_amount' => $calc['sales_tax_amount'],
                     'further_tax_rate' => $calc['further_tax_rate'],
                     'further_tax_amount' => $calc['further_tax_amount'],
+                    'cancel_further_tax' => !empty($itemData['cancel_further_tax']),
                     'extra_tax_amount' => $calc['extra_tax_amount'],
                     'send_extra_tax_as_empty' => !empty($itemData['send_extra_tax_as_empty']),
                     'fed_payable_amount' => $calc['fed_payable_amount'],
@@ -125,6 +128,8 @@ class InvoiceService implements InvoiceServiceInterface
                 'invoice_time' => $data['invoice_time'] ?? $invoice->invoice_time,
                 'payment_mode' => $data['payment_mode'] ?? $invoice->payment_mode,
                 'reference_invoice_no' => $data['reference_invoice_no'] ?? $invoice->reference_invoice_no,
+                'supplier_province' => $data['supplier_province'] ?? $invoice->supplier_province,
+                'destination_of_supply' => $data['destination_of_supply'] ?? $invoice->destination_of_supply,
             ]);
 
             if (isset($data['items'])) {
@@ -141,7 +146,7 @@ class InvoiceService implements InvoiceServiceInterface
                         'product_description' => $itemData['product_description'] ?? 'Item',
                         'quantity' => $calc['quantity'],
                         'uom' => $itemData['uom'] ?? 'NOS',
-                        'sale_type' => $itemData['sale_type'] ?? 'Goods (Standard)',
+                        'sale_type' => $itemData['sale_type'] ?? 'Goods at Standard Rate (Default)',
                         'unit_price' => $calc['unit_price'],
                         'retail_price' => $itemData['retail_price'] ?? null,
                         'fixed_notified_value' => $itemData['fixed_notified_value'] ?? null,
@@ -150,6 +155,7 @@ class InvoiceService implements InvoiceServiceInterface
                         'sales_tax_amount' => $calc['sales_tax_amount'],
                         'further_tax_rate' => $calc['further_tax_rate'],
                         'further_tax_amount' => $calc['further_tax_amount'],
+                        'cancel_further_tax' => !empty($itemData['cancel_further_tax']),
                         'extra_tax_amount' => $calc['extra_tax_amount'],
                         'send_extra_tax_as_empty' => !empty($itemData['send_extra_tax_as_empty']),
                         'fed_payable_amount' => $calc['fed_payable_amount'],

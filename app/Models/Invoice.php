@@ -24,6 +24,8 @@ class Invoice extends Model
         'invoice_time',
         'payment_mode',
         'reference_invoice_no',
+        'supplier_province',
+        'destination_of_supply',
         'buyer_name',
         'buyer_ntn_cnic',
         'buyer_province',

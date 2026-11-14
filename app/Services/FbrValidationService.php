@@ -51,7 +51,8 @@ class FbrValidationService implements FbrValidationServiceInterface
         $salesTaxAmount = round(($valueExclTax * $taxRate) / 100, 2);
 
         // Under Section 3(1A) of Sales Tax Act 1990, Further Tax (typically 4%) applies to supplies made to unregistered persons
-        $furtherTaxRate = $isUnregisteredBuyer ? (float) ($itemData['further_tax_rate'] ?? 4.00) : 0.00;
+        $isCancelled = !empty($itemData['cancel_further_tax']) || (isset($itemData['further_tax_rate']) && (float)$itemData['further_tax_rate'] === 0.0);
+        $furtherTaxRate = ($isUnregisteredBuyer && !$isCancelled) ? (float) ($itemData['further_tax_rate'] ?? 4.00) : 0.00;
         $furtherTaxAmount = round(($valueExclTax * $furtherTaxRate) / 100, 2);
 
         $stWithheldRate = (float) ($itemData['st_withheld_rate'] ?? 0.00);

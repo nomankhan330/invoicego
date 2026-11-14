@@ -45,15 +45,7 @@ class CustomerController extends Controller
         $registeredCount = $business->customers()->where('registration_type', 'registered')->count();
         $unregisteredCount = $business->customers()->where('registration_type', 'unregistered')->count();
 
-        $provinces = [
-            'AZAD JAMMU AND KASHMIR' => 'AZAD JAMMU AND KASHMIR',
-            'BALOCHISTAN' => 'BALOCHISTAN',
-            'GILGIT-BALTISTAN' => 'GILGIT-BALTISTAN',
-            'ISLAMABAD CAPITAL TERRITORY' => 'ISLAMABAD CAPITAL TERRITORY',
-            'KHYBER PAKHTUNKHWA' => 'KHYBER PAKHTUNKHWA',
-            'PUNJAB' => 'PUNJAB',
-            'SINDH' => 'SINDH',
-        ];
+        $provinces = array_combine(\App\Constants\FbrLookups::PROVINCES, \App\Constants\FbrLookups::PROVINCES);
 
         return view('tenant.customers.index', compact('business', 'customers', 'registeredCount', 'unregisteredCount', 'provinces'));
     }

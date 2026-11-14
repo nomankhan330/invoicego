@@ -35,38 +35,9 @@ class ProductController extends Controller
         $products = $query->paginate(15)->withQueryString();
         $hsCodes = HsCode::where('is_active', true)->orderBy('pct_code')->get();
 
-        $uomList = [
-            'NOS' => 'Numbers / Units (NOS)',
-            'KGS' => 'Kilograms (KGS)',
-            'LTR' => 'Liters (LTR)',
-            'MTR' => 'Meters (MTR)',
-            'TON' => 'Metric Ton (TON)',
-            'PKT' => 'Packets (PKT)',
-            'BOX' => 'Boxes (BOX)',
-            'SET' => 'Sets (SET)',
-            'BAG' => 'Bags (BAG)',
-            'SQM' => 'Square Meters (SQM)',
-        ];
-
-        $saleTypes = [
-            'Goods (Standard)' => 'Goods (Standard Taxable)',
-            'Services' => 'Services (Provincial / ICT)',
-            'Raw Material' => 'Raw Materials / Inputs',
-            'Exempt Goods' => 'Exempt Goods (6th Schedule)',
-            'Zero Rated Goods' => 'Zero Rated Goods (5th Schedule)',
-            'Reduced Rate Goods' => 'Reduced Rate Goods (8th Schedule)',
-            '3rd Schedule Goods' => '3rd Schedule Goods (Tax on Retail Price / MRP)',
-        ];
-
-        $sroList = [
-            '' => 'None / Not Applicable',
-            'Fifth Schedule' => 'Fifth Schedule (Zero-Rated)',
-            'Sixth Schedule Table-1' => 'Sixth Schedule Table-1 (Imports & Supplies Exempt)',
-            'Sixth Schedule Table-2' => 'Sixth Schedule Table-2 (Local Supplies Exempt)',
-            'Eighth Schedule Table-1' => 'Eighth Schedule Table-1 (Reduced Rates)',
-            'SRO 494(I)/2022' => 'SRO 494(I)/2022',
-            'SRO 587(I)/2020' => 'SRO 587(I)/2020',
-        ];
+        $uomList = \App\Constants\FbrLookups::UOM_LIST;
+        $saleTypes = array_combine(\App\Constants\FbrLookups::SALE_TYPES, \App\Constants\FbrLookups::SALE_TYPES);
+        $sroList = array_merge(['' => 'None / Not Applicable'], array_combine(\App\Constants\FbrLookups::SRO_LIST, \App\Constants\FbrLookups::SRO_LIST));
 
         return view('tenant.products.index', compact('business', 'products', 'hsCodes', 'uomList', 'saleTypes', 'sroList'));
     }
