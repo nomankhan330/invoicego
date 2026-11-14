@@ -132,10 +132,74 @@ class InvoiceController extends Controller
             $request->merge(['invoice_type' => $typeMap[$request->input('invoice_type')]]);
         }
 
+        $isDraftAction = ($request->input('action') === 'draft');
+
+        if ($isDraftAction) {
+            if (!$request->filled('buyer_name')) {
+                $request->merge(['buyer_name' => 'Walk In Customer']);
+            }
+            if (!$request->filled('buyer_province')) {
+                $request->merge(['buyer_province' => 'Punjab']);
+            }
+            if (!$request->filled('buyer_address')) {
+                $request->merge(['buyer_address' => 'Pakistan']);
+            }
+            if (!$request->filled('buyer_type')) {
+                $request->merge(['buyer_type' => 'unregistered']);
+            }
+            if (!$request->filled('destination_of_supply')) {
+                $request->merge(['destination_of_supply' => $request->input('buyer_province', 'Punjab')]);
+            }
+            if (!$request->filled('supplier_province')) {
+                $request->merge(['supplier_province' => $business->province ?? 'Punjab']);
+            }
+            if (!$request->filled('invoice_date')) {
+                $request->merge(['invoice_date' => now('Asia/Karachi')->format('Y-m-d')]);
+            }
+            if (!$request->filled('invoice_type')) {
+                $request->merge(['invoice_type' => 'standard']);
+            }
+
+            $rawItems = $request->input('items', []);
+            if (empty($rawItems)) {
+                $rawItems = [[
+                    'product_description' => 'Draft Item',
+                    'hs_code' => '0101.2100',
+                    'quantity' => 1,
+                    'uom' => 'NOS',
+                    'unit_price' => 0.00,
+                    'tax_rate' => '18.00%',
+                ]];
+            } else {
+                foreach ($rawItems as $k => $it) {
+                    if (empty($it['product_description'])) {
+                        $rawItems[$k]['product_description'] = 'Draft Item';
+                    }
+                    if (empty($it['hs_code'])) {
+                        $rawItems[$k]['hs_code'] = '0101.2100';
+                    }
+                    if (empty($it['uom'])) {
+                        $rawItems[$k]['uom'] = 'NOS';
+                    }
+                    if (!isset($it['quantity']) || $it['quantity'] === '' || (float)$it['quantity'] <= 0) {
+                        $rawItems[$k]['quantity'] = 1;
+                    }
+                    if (!isset($it['unit_price']) || $it['unit_price'] === '') {
+                        $rawItems[$k]['unit_price'] = 0.00;
+                    }
+                    if (!isset($it['tax_rate']) || $it['tax_rate'] === '') {
+                        $rawItems[$k]['tax_rate'] = '18.00%';
+                    }
+                }
+            }
+            $request->merge(['items' => $rawItems]);
+        }
+
         $request->mergeIfMissing([
+            'buyer_name' => 'Walk In Customer',
             'buyer_type' => 'unregistered',
             'buyer_province' => 'Punjab',
-            'buyer_address' => 'N/A',
+            'buyer_address' => 'Pakistan',
             'supplier_province' => $business->province ?? 'Punjab',
             'destination_of_supply' => 'Punjab',
         ]);
@@ -194,8 +258,8 @@ class InvoiceController extends Controller
             }
         }
 
-        // Enforce current month in Pakistan Standard Time
-        if (!$this->validator->isCurrentMonthInPakistan($validated['invoice_date'])) {
+        // Enforce current month in Pakistan Standard Time for FBR submission / final invoices
+        if (!$isDraftAction && !$this->validator->isCurrentMonthInPakistan($validated['invoice_date'])) {
             return back()->withInput()->withErrors([
                 'invoice_date' => 'FBR Business Rule: Invoices can only be dated for the current calendar month in Pakistan Standard Time.',
             ]);
@@ -365,6 +429,69 @@ class InvoiceController extends Controller
             $request->merge(['invoice_type' => $typeMap[$request->input('invoice_type')]]);
         }
 
+        $isDraftAction = ($request->input('action') === 'draft');
+
+        if ($isDraftAction) {
+            if (!$request->filled('buyer_name')) {
+                $request->merge(['buyer_name' => $invoice->buyer_name ?? 'Walk In Customer']);
+            }
+            if (!$request->filled('buyer_province')) {
+                $request->merge(['buyer_province' => $invoice->buyer_province ?? 'Punjab']);
+            }
+            if (!$request->filled('buyer_address')) {
+                $request->merge(['buyer_address' => $invoice->buyer_address ?? 'Pakistan']);
+            }
+            if (!$request->filled('buyer_type')) {
+                $request->merge(['buyer_type' => $invoice->buyer_type ?? 'unregistered']);
+            }
+            if (!$request->filled('destination_of_supply')) {
+                $request->merge(['destination_of_supply' => $invoice->destination_of_supply ?? 'Punjab']);
+            }
+            if (!$request->filled('supplier_province')) {
+                $request->merge(['supplier_province' => $business->province ?? 'Punjab']);
+            }
+            if (!$request->filled('invoice_date')) {
+                $request->merge(['invoice_date' => $invoice->invoice_date?->format('Y-m-d') ?? now('Asia/Karachi')->format('Y-m-d')]);
+            }
+            if (!$request->filled('invoice_type')) {
+                $request->merge(['invoice_type' => $invoice->invoice_type ?? 'standard']);
+            }
+
+            $rawItems = $request->input('items', []);
+            if (empty($rawItems)) {
+                $rawItems = [[
+                    'product_description' => 'Draft Item',
+                    'hs_code' => '0101.2100',
+                    'quantity' => 1,
+                    'uom' => 'NOS',
+                    'unit_price' => 0.00,
+                    'tax_rate' => '18.00%',
+                ]];
+            } else {
+                foreach ($rawItems as $k => $it) {
+                    if (empty($it['product_description'])) {
+                        $rawItems[$k]['product_description'] = 'Draft Item';
+                    }
+                    if (empty($it['hs_code'])) {
+                        $rawItems[$k]['hs_code'] = '0101.2100';
+                    }
+                    if (empty($it['uom'])) {
+                        $rawItems[$k]['uom'] = 'NOS';
+                    }
+                    if (!isset($it['quantity']) || $it['quantity'] === '' || (float)$it['quantity'] <= 0) {
+                        $rawItems[$k]['quantity'] = 1;
+                    }
+                    if (!isset($it['unit_price']) || $it['unit_price'] === '') {
+                        $rawItems[$k]['unit_price'] = 0.00;
+                    }
+                    if (!isset($it['tax_rate']) || $it['tax_rate'] === '') {
+                        $rawItems[$k]['tax_rate'] = '18.00%';
+                    }
+                }
+            }
+            $request->merge(['items' => $rawItems]);
+        }
+
         $request->mergeIfMissing([
             'buyer_name' => $invoice->buyer_name ?? $invoice->customer?->name ?? 'Buyer',
             'buyer_province' => $invoice->buyer_province ?? 'Punjab',
@@ -426,7 +553,7 @@ class InvoiceController extends Controller
             }
         }
 
-        if (!$this->validator->isCurrentMonthInPakistan($validated['invoice_date'])) {
+        if (!$isDraftAction && !$this->validator->isCurrentMonthInPakistan($validated['invoice_date'])) {
             return back()->withInput()->withErrors([
                 'invoice_date' => 'FBR Business Rule: Invoices can only be dated for the current calendar month in Pakistan Standard Time.',
             ]);

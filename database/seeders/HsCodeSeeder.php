@@ -63,3 +63,4 @@ class HsCodeSeeder extends Seeder
         $this->command?->info('HS codes successfully seeded!');
     }
 }
+

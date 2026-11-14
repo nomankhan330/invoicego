@@ -91,5 +91,50 @@ class DraftStoreTest extends TestCase
             'status' => 'draft',
         ]);
     }
+
+    public function test_minimal_draft_can_be_saved_without_buyer_name_or_item_details(): void
+    {
+        $user = User::factory()->create();
+        $business = Business::create([
+            'name' => 'OC2',
+            'ntn_cnic' => '1234126',
+            'strn' => '9988776656',
+            'province' => 'Punjab',
+            'address' => 'OC2 Address',
+            'sector' => 'All Other Sectors',
+            'business_natures' => ['Manufacturer'],
+            'status' => 'approved',
+            'current_environment' => 'sandbox',
+            'production_submissions_enabled' => false,
+        ]);
+        $user->businesses()->attach($business->id, ['role' => 'owner']);
+
+        $this->actingAs($user);
+        app(TenantServiceInterface::class)->setActiveBusiness($business);
+
+        $payload = [
+            'action' => 'draft',
+            'buyer_name' => '',
+            'buyer_province' => '',
+            'items' => [
+                0 => [
+                    'product_description' => '',
+                    'hs_code' => '',
+                    'quantity' => '',
+                    'unit_price' => '',
+                ]
+            ]
+        ];
+
+        $response = $this->post(route('tenant.invoices.store'), $payload);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+        $this->assertDatabaseHas('invoices', [
+            'business_id' => $business->id,
+            'buyer_name' => 'Walk In Customer',
+            'status' => 'draft',
+        ]);
+    }
 }
 

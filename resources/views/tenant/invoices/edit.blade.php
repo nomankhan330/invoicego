@@ -423,7 +423,7 @@
         <!-- STICKY ACTION BAR -->
         <div class="action-bar-sticky shadow-sm">
             <a href="{{ route('tenant.invoices.show', $invoice->uuid) }}" class="btn btn-light border px-4 btn-sm fw-medium">Cancel</a>
-            <button type="submit" name="action" value="draft" class="btn btn-outline-secondary px-3 btn-sm fw-medium">
+            <button type="submit" name="action" value="draft" formnovalidate class="btn btn-outline-secondary px-3 btn-sm fw-medium">
                 <i class="bi bi-file-earmark me-1"></i> Save as draft
             </button>
             <button type="button" id="validateDraftBtn" class="btn btn-outline-primary px-3 btn-sm fw-medium">
@@ -490,6 +490,21 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    const buyerProvEl = document.getElementById('buyer_province');
+    if (buyerProvEl) {
+        new TomSelect(buyerProvEl, {
+            plugins: ['dropdown_input'],
+            create: false,
+            placeholder: 'Select Buyer Province...',
+            closeAfterSelect: true,
+            onChange: function (val) {
+                if (val && destSupplyEl && destSupplyEl.tomselect && !destSupplyEl.tomselect.getValue()) {
+                    destSupplyEl.tomselect.setValue(val);
+                }
+            }
+        });
+    }
+
     // 2. Initialize TomSelect on Saved Customer
     const customerSelectEl = document.getElementById('saved_customer_select');
     if (customerSelectEl) {
@@ -507,8 +522,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     document.getElementById('buyer_ntn_cnic').value = opt.getAttribute('data-ntn') || '';
                     document.getElementById('buyer_address').value = opt.getAttribute('data-address') || '';
                     const prov = opt.getAttribute('data-province');
-                    if (prov && destSupplyEl && destSupplyEl.tomselect) {
-                        destSupplyEl.tomselect.setValue(prov);
+                    if (prov) {
+                        if (buyerProvEl && buyerProvEl.tomselect) {
+                            buyerProvEl.tomselect.setValue(prov);
+                        }
+                        if (destSupplyEl && destSupplyEl.tomselect) {
+                            destSupplyEl.tomselect.setValue(prov);
+                        }
                     }
                     const regType = opt.getAttribute('data-type');
                     document.getElementById('buyer_type').value = (regType === 'registered' ? 'registered' : 'unregistered');

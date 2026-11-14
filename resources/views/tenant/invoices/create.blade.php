@@ -176,21 +176,6 @@
         </div>
     </div>
 
-    @if (!$business->production_submissions_enabled || $business->current_environment === 'sandbox')
-        <div class="alert border-0 p-3 mb-4 rounded-3 d-flex align-items-start gap-2 shadow-sm alert-dismissible fade show" style="background-color: #FFFBEB; border: 1px solid #FDE68A !important; color: #92400E;" role="alert">
-            <i class="bi bi-info-circle-fill fs-5 mt-n1" style="color: #D97706 !important;"></i>
-            <div class="small pe-4">
-                <div class="fw-bold mb-1" style="color: #92400E;">Production is not enabled yet</div>
-                <div style="color: #78350F;">
-                    You can prepare and save drafts now. To validate and submit them to FBR, pass the required tests in
-                    <a href="{{ route('tenant.sandbox-scenarios') }}" class="fw-semibold text-decoration-underline text-reset">Sandbox scenarios</a>,
-                    then save the production token and enable production in
-                    <a href="{{ route('tenant.fbr-integration') }}" class="fw-semibold text-decoration-underline text-reset">FBR integration</a>.
-                </div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" style="font-size: 0.75rem; padding: 1.15rem;"></button>
-        </div>
-    @endif
 
     @if ($errors->any())
         <div class="alert alert-danger py-2 px-3 small mb-4 rounded-3">
@@ -446,7 +431,7 @@
         <!-- STICKY ACTION BAR -->
         <div class="action-bar-sticky shadow-sm">
             <a href="{{ route('tenant.invoices.index') }}" class="btn btn-light border px-4 btn-sm fw-medium">Cancel</a>
-            <button type="submit" name="action" value="draft" class="btn btn-outline-secondary px-3 btn-sm fw-medium">
+            <button type="submit" name="action" value="draft" formnovalidate class="btn btn-outline-secondary px-3 btn-sm fw-medium">
                 <i class="bi bi-file-earmark me-1"></i> Save as draft
             </button>
             <button type="button" id="validateDraftBtn" class="btn btn-outline-primary px-3 btn-sm fw-medium">
@@ -457,9 +442,6 @@
             </button>
             <button type="submit" name="submit_to_fbr" value="1" class="btn btn-primary px-4 btn-sm fw-semibold shadow-sm" style="background-color: #2563EB; border-color: #2563EB;">
                 <i class="bi bi-send-fill me-1"></i> Submit to FBR
-            </button>
-        </div>
-                <i class="bi bi-send-fill me-1"></i> Submit to FBR (Blue)
             </button>
         </div>
     </form>
@@ -515,6 +497,21 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    const buyerProvEl = document.getElementById('buyer_province');
+    if (buyerProvEl) {
+        new TomSelect(buyerProvEl, {
+            plugins: ['dropdown_input'],
+            create: false,
+            placeholder: 'Select Buyer Province...',
+            closeAfterSelect: true,
+            onChange: function (val) {
+                if (val && destSupplyEl && destSupplyEl.tomselect && !destSupplyEl.tomselect.getValue()) {
+                    destSupplyEl.tomselect.setValue(val);
+                }
+            }
+        });
+    }
+
     // 2. Initialize TomSelect on Saved Customer
     const customerSelectEl = document.getElementById('saved_customer_select');
     if (customerSelectEl) {
@@ -539,8 +536,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     document.getElementById('buyer_ntn_cnic').value = opt.getAttribute('data-ntn') || '';
                     document.getElementById('buyer_address').value = opt.getAttribute('data-address') || '';
                     const prov = opt.getAttribute('data-province');
-                    if (prov && destSupplyEl && destSupplyEl.tomselect) {
-                        destSupplyEl.tomselect.setValue(prov);
+                    if (prov) {
+                        if (buyerProvEl && buyerProvEl.tomselect) {
+                            buyerProvEl.tomselect.setValue(prov);
+                        }
+                        if (destSupplyEl && destSupplyEl.tomselect) {
+                            destSupplyEl.tomselect.setValue(prov);
+                        }
                     }
                     const regType = opt.getAttribute('data-type');
                     document.getElementById('buyer_type').value = (regType === 'registered' ? 'registered' : 'unregistered');

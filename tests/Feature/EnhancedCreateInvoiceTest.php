@@ -84,7 +84,7 @@ class EnhancedCreateInvoiceTest extends TestCase
         $response->assertSee('Create invoice');
         $response->assertSee('Seller details come from your business profile.');
         $response->assertSee('PRODUCTION');
-        $response->assertSee('Production is not enabled yet');
+        $response->assertDontSee('Production is not enabled yet');
 
         // Section 1: Invoice details
         $response->assertSee('Invoice details');
