@@ -177,9 +177,9 @@
     </div>
 
     @if (!$business->production_submissions_enabled || $business->current_environment === 'sandbox')
-        <div class="alert border-0 p-3 mb-4 rounded-3 d-flex align-items-start gap-2 shadow-sm" style="background-color: #FFFBEB; border: 1px solid #FDE68A !important; color: #92400E;">
-            <i class="bi bi-exclamation-triangle-fill fs-5 mt-n1" style="color: #D97706 !important;"></i>
-            <div class="small">
+        <div class="alert border-0 p-3 mb-4 rounded-3 d-flex align-items-start gap-2 shadow-sm alert-dismissible fade show" style="background-color: #FFFBEB; border: 1px solid #FDE68A !important; color: #92400E;" role="alert">
+            <i class="bi bi-info-circle-fill fs-5 mt-n1" style="color: #D97706 !important;"></i>
+            <div class="small pe-4">
                 <div class="fw-bold mb-1" style="color: #92400E;">Production is not enabled yet</div>
                 <div style="color: #78350F;">
                     You can prepare and save drafts now. To validate and submit them to FBR, pass the required tests in
@@ -188,6 +188,7 @@
                     <a href="{{ route('tenant.fbr-integration') }}" class="fw-semibold text-decoration-underline text-reset">FBR integration</a>.
                 </div>
             </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" style="font-size: 0.75rem; padding: 1.15rem;"></button>
         </div>
     @endif
 
