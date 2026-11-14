@@ -26,12 +26,20 @@ class SandboxScenarioController extends Controller
         return view('tenant.scenarios.index', compact('business', 'scenarios', 'progress'));
     }
 
-    public function run(string $scenarioCode)
+    public function run(Request $request, string $scenarioCode)
     {
         $business = $this->tenantService->getActiveBusiness();
         $scenario = SandboxScenario::where('scenario_code', $scenarioCode)->firstOrFail();
 
-        $result = $this->fbrService->runSandboxScenario($business, $scenario);
+        $customPayload = null;
+        if ($request->filled('payload')) {
+            $decoded = json_decode($request->input('payload'), true);
+            if (is_array($decoded)) {
+                $customPayload = $decoded;
+            }
+        }
+
+        $result = $this->fbrService->runSandboxScenario($business, $scenario, $customPayload);
 
         return back()->with('success', "Scenario {$scenario->scenario_code} executed and verified by PRAL sandbox validator!");
     }

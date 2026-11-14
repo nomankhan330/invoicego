@@ -152,13 +152,28 @@ class FbrIntegrationService implements FbrIntegrationServiceInterface
         ];
     }
 
-    public function runSandboxScenario(Business $business, SandboxScenario $scenario): array
+    public function runSandboxScenario(Business $business, SandboxScenario $scenario, ?array $customPayload = null): array
     {
-        $payload = $scenario->sample_payload ?? [
-            'Scenario' => $scenario->scenario_code,
-            'SellerNTN' => $business->ntn_cnic,
-            'Timestamp' => now()->toIso8601String(),
-        ];
+        $payload = $customPayload ?? ($scenario->sample_payload ?? [
+            'invoiceType' => 'Sale Invoice',
+            'invoiceDate' => now('Asia/Karachi')->format('Y-m-d'),
+            'sellerNTN' => $business->ntn_cnic,
+            'sellerBusinessName' => $business->name,
+            'buyerNTN' => '7654321',
+            'buyerName' => 'PRAL Test Buyer',
+            'scenario' => $scenario->scenario_code,
+            'items' => [
+                [
+                    'hsCode' => '0101.2100',
+                    'description' => 'Test Scenario Item for ' . $scenario->scenario_code,
+                    'rate' => 18,
+                    'quantity' => 1,
+                    'unitPrice' => 1000,
+                    'salesTax' => 180,
+                ]
+            ],
+            'timestamp' => now()->toIso8601String(),
+        ]);
 
         // Simulate or execute scenario against PRAL test gateway
         $fbrResponse = [

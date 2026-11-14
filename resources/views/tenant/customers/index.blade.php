@@ -63,13 +63,12 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light text-muted text-uppercase" style="font-size: 11px; letter-spacing: 0.05em;">
                     <tr>
-                        <th class="py-3 px-3">Customer / Business name</th>
-                        <th class="py-3">Registration</th>
+                        <th class="py-3 px-3">Name</th>
                         <th class="py-3">NTN / CNIC</th>
-                        <th class="py-3">STRN</th>
+                        <th class="py-3">Business</th>
                         <th class="py-3">Province</th>
-                        <th class="py-3">Category</th>
-                        <th class="py-3">Contact</th>
+                        <th class="py-3">Phone</th>
+                        <th class="py-3">Type</th>
                         <th class="py-3 text-end px-3">Actions</th>
                     </tr>
                 </thead>
@@ -77,6 +76,10 @@
                     @foreach ($customers as $c)
                         <tr style="font-size: 13.5px;">
                             <td class="py-3 px-3 fw-bold text-dark">{{ $c->name }}</td>
+                            <td class="py-3 text-secondary font-monospace">{{ $c->ntn_cnic ?? '&mdash;' }}</td>
+                            <td class="py-3 text-dark">{{ $c->category ?? $c->name }}</td>
+                            <td class="py-3 text-muted small">{{ $c->province ?? 'N/A' }}</td>
+                            <td class="py-3 text-muted small">{{ $c->phone ?? ($c->email ?? '&mdash;') }}</td>
                             <td class="py-3">
                                 @if ($c->isRegistered())
                                     <span class="badge bg-success bg-opacity-10 text-success">Registered</span>
@@ -84,18 +87,21 @@
                                     <span class="badge bg-warning bg-opacity-10 text-warning">Unregistered</span>
                                 @endif
                             </td>
-                            <td class="py-3 text-secondary font-monospace">
-                                {{ $c->ntn_cnic ?? '&mdash;' }}
-                            </td>
-                            <td class="py-3 text-secondary font-monospace">{{ $c->strn ?? '&mdash;' }}</td>
-                            <td class="py-3 text-muted small">{{ $c->province ?? 'N/A' }}</td>
-                            <td class="py-3 text-muted small">{{ $c->category ?? '&mdash;' }}</td>
-                            <td class="py-3 text-muted small">
-                                <div>{{ $c->phone ?? '' }}</div>
-                                <div>{{ $c->email ?? '' }}</div>
-                            </td>
                             <td class="py-3 text-end px-3">
                                 <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-outline-primary view-customer-btn"
+                                        data-name="{{ $c->name }}"
+                                        data-reg="{{ $c->registration_type }}"
+                                        data-ntn="{{ $c->ntn_cnic }}"
+                                        data-strn="{{ $c->strn }}"
+                                        data-province="{{ $c->province }}"
+                                        data-cat="{{ $c->category }}"
+                                        data-addr="{{ $c->address }}"
+                                        data-phone="{{ $c->phone }}"
+                                        data-email="{{ $c->email }}"
+                                        title="View Customer Details">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
                                     <button type="button" class="btn btn-outline-secondary edit-customer-btn"
                                         data-id="{{ $c->id }}"
                                         data-name="{{ $c->name }}"
@@ -297,9 +303,57 @@
     </div>
 </div>
 
+<!-- ================= VIEW CUSTOMER MODAL ================= -->
+<div class="modal fade" id="viewCustomerModal" tabindex="-1" aria-labelledby="viewCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header border-0 pb-0 pt-4 px-4">
+                <h5 class="modal-title font-display fw-bold text-dark fs-5" id="viewCustomerModalLabel">Buyer / Customer Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 py-3">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr><th class="text-muted small" style="width: 35%;">Buyer Name:</th><td class="fw-bold" id="view_cust_name"></td></tr>
+                    <tr><th class="text-muted small">Type:</th><td id="view_cust_reg"></td></tr>
+                    <tr><th class="text-muted small">NTN / CNIC:</th><td class="font-monospace" id="view_cust_ntn"></td></tr>
+                    <tr><th class="text-muted small">STRN:</th><td class="font-monospace" id="view_cust_strn"></td></tr>
+                    <tr><th class="text-muted small">Province:</th><td id="view_cust_province"></td></tr>
+                    <tr><th class="text-muted small">Category/Business:</th><td id="view_cust_cat"></td></tr>
+                    <tr><th class="text-muted small">Address:</th><td id="view_cust_addr"></td></tr>
+                    <tr><th class="text-muted small">Phone:</th><td id="view_cust_phone"></td></tr>
+                    <tr><th class="text-muted small">Email:</th><td id="view_cust_email"></td></tr>
+                </table>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const viewButtons = document.querySelectorAll('.view-customer-btn');
+    const viewModal = new bootstrap.Modal(document.getElementById('viewCustomerModal'));
+
+    viewButtons.forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.getElementById('view_cust_name').textContent = this.getAttribute('data-name') || 'N/A';
+            const reg = this.getAttribute('data-reg') || 'unregistered';
+            document.getElementById('view_cust_reg').innerHTML = `<span class="badge ${reg === 'registered' ? 'bg-success' : 'bg-warning'} bg-opacity-10 ${reg === 'registered' ? 'text-success' : 'text-warning'}">${reg}</span>`;
+            document.getElementById('view_cust_ntn').textContent = this.getAttribute('data-ntn') || '—';
+            document.getElementById('view_cust_strn').textContent = this.getAttribute('data-strn') || '—';
+            document.getElementById('view_cust_province').textContent = this.getAttribute('data-province') || '—';
+            document.getElementById('view_cust_cat').textContent = this.getAttribute('data-cat') || '—';
+            document.getElementById('view_cust_addr').textContent = this.getAttribute('data-addr') || '—';
+            document.getElementById('view_cust_phone').textContent = this.getAttribute('data-phone') || '—';
+            document.getElementById('view_cust_email').textContent = this.getAttribute('data-email') || '—';
+
+            viewModal.show();
+        });
+    });
+
     const editButtons = document.querySelectorAll('.edit-customer-btn');
     const editForm = document.getElementById('editCustomerForm');
     const editModal = new bootstrap.Modal(document.getElementById('editCustomerModal'));

@@ -18,7 +18,8 @@ class BusinessResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
     protected static ?string $navigationLabel = 'Businesses & Approvals';
-    protected static ?string $navigationGroup = 'Tenant Management';
+    protected static ?string $navigationGroup = 'User & Business Management';
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {

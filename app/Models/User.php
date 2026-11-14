@@ -45,6 +45,16 @@ class User extends Authenticatable implements FilamentUser
             ->withTimestamps();
     }
 
+    public function supportTickets()
+    {
+        return $this->hasMany(SupportTicket::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public function canAccessPanel(Panel $panel): bool
     {
         // Only Super Admins can access the Filament /admin portal

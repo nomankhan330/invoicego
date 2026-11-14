@@ -265,6 +265,50 @@ class InvoiceController extends Controller
             ]);
         }
 
+        // Registered / Unregistered validation check
+        if (!$isDraftAction) {
+            $buyerName = $validated['buyer_name'] ?? 'Buyer';
+            $ntnDigits = preg_replace('/\D/', '', $validated['buyer_ntn_cnic'] ?? '');
+            $customer = $business->customers()
+                ->when(!empty($validated['customer_id']), fn ($q) => $q->where('id', $validated['customer_id']))
+                ->when(!empty($ntnDigits), fn ($q) => $q->orWhere('ntn_cnic', $ntnDigits))
+                ->first();
+
+            if ((($customer && $customer->registration_type === 'registered') || strlen($ntnDigits) === 7) && $validated['buyer_type'] === 'unregistered') {
+                return back()->withInput()->withErrors([
+                    'buyer_type' => "{$buyerName} with Registered Error: Buyer has a registered NTN profile. Please select 'Registered'.",
+                ]);
+            }
+
+            if (($customer && $customer->registration_type === 'unregistered' && strlen($ntnDigits) === 13) && $validated['buyer_type'] === 'registered') {
+                return back()->withInput()->withErrors([
+                    'buyer_type' => "{$buyerName} with Unregistered Error: Buyer is unregistered in FBR ATL. Please select 'Unregistered'.",
+                ]);
+            }
+        }
+
+        // Registered / Unregistered validation check
+        if (!$isDraftAction) {
+            $buyerName = $validated['buyer_name'] ?? 'Buyer';
+            $ntnDigits = preg_replace('/\D/', '', $validated['buyer_ntn_cnic'] ?? '');
+            $customer = $business->customers()
+                ->when(!empty($validated['customer_id']), fn ($q) => $q->where('id', $validated['customer_id']))
+                ->when(!empty($ntnDigits), fn ($q) => $q->orWhere('ntn_cnic', $ntnDigits))
+                ->first();
+
+            if ((($customer && $customer->registration_type === 'registered') || strlen($ntnDigits) === 7) && $validated['buyer_type'] === 'unregistered') {
+                return back()->withInput()->withErrors([
+                    'buyer_type' => "{$buyerName} with Registered Error: Buyer has a registered NTN profile. Please select 'Registered'.",
+                ]);
+            }
+
+            if (($customer && $customer->registration_type === 'unregistered' && strlen($ntnDigits) === 13) && $validated['buyer_type'] === 'registered') {
+                return back()->withInput()->withErrors([
+                    'buyer_type' => "{$buyerName} with Unregistered Error: Buyer is unregistered in FBR ATL. Please select 'Unregistered'.",
+                ]);
+            }
+        }
+
         $invoice = $this->invoiceService->createInvoice($validated, $business, Auth::id());
 
         // Check if user clicked "Submit to FBR immediately"
@@ -310,6 +354,20 @@ class InvoiceController extends Controller
         }
 
         $ntn = preg_replace('/\D/', '', $validated['buyer_ntn_cnic'] ?? '');
+        $buyerName = $validated['buyer_name'] ?? 'Buyer';
+        $customer = $business->customers()
+            ->when(!empty($validated['customer_id']), fn ($q) => $q->where('id', $validated['customer_id']))
+            ->when(!empty($ntn), fn ($q) => $q->orWhere('ntn_cnic', $ntn))
+            ->first();
+
+        if ((($customer && $customer->registration_type === 'registered') || strlen($ntn) === 7) && strtolower($validated['buyer_type']) === 'unregistered') {
+            $errors[] = "{$buyerName} with Registered Error: Buyer has a registered NTN profile. Please select 'Registered'.";
+        }
+
+        if (($customer && $customer->registration_type === 'unregistered' && strlen($ntn) === 13) && strtolower($validated['buyer_type']) === 'registered') {
+            $errors[] = "{$buyerName} with Unregistered Error: Buyer is unregistered in FBR ATL. Please select 'Unregistered'.";
+        }
+
         if ($validated['buyer_type'] === 'registered') {
             if (empty($ntn)) {
                 $errors[] = 'Registered buyer must have a valid 7-digit NTN or 13-digit CNIC.';
@@ -559,6 +617,28 @@ class InvoiceController extends Controller
             ]);
         }
 
+        // Registered / Unregistered validation check
+        if (!$isDraftAction) {
+            $buyerName = $validated['buyer_name'] ?? 'Buyer';
+            $ntnDigits = preg_replace('/\D/', '', $validated['buyer_ntn_cnic'] ?? '');
+            $customer = $business->customers()
+                ->when(!empty($validated['customer_id']), fn ($q) => $q->where('id', $validated['customer_id']))
+                ->when(!empty($ntnDigits), fn ($q) => $q->orWhere('ntn_cnic', $ntnDigits))
+                ->first();
+
+            if ((($customer && $customer->registration_type === 'registered') || strlen($ntnDigits) === 7) && $validated['buyer_type'] === 'unregistered') {
+                return back()->withInput()->withErrors([
+                    'buyer_type' => "{$buyerName} with Registered Error: Buyer has a registered NTN profile. Please select 'Registered'.",
+                ]);
+            }
+
+            if (($customer && $customer->registration_type === 'unregistered' && strlen($ntnDigits) === 13) && $validated['buyer_type'] === 'registered') {
+                return back()->withInput()->withErrors([
+                    'buyer_type' => "{$buyerName} with Unregistered Error: Buyer is unregistered in FBR ATL. Please select 'Unregistered'.",
+                ]);
+            }
+        }
+
         $this->invoiceService->updateInvoice($invoice, $validated);
 
         if ($request->has('submit_to_fbr') || $request->input('action') === 'submit') {
@@ -598,6 +678,203 @@ class InvoiceController extends Controller
         $invoice = $business->invoices()->where('uuid', $uuid)->with(['customer', 'items'])->firstOrFail();
 
         return view('tenant.invoices.print', compact('business', 'invoice'));
+    }
+
+    public function bulkUpload()
+    {
+        $business = $this->tenantService->getActiveBusiness();
+        return view('tenant.invoices.bulk', compact('business'));
+    }
+
+    public function downloadSampleTemplate()
+    {
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="fbr_invoice_bulk_template.csv"',
+        ];
+
+        return response()->stream(function () {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, [
+                'Invoice Reference',
+                'Invoice Date (YYYY-MM-DD)',
+                'Invoice Type (standard/credit_note/debit_note)',
+                'Payment Mode (Cash/Bank/Card)',
+                'Buyer Name',
+                'Buyer NTN or CNIC',
+                'Buyer Province',
+                'Buyer Address',
+                'Buyer Type (registered/unregistered)',
+                'HS Code (e.g. 0101.2100)',
+                'Product Description',
+                'UOM',
+                'Quantity',
+                'Unit Price',
+                'Tax Rate (%)',
+                'Fixed or Retail Price',
+                'Discount',
+            ]);
+
+            fputcsv($handle, [
+                'INV-BULK-001',
+                now('Asia/Karachi')->format('Y-m-d'),
+                'standard',
+                'Cash',
+                'Ali Khan Logistics',
+                '7654321',
+                'Punjab',
+                'Main Boulevard Gulberg III Lahore',
+                'registered',
+                '0101.2100',
+                'Purebred breeding animals',
+                'NOS',
+                '2',
+                '150000',
+                '18%',
+                '0',
+                '0',
+            ]);
+
+            fputcsv($handle, [
+                'INV-BULK-002',
+                now('Asia/Karachi')->format('Y-m-d'),
+                'standard',
+                'Bank Transfer',
+                'Tariq Traders',
+                '3520112345678',
+                'Punjab',
+                'Shop 12 Shah Alam Market Lahore',
+                'unregistered',
+                '8471.3010',
+                'Intel Core i7 Laptop Computer',
+                'NOS',
+                '5',
+                '95000',
+                '18%',
+                '0',
+                '0',
+            ]);
+
+            fclose($handle);
+        }, 200, $headers);
+    }
+
+    public function processBulkUpload(Request $request)
+    {
+        $request->validate([
+            'csv_file' => 'required|file|max:5120',
+        ]);
+
+        $business = $this->tenantService->getActiveBusiness();
+        $file = $request->file('csv_file');
+        $path = $file->getRealPath();
+
+        $rows = [];
+        if (($handle = fopen($path, 'r')) !== false) {
+            $header = fgetcsv($handle, 2000, ',');
+            while (($data = fgetcsv($handle, 2000, ',')) !== false) {
+                if (count($data) >= 11 && !empty(trim($data[0] ?? ''))) {
+                    $rows[] = $data;
+                }
+            }
+            fclose($handle);
+        }
+
+        if (empty($rows)) {
+            return back()->with('error', 'The uploaded file contains no valid invoice data rows.');
+        }
+
+        // Group rows by Invoice Reference
+        $grouped = [];
+        foreach ($rows as $row) {
+            $ref = trim($row[0] ?? '');
+            if (!isset($grouped[$ref])) {
+                $grouped[$ref] = [
+                    'ref' => $ref,
+                    'date' => trim($row[1] ?? now('Asia/Karachi')->format('Y-m-d')),
+                    'type' => trim($row[2] ?? 'standard'),
+                    'payment_mode' => trim($row[3] ?? 'Cash'),
+                    'buyer_name' => trim($row[4] ?? 'Bulk Buyer'),
+                    'buyer_ntn' => trim($row[5] ?? ''),
+                    'buyer_province' => trim($row[6] ?? 'Punjab'),
+                    'buyer_address' => trim($row[7] ?? 'Pakistan'),
+                    'buyer_type' => strtolower(trim($row[8] ?? 'unregistered')),
+                    'items' => [],
+                ];
+            }
+
+            $grouped[$ref]['items'][] = [
+                'hs_code' => trim($row[9] ?? '0101.2100'),
+                'product_description' => trim($row[10] ?? 'Bulk Item'),
+                'uom' => trim($row[11] ?? 'NOS'),
+                'quantity' => (float) (trim($row[12] ?? 1) ?: 1),
+                'unit_price' => (float) (trim($row[13] ?? 0) ?: 0),
+                'tax_rate' => trim($row[14] ?? '18%'),
+                'retail_price' => (float) (trim($row[15] ?? 0) ?: 0),
+                'discount_amount' => (float) (trim($row[16] ?? 0) ?: 0),
+            ];
+        }
+
+        $importedCount = 0;
+        $submittedCount = 0;
+        $submitToFbr = $request->boolean('submit_to_fbr');
+
+        foreach ($grouped as $invData) {
+            $invoicePayload = [
+                'buyer_name' => $invData['buyer_name'],
+                'buyer_ntn_cnic' => $invData['buyer_ntn'],
+                'buyer_province' => $invData['buyer_province'],
+                'supplier_province' => $business->province ?? 'Punjab',
+                'destination_of_supply' => $invData['buyer_province'],
+                'buyer_address' => $invData['buyer_address'],
+                'buyer_type' => $invData['buyer_type'],
+                'invoice_date' => $invData['date'],
+                'invoice_time' => now('Asia/Karachi')->format('H:i:s'),
+                'payment_mode' => $invData['payment_mode'],
+                'reference_invoice_no' => $invData['ref'],
+                'invoice_type' => $invData['type'] ?: 'standard',
+                'environment' => $business->current_environment ?? 'sandbox',
+                'items' => [],
+            ];
+
+            foreach ($invData['items'] as $it) {
+                $taxNum = 18.00;
+                if (preg_match('/([0-9]+(?:\.[0-9]+)?)/', $it['tax_rate'], $m)) {
+                    $taxNum = (float) $m[1];
+                }
+
+                $invoicePayload['items'][] = [
+                    'hs_code' => $it['hs_code'],
+                    'product_description' => $it['product_description'],
+                    'uom' => $it['uom'],
+                    'quantity' => $it['quantity'],
+                    'unit_price' => $it['unit_price'],
+                    'tax_rate' => $taxNum,
+                    'retail_price' => $it['retail_price'],
+                    'fixed_notified_value' => 0,
+                    'discount_amount' => $it['discount_amount'],
+                    'further_tax_rate' => ($invData['buyer_type'] === 'unregistered') ? 4.00 : 0.00,
+                    'cancel_further_tax' => ($invData['buyer_type'] === 'registered'),
+                ];
+            }
+
+            $invoice = $this->invoiceService->createInvoice($invoicePayload, $business, Auth::id());
+            $importedCount++;
+
+            if ($submitToFbr) {
+                $fbrRes = $this->fbrService->submitInvoice($invoice);
+                if ($fbrRes['success']) {
+                    $submittedCount++;
+                }
+            }
+        }
+
+        $msg = "Excel/CSV Bulk Import completed: {$importedCount} invoices created successfully.";
+        if ($submitToFbr) {
+            $msg .= " ({$submittedCount} submitted and accepted by FBR).";
+        }
+
+        return redirect()->route('tenant.invoices.index')->with('success', $msg);
     }
 }
 

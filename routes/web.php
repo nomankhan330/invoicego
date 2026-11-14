@@ -50,6 +50,9 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::get('/', [InvoiceController::class, 'index'])->name('index');
         Route::get('/create', [InvoiceController::class, 'create'])->name('create');
         Route::post('/', [InvoiceController::class, 'store'])->name('store');
+        Route::get('/bulk-upload', [InvoiceController::class, 'bulkUpload'])->name('bulk-upload');
+        Route::post('/bulk-upload', [InvoiceController::class, 'processBulkUpload'])->name('process-bulk-upload');
+        Route::get('/sample-template', [InvoiceController::class, 'downloadSampleTemplate'])->name('sample-template');
         Route::post('/validate-draft', [InvoiceController::class, 'validateDraft'])->name('validate-draft');
         Route::get('/verify-buyer', [InvoiceController::class, 'verifyBuyer'])->name('verify-buyer');
         Route::get('/{uuid}', [InvoiceController::class, 'show'])->name('show');

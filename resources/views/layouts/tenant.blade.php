@@ -174,6 +174,13 @@
                     </div>
                 </div>
 
+                @if (Auth::user()?->is_super_admin)
+                    <a href="/admin" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 py-1 px-2" style="font-size: 11.5px; border-radius: 8px;">
+                        <i class="bi bi-shield-lock-fill"></i>
+                        <span>Admin Panel</span>
+                    </a>
+                @endif
+
                 <!-- Sign Out -->
                 <form method="POST" action="{{ route('logout') }}" class="m-0">
                     @csrf
@@ -197,6 +204,20 @@
                 <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
             </div>
         @endif
+
+        <!-- System Announcements Broadcast -->
+        @php
+            $activeAnnouncements = \App\Models\Announcement::active()->latest()->take(2)->get();
+        @endphp
+        @foreach ($activeAnnouncements as $announcement)
+            <div class="alert alert-{{ $announcement->type === 'warning' ? 'warning' : ($announcement->type === 'maintenance' ? 'danger' : 'info') }} alert-dismissible fade show small mb-3 py-2 px-3 d-flex align-items-center gap-2" role="alert">
+                <i class="bi bi-megaphone-fill flex-shrink-0"></i>
+                <div class="flex-grow-1">
+                    <strong>{{ $announcement->title }}:</strong> {{ $announcement->message }}
+                </div>
+                <button type="button" class="btn-close py-2 ms-auto" data-bs-dismiss="alert"></button>
+            </div>
+        @endforeach
 
         <!-- Page Yield -->
         @yield('content')

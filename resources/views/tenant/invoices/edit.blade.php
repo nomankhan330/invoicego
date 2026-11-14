@@ -337,6 +337,7 @@
                         <option value="registered" {{ old('buyer_type', $invoice->buyer_type) === 'registered' ? 'selected' : '' }}>Registered</option>
                         <option value="unregistered" {{ old('buyer_type', $invoice->buyer_type) === 'unregistered' ? 'selected' : '' }}>Unregistered</option>
                     </select>
+                    <div id="buyerTypeErrorBanner" class="alert alert-danger py-1 px-2 mt-1 small" style="display: none; font-size: 11.5px; line-height: 1.3;"></div>
                     <div class="d-flex align-items-center justify-content-between mt-1">
                         <a href="javascript:void(0)" id="verifyBuyerBtn" class="text-primary small text-decoration-none fw-semibold" style="font-size: 11px;">
                             <i class="bi bi-arrow-repeat me-1"></i> Verify registration with FBR
@@ -538,10 +539,40 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Buyer Registration Type Validation Check
+    function validateBuyerRegistrationType() {
+        const ntnVal = (document.getElementById('buyer_ntn_cnic')?.value || '').replace(/\D/g, '');
+        const buyerName = document.getElementById('buyer_name')?.value.trim() || 'Buyer';
+        const buyerType = document.getElementById('buyer_type')?.value;
+        const banner = document.getElementById('buyerTypeErrorBanner');
+        if (!banner) return;
+
+        if (ntnVal.length === 7 && buyerType === 'unregistered') {
+            banner.style.display = 'block';
+            banner.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i> <strong>${buyerName} with Registered Error</strong>: Buyer has a 7-digit NTN and is registered in FBR. Please select 'Registered'.`;
+        } else if (ntnVal.length === 13 && buyerType === 'registered') {
+            banner.style.display = 'block';
+            banner.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i> <strong>${buyerName} with Unregistered Error</strong>: Buyer is unregistered in FBR ATL. Please select 'Unregistered'.`;
+        } else {
+            banner.style.display = 'none';
+            banner.innerHTML = '';
+        }
+    }
+
+    const ntnInputEl = document.getElementById('buyer_ntn_cnic');
+    if (ntnInputEl) {
+        ntnInputEl.addEventListener('input', validateBuyerRegistrationType);
+    }
+    const buyerNameInputEl = document.getElementById('buyer_name');
+    if (buyerNameInputEl) {
+        buyerNameInputEl.addEventListener('input', validateBuyerRegistrationType);
+    }
+
     // Buyer Type Dropdown Change Listener
     const buyerTypeEl = document.getElementById('buyer_type');
     if (buyerTypeEl) {
         buyerTypeEl.addEventListener('change', function () {
+            validateBuyerRegistrationType();
             const isUnregistered = (this.value === 'unregistered');
             document.querySelectorAll('.item-card').forEach(card => {
                 const applyCb = card.querySelector('.item-apply-further');

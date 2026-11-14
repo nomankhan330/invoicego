@@ -8,10 +8,16 @@
         <h1 class="font-display fw-bold text-dark fs-3 mb-1">Invoices</h1>
         <div class="text-muted small">Manage, fiscalize, and print standard sales tax invoices</div>
     </div>
-    <a href="{{ route('tenant.invoices.create') }}" class="btn btn-ig-primary d-flex align-items-center gap-2">
-        <i class="bi bi-file-earmark-plus"></i>
-        <span>Create invoice</span>
-    </a>
+    <div class="d-flex align-items-center gap-2">
+        <a href="{{ route('tenant.invoices.bulk-upload') }}" class="btn btn-ig-outline d-flex align-items-center gap-2">
+            <i class="bi bi-file-earmark-spreadsheet"></i>
+            <span>Bulk Upload (Excel)</span>
+        </a>
+        <a href="{{ route('tenant.invoices.create') }}" class="btn btn-ig-primary d-flex align-items-center gap-2">
+            <i class="bi bi-file-earmark-plus"></i>
+            <span>Create invoice</span>
+        </a>
+    </div>
 </div>
 
 <!-- Filters Bar -->

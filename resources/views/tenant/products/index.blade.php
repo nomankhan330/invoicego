@@ -53,13 +53,13 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light text-muted text-uppercase" style="font-size: 11px; letter-spacing: 0.05em;">
                     <tr>
-                        <th class="py-3 px-3">Product code (SKU)</th>
+                        <th class="py-3 px-3">Product Code (SKU)</th>
                         <th class="py-3">Description</th>
-                        <th class="py-3">HS code</th>
+                        <th class="py-3">HS Code</th>
                         <th class="py-3">UOM</th>
-                        <th class="py-3">Sale type</th>
-                        <th class="py-3 text-end">Sale price (PKR, excl. tax)</th>
-                        <th class="py-3 text-end">Tax rate</th>
+                        <th class="py-3">Sale Type</th>
+                        <th class="py-3 text-end">Price (PKR)</th>
+                        <th class="py-3 text-end">Tax %</th>
                         <th class="py-3 text-end px-3">Actions</th>
                     </tr>
                 </thead>
@@ -75,6 +75,20 @@
                             <td class="py-3 text-end">{{ number_format($p->default_tax_rate, 1) }}%</td>
                             <td class="py-3 text-end px-3">
                                 <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-outline-primary view-product-btn"
+                                        data-sku="{{ $p->sku }}"
+                                        data-price="{{ $p->unit_price }}"
+                                        data-desc="{{ $p->description }}"
+                                        data-hs="{{ $p->hs_code ?? $p->hsCode?->pct_code }}"
+                                        data-uom="{{ $p->uom }}"
+                                        data-saletype="{{ $p->sale_type }}"
+                                        data-tax="{{ $p->default_tax_rate }}"
+                                        data-sro="{{ $p->sro_schedule_no }}"
+                                        data-serial="{{ $p->sro_item_serial }}"
+                                        data-retail="{{ $p->retail_price }}"
+                                        title="View Product">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
                                     <button type="button" class="btn btn-outline-secondary edit-product-btn"
                                         data-id="{{ $p->id }}"
                                         data-sku="{{ $p->sku }}"
@@ -334,9 +348,58 @@
     </div>
 </div>
 
+<!-- ================= VIEW PRODUCT MODAL ================= -->
+<div class="modal fade" id="viewProductModal" tabindex="-1" aria-labelledby="viewProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header border-0 pb-0 pt-4 px-4">
+                <h5 class="modal-title font-display fw-bold text-dark fs-5" id="viewProductModalLabel">Product Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 py-3">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr><th class="text-muted small" style="width: 35%;">Product Code (SKU):</th><td class="fw-bold font-monospace" id="view_prod_sku"></td></tr>
+                    <tr><th class="text-muted small">Description:</th><td id="view_prod_desc"></td></tr>
+                    <tr><th class="text-muted small">HS Code:</th><td class="font-monospace" id="view_prod_hs"></td></tr>
+                    <tr><th class="text-muted small">UOM:</th><td id="view_prod_uom"></td></tr>
+                    <tr><th class="text-muted small">Sale Type:</th><td id="view_prod_saletype"></td></tr>
+                    <tr><th class="text-muted small">Unit Price:</th><td class="fw-semibold text-primary" id="view_prod_price"></td></tr>
+                    <tr><th class="text-muted small">Tax Rate:</th><td id="view_prod_tax"></td></tr>
+                    <tr><th class="text-muted small">Retail Price:</th><td id="view_prod_retail"></td></tr>
+                    <tr><th class="text-muted small">SRO / Schedule:</th><td id="view_prod_sro"></td></tr>
+                    <tr><th class="text-muted small">Item Serial No:</th><td id="view_prod_serial"></td></tr>
+                </table>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const viewButtons = document.querySelectorAll('.view-product-btn');
+    const viewModal = new bootstrap.Modal(document.getElementById('viewProductModal'));
+
+    viewButtons.forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.getElementById('view_prod_sku').textContent = this.getAttribute('data-sku') || '';
+            document.getElementById('view_prod_desc').textContent = this.getAttribute('data-desc') || '';
+            document.getElementById('view_prod_hs').textContent = this.getAttribute('data-hs') || 'N/A';
+            document.getElementById('view_prod_uom').textContent = this.getAttribute('data-uom') || 'NOS';
+            document.getElementById('view_prod_saletype').textContent = this.getAttribute('data-saletype') || 'Goods';
+            document.getElementById('view_prod_price').textContent = 'Rs ' + parseFloat(this.getAttribute('data-price') || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('view_prod_tax').textContent = parseFloat(this.getAttribute('data-tax') || 18.00).toFixed(2) + '%';
+            document.getElementById('view_prod_retail').textContent = this.getAttribute('data-retail') ? 'Rs ' + parseFloat(this.getAttribute('data-retail')).toLocaleString(undefined, {minimumFractionDigits: 2}) : '—';
+            document.getElementById('view_prod_sro').textContent = this.getAttribute('data-sro') || '—';
+            document.getElementById('view_prod_serial').textContent = this.getAttribute('data-serial') || '—';
+
+            viewModal.show();
+        });
+    });
+
     const editButtons = document.querySelectorAll('.edit-product-btn');
     const editForm = document.getElementById('editProductForm');
     const editModal = new bootstrap.Modal(document.getElementById('editProductModal'));
