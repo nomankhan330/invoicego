@@ -521,7 +521,14 @@ document.addEventListener('DOMContentLoaded', function () {
     // Buyer Type Dropdown Change Listener
     const buyerTypeEl = document.getElementById('buyer_type');
     if (buyerTypeEl) {
-        buyerTypeEl.addEventListener('change', recalculateAll);
+        buyerTypeEl.addEventListener('change', function () {
+            const isUnregistered = (this.value === 'unregistered');
+            document.querySelectorAll('.item-card').forEach(card => {
+                const applyCb = card.querySelector('.item-apply-further');
+                if (applyCb) applyCb.checked = isUnregistered;
+                recalculateCard(card, 'buyer-change');
+            });
+        });
     }
 
     // 3. Buyer ATL Verification Button
@@ -662,7 +669,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             </div>
 
-            <!-- Row 3: Discount, Value excl tax, Sales Tax, Retail Price, Fixed Value, Extra Tax -->
+            <!-- Row 3: Discount, Value excl tax, Sales Tax, Fixed/Retail Price, Extra Tax -->
             <div class="row g-2 mb-2">
                 <div class="col-md-2">
                     <label class="form-label-xs">Discount</label>
@@ -670,7 +677,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div class="form-helper-xs">Deducted once</div>
                 </div>
 
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label class="form-label-xs">VALUE OF SALES (EXCL. TAX)</label>
                     <input type="text" class="form-control form-control-sm bg-light item-val-excl fw-semibold text-dark" value="${initialData.value_excl_tax || '0.00'}" readonly>
                     <div class="form-helper-xs text-muted">Auto: Qty &times; Price</div>
@@ -679,41 +686,36 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="col-md-2">
                     <label class="form-label-xs">Sales Tax</label>
                     <input type="number" step="0.01" min="0" name="items[${index}][sales_tax_amount]" class="form-control form-control-sm item-sales-tax" value="${initialData.sales_tax_amount || '0.00'}">
-                    <div class="form-helper-xs text-muted">Auto: Val &times; Tax Rate %</div>
+                    <div class="form-helper-xs text-muted">Auto: Base &times; Tax Rate %</div>
                 </div>
 
-                <div class="col-md-2">
-                    <label class="form-label-xs">Fixed / Notified Value</label>
-                    <input type="number" step="0.01" min="0" name="items[${index}][fixed_notified_value]" class="form-control form-control-sm item-fixed-val" value="${initialData.fixed_notified_value || ''}">
-                    <div class="form-helper-xs">Fixed tariff value</div>
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label-xs">Retail Price (MRP)</label>
-                    <input type="number" step="0.01" min="0" name="items[${index}][retail_price]" class="form-control form-control-sm item-retail-price" value="${initialData.retail_price || ''}">
-                    <div class="form-helper-xs">3rd Schedule items</div>
+                <div class="col-md-3">
+                    <label class="form-label-xs">Fixed / notified value or retail price</label>
+                    <input type="number" step="0.01" min="0" name="items[${index}][fixed_notified_value]" class="form-control form-control-sm item-fixed-val" value="${initialData.fixed_notified_value || initialData.retail_price || ''}" placeholder="0.00">
+                    <input type="hidden" name="items[${index}][retail_price]" class="item-retail-price" value="${initialData.retail_price || initialData.fixed_notified_value || ''}">
+                    <div class="form-helper-xs text-muted">Per unit tariff / 3rd Sch. MRP</div>
                 </div>
 
                 <div class="col-md-2">
                     <label class="form-label-xs">Extra Tax</label>
                     <input type="number" step="0.01" min="0" name="items[${index}][extra_tax_amount]" class="form-control form-control-sm item-extra-tax" value="${initialData.extra_tax_amount || '0.00'}">
-                    <div class="form-check small mt-1">
-                        <input class="form-check-input item-send-empty" type="checkbox" name="items[${index}][send_extra_tax_as_empty]" value="1" id="empty_extra_${index}" ${initialData.send_extra_tax_as_empty ? 'checked' : ''}>
-                        <label class="form-check-label" for="empty_extra_${index}" style="font-size: 10px;">Send as empty (FBR 009)</label>
-                    </div>
                 </div>
             </div>
 
             <!-- Row 4: Further tax, SRO / Schedule No, Item S. No, FED, ST Withheld, Total -->
+            @php
+                // will be handled by javascript dynamic template
+            @endphp
             <div class="row g-2">
                 <div class="col-md-2">
                     <div class="d-flex justify-content-between align-items-center">
                         <label class="form-label-xs mb-0">Further Tax (4%)</label>
-                        <div class="form-check form-switch m-0" title="Option to cancel further tax">
-                            <input class="form-check-input item-cancel-further" type="checkbox" name="items[${index}][cancel_further_tax]" value="1" id="cancel_further_${index}" ${initialData.cancel_further_tax ? 'checked' : ''}>
-                            <label class="form-check-label" for="cancel_further_${index}" style="font-size: 10.5px; color: #DC2626; font-weight: 600;">Cancel</label>
+                        <div class="form-check form-switch m-0" title="Apply 4% further tax">
+                            <input class="form-check-input item-apply-further" type="checkbox" id="apply_further_${index}" ${(parseFloat(initialData.further_tax_amount) > 0 || (!initialData.cancel_further_tax && document.getElementById('buyer_type')?.value === 'unregistered')) ? 'checked' : ''}>
+                            <label class="form-check-label" for="apply_further_${index}" style="font-size: 10px; color: #2563EB; font-weight: 600;">Apply 4%</label>
                         </div>
                     </div>
+                    <input type="hidden" name="items[${index}][cancel_further_tax]" class="item-cancel-further" value="${(parseFloat(initialData.further_tax_amount) > 0 || (!initialData.cancel_further_tax && document.getElementById('buyer_type')?.value === 'unregistered')) ? '0' : '1'}">
                     <input type="number" step="0.01" min="0" name="items[${index}][further_tax_amount]" class="form-control form-control-sm item-further-tax mt-1" value="${initialData.further_tax_amount || '0.00'}">
                     <div class="form-helper-xs text-muted" id="further_note_${index}">Auto 4% for unregistered</div>
                 </div>
@@ -846,17 +848,28 @@ document.addEventListener('DOMContentLoaded', function () {
         tomSelectInstances[`item_${index}`] = { prodTs, saleTs, hsTs, taxTs, uomTs, sroTs, serialTs };
 
         // Attach event listeners for calculations
-        const inputs = card.querySelectorAll('input, select');
-        inputs.forEach(input => {
+        const furtherTaxInput = card.querySelector('.item-further-tax');
+        if (furtherTaxInput) {
+            furtherTaxInput.addEventListener('input', () => recalculateCard(card, 'further-tax'));
+            furtherTaxInput.addEventListener('change', () => recalculateCard(card, 'further-tax'));
+        }
+
+        const applyFurtherCb = card.querySelector('.item-apply-further');
+        if (applyFurtherCb) {
+            applyFurtherCb.addEventListener('change', () => recalculateCard(card, 'toggle-further'));
+        }
+
+        const fixedValInput = card.querySelector('.item-fixed-val');
+        if (fixedValInput) {
+            fixedValInput.addEventListener('input', () => recalculateCard(card, 'fixed-val'));
+            fixedValInput.addEventListener('change', () => recalculateCard(card, 'fixed-val'));
+        }
+
+        const otherInputs = card.querySelectorAll('input:not(.item-further-tax):not(.item-fixed-val), select');
+        otherInputs.forEach(input => {
             input.addEventListener('input', () => recalculateCard(card));
             input.addEventListener('change', () => recalculateCard(card));
         });
-
-        // Cancel Further Tax checkbox listener
-        const cancelFurtherCb = card.querySelector('.item-cancel-further');
-        if (cancelFurtherCb) {
-            cancelFurtherCb.addEventListener('change', () => recalculateCard(card));
-        }
 
         // Delete button listener
         const delBtn = card.querySelector('.delete-item-btn');
@@ -884,26 +897,40 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // 5. Real-Time Calculation Engine
-    function recalculateCard(card) {
+    function recalculateCard(card, source = null) {
         const autoCalc = document.getElementById('autoCalcCheckbox').checked;
-        const buyerTypeVal = document.getElementById('buyer_type').value;
+        const buyerTypeVal = document.getElementById('buyer_type')?.value || 'unregistered';
         const isRegistered = (buyerTypeVal === 'registered');
 
-        const qty = parseFloat(card.querySelector('.item-qty').value) || 0;
-        const unitPrice = parseFloat(card.querySelector('.item-unit-price').value) || 0;
-        const discount = parseFloat(card.querySelector('.item-discount').value) || 0;
+        const qty = parseFloat(card.querySelector('.item-qty')?.value) || 0;
+        const unitPrice = parseFloat(card.querySelector('.item-unit-price')?.value) || 0;
+        const discount = parseFloat(card.querySelector('.item-discount')?.value) || 0;
 
         const valExcl = Math.max(0, (qty * unitPrice));
-        card.querySelector('.item-val-excl').value = valExcl.toFixed(2);
+        const valExclEl = card.querySelector('.item-val-excl');
+        if (valExclEl) valExclEl.value = valExcl.toFixed(2);
 
-        let salesTax = parseFloat(card.querySelector('.item-sales-tax').value) || 0;
-        let furtherTax = parseFloat(card.querySelector('.item-further-tax').value) || 0;
-        const extraTax = parseFloat(card.querySelector('.item-extra-tax').value) || 0;
-        const fed = parseFloat(card.querySelector('.item-fed').value) || 0;
-        const stWithheld = parseFloat(card.querySelector('.item-st-withheld').value) || 0;
+        // Fixed / Notified value or Retail price
+        const fixedValInput = card.querySelector('.item-fixed-val');
+        const fixedVal = parseFloat(fixedValInput?.value) || 0;
+        const mirrorRetail = card.querySelector('.item-retail-price');
+        if (mirrorRetail) mirrorRetail.value = fixedVal > 0 ? fixedVal.toFixed(2) : '';
+
+        // Taxable Base: if Fixed/Retail price entered, sales tax and further tax are calculated on (fixedVal * qty), else on valExcl
+        const taxableBase = fixedVal > 0 ? (fixedVal * qty) : valExcl;
+
+        let salesTax = parseFloat(card.querySelector('.item-sales-tax')?.value) || 0;
+        let furtherTax = parseFloat(card.querySelector('.item-further-tax')?.value) || 0;
+        const extraTax = parseFloat(card.querySelector('.item-extra-tax')?.value) || 0;
+        const fed = parseFloat(card.querySelector('.item-fed')?.value) || 0;
+        const stWithheld = parseFloat(card.querySelector('.item-st-withheld')?.value) || 0;
+
+        const applyFurtherCb = card.querySelector('.item-apply-further');
+        const cancelFurtherInput = card.querySelector('.item-cancel-further');
+        const furtherNote = card.querySelector('[id^="further_note_"]');
 
         if (autoCalc) {
-            const taxRateStr = card.querySelector('.item-tax-rate').value || '18.00%';
+            const taxRateStr = card.querySelector('.item-tax-rate')?.value || '18.00%';
             let taxRateNum = 0;
             const pctMatch = taxRateStr.match(/^([0-9]+(?:\.[0-9]+)?)\s*%/);
             if (pctMatch) {
@@ -912,34 +939,46 @@ document.addEventListener('DOMContentLoaded', function () {
                 taxRateNum = parseFloat(taxRateStr);
             }
 
-            salesTax = (valExcl * taxRateNum) / 100;
-            card.querySelector('.item-sales-tax').value = salesTax.toFixed(2);
+            salesTax = (taxableBase * taxRateNum) / 100;
+            const salesTaxEl = card.querySelector('.item-sales-tax');
+            if (salesTaxEl) salesTaxEl.value = salesTax.toFixed(2);
 
-            // Further Tax 4% auto-applied for unregistered buyers, unless cancelled
-            const cancelFurther = card.querySelector('.item-cancel-further').checked;
-            const furtherNote = card.querySelector('[id^="further_note_"]');
-
-            if (!isRegistered && !cancelFurther) {
-                furtherTax = (valExcl * 4.00) / 100;
-                card.querySelector('.item-further-tax').value = furtherTax.toFixed(2);
-                if (furtherNote) furtherNote.innerText = '4% applied (unregistered)';
+            if (source === 'further-tax') {
+                // User directly typed into further tax amount field
+                furtherTax = parseFloat(card.querySelector('.item-further-tax')?.value) || 0;
+                if (cancelFurtherInput) cancelFurtherInput.value = (furtherTax <= 0 ? '1' : '0');
+                if (applyFurtherCb) applyFurtherCb.checked = (furtherTax > 0);
+                if (furtherNote) furtherNote.innerText = furtherTax > 0 ? 'Manual amount' : '0.00';
             } else {
-                furtherTax = 0.00;
-                card.querySelector('.item-further-tax').value = '0.00';
-                if (furtherNote) {
-                    furtherNote.innerText = cancelFurther ? 'Cancelled (0%)' : '0% (registered buyer)';
+                const shouldApply = applyFurtherCb ? applyFurtherCb.checked : (!isRegistered);
+                if (shouldApply) {
+                    furtherTax = (taxableBase * 4.00) / 100;
+                    const furtherTaxEl = card.querySelector('.item-further-tax');
+                    if (furtherTaxEl) furtherTaxEl.value = furtherTax.toFixed(2);
+                    if (cancelFurtherInput) cancelFurtherInput.value = '0';
+                    if (furtherNote) furtherNote.innerText = '4% applied (' + (isRegistered ? 'manual' : 'unregistered') + ')';
+                } else {
+                    furtherTax = 0.00;
+                    const furtherTaxEl = card.querySelector('.item-further-tax');
+                    if (furtherTaxEl) furtherTaxEl.value = '0.00';
+                    if (cancelFurtherInput) cancelFurtherInput.value = '1';
+                    if (furtherNote) furtherNote.innerText = '0% (not applied)';
                 }
             }
+        } else {
+            // AutoCalc unchecked: still read whatever user typed
+            furtherTax = parseFloat(card.querySelector('.item-further-tax')?.value) || 0;
         }
 
         const totalIncl = Math.max(0, (valExcl + salesTax + furtherTax + extraTax + fed - discount));
-        card.querySelector('.item-total-incl').value = totalIncl.toFixed(2);
+        const totalInclEl = card.querySelector('.item-total-incl');
+        if (totalInclEl) totalInclEl.value = totalIncl.toFixed(2);
 
         recalculateTotalsPreview();
     }
 
     function recalculateAll() {
-        document.querySelectorAll('.item-card').forEach(recalculateCard);
+        document.querySelectorAll('.item-card').forEach(card => recalculateCard(card));
     }
 
     function recalculateTotalsPreview() {

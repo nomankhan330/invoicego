@@ -76,20 +76,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // 4. Seed Standard HS / PCT Codes
-        $hsCodes = [
-            ['pct_code' => '8471.30.00', 'description' => 'Portable automatic data processing machines (Laptops/Notebooks)', 'default_tax_rate' => 18.00],
-            ['pct_code' => '8471.50.00', 'description' => 'Processing units other than those of subheading 8471.30', 'default_tax_rate' => 18.00],
-            ['pct_code' => '8517.13.00', 'description' => 'Smartphones for cellular networks', 'default_tax_rate' => 18.00],
-            ['pct_code' => '8443.32.00', 'description' => 'Printers capable of connecting to data processing machines', 'default_tax_rate' => 18.00],
-            ['pct_code' => '8528.52.00', 'description' => 'Monitors capable of connecting directly to automatic data processing machines', 'default_tax_rate' => 18.00],
-            ['pct_code' => '9917.00.00', 'description' => 'IT enabled services and software consultancy', 'default_tax_rate' => 16.00],
-            ['pct_code' => '1006.30.00', 'description' => 'Semi-milled or wholly milled rice, whether or not polished or glazed', 'default_tax_rate' => 0.00],
-            ['pct_code' => '3004.90.99', 'description' => 'Medicaments consisting of mixed or unmixed products for therapeutic uses', 'default_tax_rate' => 1.00],
-        ];
-
-        foreach ($hsCodes as $code) {
-            HsCode::firstOrCreate(['pct_code' => $code['pct_code']], $code);
-        }
+        $this->call(HsCodeSeeder::class);
 
         // 5. Seed Sandbox Scenarios (SN001 - SN028)
         $scenarios = [
@@ -145,7 +132,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $hs1 = HsCode::where('pct_code', '8471.30.00')->first();
+        $hs1 = HsCode::where('pct_code', '8471.3010')->first() ?? HsCode::first();
 
         Product::firstOrCreate(
             ['business_id' => $demoBusiness->id, 'sku' => 'LAP-DELL-5520'],

@@ -92,3 +92,4 @@ class DraftStoreTest extends TestCase
         ]);
     }
 }
+

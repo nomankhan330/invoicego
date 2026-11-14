@@ -47,13 +47,30 @@ class FbrValidationService implements FbrValidationServiceInterface
         $unitPrice = (float) ($itemData['unit_price'] ?? 0);
         $valueExclTax = round($quantity * $unitPrice, 2);
 
+        $fixedOrRetail = (float) ($itemData['fixed_notified_value'] ?? $itemData['retail_price'] ?? 0);
+        $taxableBase = ($fixedOrRetail > 0) ? round($fixedOrRetail * $quantity, 2) : $valueExclTax;
+
         $taxRate = (float) ($itemData['tax_rate'] ?? 18.00);
-        $salesTaxAmount = round(($valueExclTax * $taxRate) / 100, 2);
+        $salesTaxAmount = isset($itemData['sales_tax_amount']) && $itemData['sales_tax_amount'] !== ''
+            ? round((float) $itemData['sales_tax_amount'], 2)
+            : round(($taxableBase * $taxRate) / 100, 2);
 
         // Under Section 3(1A) of Sales Tax Act 1990, Further Tax (typically 4%) applies to supplies made to unregistered persons
-        $isCancelled = !empty($itemData['cancel_further_tax']) || (isset($itemData['further_tax_rate']) && (float)$itemData['further_tax_rate'] === 0.0);
-        $furtherTaxRate = ($isUnregisteredBuyer && !$isCancelled) ? (float) ($itemData['further_tax_rate'] ?? 4.00) : 0.00;
-        $furtherTaxAmount = round(($valueExclTax * $furtherTaxRate) / 100, 2);
+        $isCancelled = !empty($itemData['cancel_further_tax']) || (isset($itemData['further_tax_rate']) && (float)$itemData['further_tax_rate'] === 0.0 && empty($itemData['further_tax_amount']));
+        
+        if ($isCancelled) {
+            $furtherTaxRate = 0.00;
+            $furtherTaxAmount = 0.00;
+        } elseif (isset($itemData['further_tax_amount']) && (float)$itemData['further_tax_amount'] > 0) {
+            $furtherTaxAmount = round((float) $itemData['further_tax_amount'], 2);
+            $furtherTaxRate = $taxableBase > 0 ? round(($furtherTaxAmount / $taxableBase) * 100, 2) : 4.00;
+        } elseif ($isUnregisteredBuyer) {
+            $furtherTaxRate = (float) ($itemData['further_tax_rate'] ?? 4.00);
+            $furtherTaxAmount = round(($taxableBase * $furtherTaxRate) / 100, 2);
+        } else {
+            $furtherTaxRate = 0.00;
+            $furtherTaxAmount = 0.00;
+        }
 
         $stWithheldRate = (float) ($itemData['st_withheld_rate'] ?? 0.00);
         $stWithheldAmount = round(($salesTaxAmount * $stWithheldRate) / 100, 2);
@@ -68,6 +85,8 @@ class FbrValidationService implements FbrValidationServiceInterface
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
             'value_excl_tax' => $valueExclTax,
+            'fixed_notified_value' => $fixedOrRetail > 0 ? $fixedOrRetail : null,
+            'retail_price' => $fixedOrRetail > 0 ? $fixedOrRetail : null,
             'tax_rate' => $taxRate,
             'sales_tax_amount' => $salesTaxAmount,
             'further_tax_rate' => $furtherTaxRate,

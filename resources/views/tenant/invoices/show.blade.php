@@ -165,10 +165,24 @@
                 <span class="sales-label">Sales Tax Amount:</span>
                 <span class="sales-val">Rs {{ number_format($invoice->sales_tax_amount, 2) }}</span>
             </div>
-            <div class="sales-row">
-                <span class="sales-label">Further Tax (4%):</span>
-                <span class="sales-val">Rs {{ number_format($invoice->further_tax_amount, 2) }}</span>
-            </div>
+            @if ($invoice->further_tax_amount > 0)
+                <div class="sales-row">
+                    <span class="sales-label">Further Tax (4%):</span>
+                    <span class="sales-val">Rs {{ number_format($invoice->further_tax_amount, 2) }}</span>
+                </div>
+            @endif
+            @if (($invoice->extra_tax_amount ?? 0) > 0)
+                <div class="sales-row">
+                    <span class="sales-label">Extra Tax:</span>
+                    <span class="sales-val">Rs {{ number_format($invoice->extra_tax_amount, 2) }}</span>
+                </div>
+            @endif
+            @if (($invoice->fed_amount ?? 0) > 0)
+                <div class="sales-row">
+                    <span class="sales-label">FED Amount:</span>
+                    <span class="sales-val">Rs {{ number_format($invoice->fed_amount, 2) }}</span>
+                </div>
+            @endif
             @if ($invoice->st_withheld_amount > 0)
                 <div class="sales-row">
                     <span class="sales-label">ST Withheld:</span>

@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice {{ $invoice->invoice_number }} — Official FBR Print</title>
+    <title>FBR Tax Invoice {{ $invoice->invoice_number }}</title>
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -14,44 +14,55 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             color: #0F172A;
             background: #F1F5F9;
-            padding: 30px 0;
-            font-size: 13px;
+            padding: 24px 0;
+            font-size: 12px;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
         .a4-page {
             width: 210mm;
             min-height: 297mm;
-            padding: 20mm;
+            padding: 18mm 18mm;
             margin: 0 auto;
             background: #FFFFFF;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             position: relative;
             box-sizing: border-box;
+            border-radius: 4px;
         }
-        .fbr-header-badge {
-            background-color: #047857;
+        .fbr-header-pill {
+            background-color: #0F3B82;
             color: #FFFFFF;
-            padding: 6px 16px;
+            padding: 6px 18px;
             font-weight: 700;
-            font-size: 11px;
+            font-size: 12.5px;
             letter-spacing: 0.05em;
             text-transform: uppercase;
             border-radius: 4px;
             display: inline-block;
         }
-        .table-invoice th {
-            background-color: #F8FAFC !important;
-            color: #475569;
-            font-size: 11px;
-            text-transform: uppercase;
-            border-top: 1px solid #CBD5E1;
-            border-bottom: 2px solid #94A3B8;
+        .fbr-number-badge {
+            border: 2px solid #22C55E;
+            border-radius: 6px;
+            padding: 6px 14px;
+            background: #FFFFFF;
+            display: inline-block;
+            text-align: center;
+        }
+        .fbr-qr-box {
+            border: 2px solid #22C55E;
+            border-radius: 8px;
+            padding: 12px;
+            background: #FFFFFF;
+            width: 235px;
+            display: inline-block;
         }
         .watermark-sandbox {
             position: absolute;
             top: 45%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-35deg);
-            font-size: 56px;
+            font-size: 52px;
             font-weight: 900;
             color: rgba(220, 38, 38, 0.08);
             text-transform: uppercase;
@@ -70,7 +81,7 @@
                 margin: 0 !important;
                 width: 100% !important;
                 min-height: auto !important;
-                padding: 15mm 15mm !important;
+                padding: 12mm 12mm !important;
             }
             .no-print {
                 display: none !important;
@@ -82,7 +93,7 @@
 
     <!-- Print Action Bar -->
     <div class="container no-print mb-4 text-center">
-        <button onclick="window.print()" class="btn btn-primary px-4 py-2 fw-semibold shadow-sm" style="background-color: #5850EC; border-color: #5850EC;">
+        <button onclick="window.print()" class="btn btn-primary px-4 py-2 fw-semibold shadow-sm" style="background-color: #0F3B82; border-color: #0F3B82;">
             <i class="bi bi-printer me-1"></i> Print / Save as PDF
         </button>
         <button onclick="window.close()" class="btn btn-outline-secondary px-3 py-2 ms-2">
@@ -96,158 +107,247 @@
             <div class="watermark-sandbox">SANDBOX TEST INVOICE</div>
         @endif
 
-        <!-- Document Header -->
-        <div class="d-flex justify-content-between align-items-start border-bottom pb-4 mb-4">
-            <div>
-                <h3 class="fw-bold mb-1 font-display" style="color: #1E293B;">{{ $business->name }}</h3>
-                <div class="text-secondary small mb-1">{{ $business->address }}</div>
-                <div class="text-secondary small">
-                    <strong>NTN/CNIC:</strong> {{ $business->ntn_cnic }} &middot;
-                    <strong>STRN:</strong> {{ $business->strn ?? 'Unregistered' }} &middot;
-                    <strong>Province:</strong> {{ $business->province }}
+        <!-- Document Top Header -->
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <!-- Brand / Logo -->
+            <div class="d-flex align-items-center">
+                <div class="me-2" style="width: 38px; height: 38px; background: linear-gradient(135deg, #0F3B82 0%, #16A34A 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #FFF; font-weight: 900; font-size: 20px;">
+                    <i class="bi bi-receipt-cutoff"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold mb-0" style="color: #0F3B82; letter-spacing: -0.5px; font-size: 19px;">
+                        DIGITAL <span style="color: #64748B; font-weight: 400;">INVOICING</span>
+                    </h4>
                 </div>
             </div>
 
+            <!-- Header Badge & Invoice Meta -->
             <div class="text-end">
-                <div class="fbr-header-badge mb-2">
-                    FBR DIGITAL INVOICING
+                <div class="fbr-header-pill mb-2">
+                    FBR TAX INVOICE
                 </div>
-                <h4 class="fw-bold text-dark mb-1">SALES TAX INVOICE</h4>
-                <div class="small text-muted"><strong>Invoice #:</strong> {{ $invoice->invoice_number }}</div>
-                <div class="small text-muted"><strong>Date:</strong> {{ $invoice->invoice_date->format('d-M-Y') }}</div>
+                <div class="small fw-semibold text-dark">
+                    Invoice #: <span class="fw-bold">{{ $invoice->invoice_number }}</span>
+                </div>
+                <div class="small text-secondary">
+                    Date: <span class="fw-semibold">{{ $invoice->invoice_date->format('d-M-Y') }}</span>
+                </div>
+
+                @if (!empty($invoice->fbr_invoice_number))
+                    <div class="fbr-number-badge mt-2">
+                        <div style="font-size: 9px; font-weight: 800; color: #16A34A; text-transform: uppercase; letter-spacing: 0.5px;">FBR INVOICE NUMBER</div>
+                        <div style="font-size: 13.5px; font-weight: 800; font-family: monospace; color: #15803D; letter-spacing: 0.5px;">{{ $invoice->fbr_invoice_number }}</div>
+                    </div>
+                @endif
             </div>
         </div>
 
-        <!-- FBR Official Verification Box -->
-        <div class="card bg-light border-0 rounded-3 p-3 mb-4">
-            <div class="row align-items-center">
-                <div class="col-8">
-                    <div class="text-uppercase fw-bold text-success small mb-1" style="font-size: 11px;">
-                        <i class="bi bi-shield-check me-1"></i> Official FBR Fiscal Verification Details
-                    </div>
-                    <div class="mb-1">
-                        <strong>FBR Invoice Number:</strong>
-                        <span class="font-monospace text-primary fw-bold">{{ $invoice->fbr_invoice_number ?? 'PENDING SUBMISSION' }}</span>
-                    </div>
-                    <div class="text-muted small">
-                        <strong>DI Specification:</strong> PRAL DI API v1.12 &middot;
-                        <strong>Submission Mode:</strong> {{ strtoupper($invoice->environment) }} &middot;
-                        <strong>Verified At:</strong> {{ $invoice->fbr_submitted_at?->format('d-M-Y H:i:s') ?? 'N/A' }}
-                    </div>
-                </div>
-                <div class="col-4 text-end">
-                    @php
-                        $qrPayload = $invoice->fbr_qr_code ?? ('https://fbr.gov.pk/verify?inv=' . $invoice->invoice_number . '&fbr=' . ($invoice->fbr_invoice_number ?? 'DEMO'));
-                        $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=" . urlencode($qrPayload);
-                    @endphp
-                    <img src="{{ $qrUrl }}" alt="FBR Verification QR Code" width="85" height="85" class="border p-1 bg-white rounded">
-                    <div class="text-muted" style="font-size: 10px; margin-top: 3px;">Scan to verify with FBR</div>
-                </div>
-            </div>
-        </div>
+        <!-- Blue Divider Line -->
+        <div style="height: 2px; background-color: #0F3B82; margin: 15px 0 20px 0;"></div>
 
-        <!-- Buyer Information Box -->
+        <!-- Split Information Cards: Seller & Buyer -->
         <div class="row g-3 mb-4">
-            <div class="col-12">
-                <div class="border rounded-2 p-3 bg-white">
-                    <div class="text-uppercase text-secondary fw-bold small mb-2" style="font-size: 10.5px;">Buyer / Customer Details</div>
-                    <div class="row">
-                        <div class="col-6">
-                            <div class="fw-bold text-dark fs-6">{{ $invoice->customer->name }}</div>
-                            <div class="text-secondary small">{{ $invoice->customer->address ?? 'N/A' }}</div>
-                        </div>
-                        <div class="col-6 text-end">
-                            <div class="small">
-                                <strong>{{ $invoice->customer->isRegistered() ? 'NTN (Registered):' : 'CNIC (Unregistered):' }}</strong>
-                                {{ $invoice->customer->ntn_cnic }}
-                            </div>
-                            @if ($invoice->customer->strn)
-                                <div class="small"><strong>STRN:</strong> {{ $invoice->customer->strn }}</div>
-                            @endif
-                            <div class="small"><strong>Province:</strong> {{ $invoice->customer->province ?? 'Punjab' }}</div>
+            <!-- Seller Information Card -->
+            <div class="col-6">
+                <div class="card h-100 p-3" style="border: 1px solid #E2E8F0; border-radius: 6px; background-color: #FFFFFF;">
+                    <div style="font-size: 10.5px; font-weight: 700; color: #0F3B82; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                        SELLER INFORMATION
+                    </div>
+                    <div style="font-size: 13.5px; font-weight: 700; color: #0F172A; margin-bottom: 4px;">
+                        {{ $business->name }}
+                    </div>
+                    <div class="small text-secondary" style="font-size: 11.5px; line-height: 1.6;">
+                        <div><strong>CNIC:</strong> <span class="text-dark">{{ $business->ntn_cnic }}</span></div>
+                        <div><strong>STRN:</strong> <span class="text-dark">{{ $business->strn ?? 'N/A' }}</span></div>
+                        <div><strong>Province:</strong> <span class="text-dark">{{ $business->province }}</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buyer Information Card -->
+            <div class="col-6">
+                <div class="card h-100 p-3" style="border: 1px solid #E2E8F0; border-radius: 6px; background-color: #FFFFFF;">
+                    <div style="font-size: 10.5px; font-weight: 700; color: #0F3B82; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                        BUYER INFORMATION
+                    </div>
+                    <div style="font-size: 13.5px; font-weight: 700; color: #0F172A; margin-bottom: 4px;">
+                        {{ $invoice->customer->name }}
+                    </div>
+                    <div class="small text-secondary" style="font-size: 11.5px; line-height: 1.6;">
+                        <div><strong>CNIC:</strong> <span class="text-dark">{{ $invoice->customer->ntn_cnic }}</span></div>
+                        <div><strong>Address:</strong> <span class="text-dark">{{ $invoice->customer->address ?? 'N/A' }}</span></div>
+                        <div><strong>Province:</strong> <span class="text-dark">{{ $invoice->customer->province ?? 'N/A' }}</span></div>
+                        <div>
+                            <strong>Status:</strong>
+                            <span style="font-weight: 700; color: {{ $invoice->customer->isRegistered() ? '#16A34A' : '#DC2626' }};">
+                                {{ $invoice->customer->isRegistered() ? 'Registered' : 'Unregistered' }}
+                            </span>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Items Table -->
-        <table class="table table-bordered table-invoice align-middle mb-4">
-            <thead>
-                <tr>
-                    <th style="width: 5%;">#</th>
-                    <th style="width: 35%;">Item Description</th>
-                    <th style="width: 15%;">HS / PCT Code</th>
-                    <th style="width: 8%;" class="text-end">Qty</th>
-                    <th style="width: 7%;">UOM</th>
-                    <th style="width: 15%;" class="text-end">Unit Price</th>
-                    <th style="width: 15%;" class="text-end">Excl. Tax (Rs)</th>
+        <!-- Items Table (Two-tier Design Matching Reference) -->
+        <table class="table table-bordered mb-4" style="border-color: #CBD5E1; vertical-align: middle;">
+            <thead style="background-color: #0F3B82; color: #FFFFFF;">
+                <tr style="font-size: 11px;">
+                    <th style="background-color: #0F3B82; color: #FFFFFF; width: 4%; text-align: center; font-weight: 600;">Sr</th>
+                    <th style="background-color: #0F3B82; color: #FFFFFF; width: 12%; font-weight: 600;">HS Code</th>
+                    <th style="background-color: #0F3B82; color: #FFFFFF; width: 28%; font-weight: 600;">Description</th>
+                    <th style="background-color: #0F3B82; color: #FFFFFF; width: 6%; text-align: center; font-weight: 600;">Qty</th>
+                    <th style="background-color: #0F3B82; color: #FFFFFF; width: 10%; text-align: center; font-weight: 600;">UOM</th>
+                    <th style="background-color: #0F3B82; color: #FFFFFF; width: 13%; text-align: end; font-weight: 600;">Per Unit Price</th>
+                    <th style="background-color: #0F3B82; color: #FFFFFF; width: 13%; text-align: end; font-weight: 600;">Sub Total</th>
+                    <th style="background-color: #0F3B82; color: #FFFFFF; width: 6%; text-align: center; font-weight: 600;">Discount</th>
+                    <th style="background-color: #0F3B82; color: #FFFFFF; width: 14%; text-align: end; font-weight: 600;">Total Value</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($invoice->items as $idx => $item)
-                    <tr>
-                        <td class="text-center text-muted">{{ $idx + 1 }}</td>
+                    <!-- Row 1: Item Basic Details -->
+                    <tr style="font-size: 11.5px; background-color: #FFFFFF;">
+                        <td class="text-center text-secondary">{{ $idx + 1 }}</td>
+                        <td class="font-monospace text-dark fw-semibold">{{ $item->hs_code }}</td>
                         <td class="fw-semibold text-dark">{{ $item->product_description }}</td>
-                        <td class="text-muted"><code>{{ $item->hs_code }}</code></td>
-                        <td class="text-end">{{ number_format($item->quantity, 2) }}</td>
-                        <td>{{ $item->uom }}</td>
+                        <td class="text-center">{{ number_format($item->quantity, 0) }}</td>
+                        <td class="text-center text-secondary small">{{ $item->uom }}</td>
                         <td class="text-end">{{ number_format($item->unit_price, 2) }}</td>
-                        <td class="text-end fw-semibold">{{ number_format($item->value_excl_tax, 2) }}</td>
+                        <td class="text-end">{{ number_format($item->value_excl_tax, 2) }}</td>
+                        <td class="text-center">{{ $item->discount_amount > 0 ? number_format($item->discount_amount, 2) : '-' }}</td>
+                        <td class="text-end fw-bold" style="background-color: #FEF9C3; color: #0F172A;">
+                            {{ number_format($item->value_excl_tax - $item->discount_amount, 2) }}
+                        </td>
+                    </tr>
+                    <!-- Row 2: Sub-row for Detailed Tax Breakdown -->
+                    <tr style="font-size: 10.5px; background-color: #F8FAFC; border-bottom: 2px solid #CBD5E1;">
+                        <td colspan="9" class="py-2 px-3">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 text-secondary">
+                                <div><span class="text-muted">Sale Type:</span> <strong class="text-dark">{{ $item->sale_type ?: 'Standard' }}</strong></div>
+                                <div><span class="text-muted">SRO #:</span> <strong class="text-dark">{{ $item->sro_schedule_no ?: 'N/A' }}</strong></div>
+                                <div>
+                                    <span class="text-muted">Taxable Value:</span>
+                                    <strong class="text-dark">
+                                        @if (($item->fixed_notified_value ?? $item->retail_price) > 0)
+                                            MSRP {{ number_format($item->fixed_notified_value ?? $item->retail_price, 2) }} &times; {{ (int)$item->quantity }} = {{ number_format(($item->fixed_notified_value ?? $item->retail_price) * $item->quantity, 2) }}
+                                        @else
+                                            {{ number_format($item->value_excl_tax, 2) }}
+                                        @endif
+                                    </strong>
+                                </div>
+                                <div><span class="text-muted">GST:</span> <strong class="text-dark">{{ (float)$item->tax_rate }}% &nbsp; {{ number_format($item->sales_tax_amount, 2) }}</strong></div>
+                                <div><span class="text-muted">F.Tax:</span> <strong class="text-dark">{{ (float)$item->further_tax_rate }}% &nbsp; {{ number_format($item->further_tax_amount, 2) }}</strong></div>
+                                <div><span class="text-muted">FED:</span> <strong class="text-dark">{{ number_format($item->fed_payable_amount ?? 0, 2) }}</strong></div>
+                                <div><span class="text-muted">Extra:</span> <strong class="text-dark">{{ number_format($item->extra_tax_amount ?? 0, 2) }}</strong></div>
+                                <div class="px-2 py-1 rounded" style="background-color: #DCFCE7; color: #15803D; font-weight: 700;">
+                                    Total Tax: {{ number_format($item->sales_tax_amount + $item->further_tax_amount + ($item->extra_tax_amount ?? 0) + ($item->fed_payable_amount ?? 0), 2) }}
+                                </div>
+                                <div class="px-2 py-1 rounded" style="background-color: #DBEAFE; color: #1E40AF; font-weight: 800;">
+                                    Total + Tax: {{ number_format($item->total_value_incl_tax, 2) }}
+                                </div>
+                            </div>
+                        </td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
 
-        <!-- Summary Totals Table -->
-        <div class="row justify-content-end mb-4">
-            <div class="col-6">
-                <table class="table table-sm table-bordered">
+        <!-- Bottom Section: FBR QR Verification Container & Summary Totals -->
+        <div class="d-flex justify-content-between align-items-start mt-3 mb-4">
+            <!-- Left Side: FBR QR Code Container -->
+            <div>
+                @if (!empty($invoice->fbr_invoice_number))
+                    <div class="fbr-qr-box">
+                        <div class="d-flex align-items-center mb-2" style="color: #16A34A; font-weight: 800; font-size: 11px;">
+                            <svg class="me-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                            <span>FBR VERIFIED INVOICE</span>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            @php
+                                $qrPayload = $invoice->fbr_qr_code ?: ('https://e.fbr.gov.pk/es/VerifyInvoice.aspx?fbr_inv_no=' . urlencode($invoice->fbr_invoice_number));
+                                $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=" . urlencode($qrPayload);
+                            @endphp
+                            <img src="{{ $qrUrl }}" alt="FBR QR Code" width="110" height="110" style="border: 1px solid #CBD5E1; padding: 2px; border-radius: 4px;">
+                            <div class="ms-2 text-center" style="border: 1px solid #3B82F6; border-radius: 6px; padding: 8px 4px; background: #EFF6FF; width: 90px;">
+                                <div style="font-weight: 900; font-size: 14px; color: #1E40AF; line-height: 1;">FBR</div>
+                                <div style="font-weight: 800; font-size: 9.5px; color: #2563EB; letter-spacing: 0.5px;">DIGITAL</div>
+                                <div style="font-size: 7px; color: #475569; text-transform: uppercase;">INVOICING SYSTEM</div>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <div style="font-size: 9.5px; color: #64748B;">Scan to verify</div>
+                            <div style="font-size: 9px; font-weight: 800; font-family: monospace; color: #16A34A; word-break: break-all;">
+                                {{ $invoice->fbr_invoice_number }}
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <div style="border: 2px dashed #94A3B8; border-radius: 8px; padding: 14px; background: #F8FAFC; width: 235px; text-align: center;">
+                        <div class="text-muted fw-bold small mb-1"><i class="bi bi-clock-history me-1"></i> FBR Invoicing Pending</div>
+                        <div style="font-size: 10px; color: #64748B;">Official QR code and FBR Invoice Number will be generated when submitted to FBR.</div>
+                    </div>
+                @endif
+            </div>
+
+            <!-- Right Side: Summary Totals Card -->
+            <div style="width: 360px;">
+                <table class="table table-sm table-borderless mb-2" style="font-size: 12.5px;">
                     <tbody>
-                        <tr>
-                            <td class="text-secondary">Total Value (Excl. Tax):</td>
-                            <td class="text-end fw-semibold">Rs {{ number_format($invoice->sales_value_excl_tax, 2) }}</td>
+                        <tr style="border-bottom: 1px solid #E2E8F0;">
+                            <td class="text-secondary py-1">Total Value (Excl. Tax)</td>
+                            <td class="text-end fw-semibold text-dark py-1">{{ number_format($invoice->sales_value_excl_tax, 2) }}</td>
                         </tr>
-                        <tr>
-                            <td class="text-secondary">Sales Tax (GST @ 18%):</td>
-                            <td class="text-end fw-semibold">Rs {{ number_format($invoice->sales_tax_amount, 2) }}</td>
+                        <tr style="border-bottom: 1px solid #E2E8F0;">
+                            <td class="text-secondary py-1">Total GST</td>
+                            <td class="text-end fw-semibold text-dark py-1">{{ number_format($invoice->sales_tax_amount, 2) }}</td>
                         </tr>
                         @if ($invoice->further_tax_amount > 0)
-                            <tr>
-                                <td class="text-secondary">Further Tax (4% §3(1A)):</td>
-                                <td class="text-end fw-semibold">Rs {{ number_format($invoice->further_tax_amount, 2) }}</td>
+                            <tr style="border-bottom: 1px solid #E2E8F0;">
+                                <td class="text-secondary py-1">Total Further Tax</td>
+                                <td class="text-end fw-semibold text-dark py-1">{{ number_format($invoice->further_tax_amount, 2) }}</td>
                             </tr>
                         @endif
-                        @if ($invoice->st_withheld_amount > 0)
-                            <tr>
-                                <td class="text-secondary">ST Withheld at Source:</td>
-                                <td class="text-end fw-semibold">Rs {{ number_format($invoice->st_withheld_amount, 2) }}</td>
+                        @if (($invoice->extra_tax_amount ?? 0) > 0)
+                            <tr style="border-bottom: 1px solid #E2E8F0;">
+                                <td class="text-secondary py-1">Total Extra Tax</td>
+                                <td class="text-end fw-semibold text-dark py-1">{{ number_format($invoice->extra_tax_amount, 2) }}</td>
                             </tr>
                         @endif
-                        <tr class="table-light">
-                            <td class="fw-bold fs-6">Gross Invoice Value:</td>
-                            <td class="text-end fw-bold fs-6 text-dark">Rs {{ number_format($invoice->total_invoice_value, 2) }}</td>
-                        </tr>
+                        @if (($invoice->fed_amount ?? 0) > 0)
+                            <tr style="border-bottom: 1px solid #E2E8F0;">
+                                <td class="text-secondary py-1">Total FED</td>
+                                <td class="text-end fw-semibold text-dark py-1">{{ number_format($invoice->fed_amount, 2) }}</td>
+                            </tr>
+                        @endif
                     </tbody>
                 </table>
+
+                <!-- Solid Blue Grand Total Bar -->
+                <div class="d-flex justify-content-between align-items-center px-3 py-2 rounded mb-2" style="background-color: #0F3B82; color: #FFFFFF;">
+                    <span style="font-size: 13.5px; font-weight: 700;">Grand Total</span>
+                    <span style="font-size: 15.5px; font-weight: 800;">Rs {{ number_format($invoice->total_invoice_value, 2) }}</span>
+                </div>
+
+                <!-- Soft Red Amount Due Bar -->
+                <div class="d-flex justify-content-between align-items-center px-3 py-2 rounded" style="background-color: #FEE2E2; color: #DC2626;">
+                    <span style="font-size: 13px; font-weight: 700;">Amount Due</span>
+                    <span style="font-size: 14.5px; font-weight: 800;">Rs {{ number_format($invoice->net_receivable_amount ?: $invoice->total_invoice_value, 2) }}</span>
+                </div>
             </div>
         </div>
 
-        <!-- Footer Sign-off -->
-        <div class="border-top pt-4 mt-5 text-muted" style="font-size: 11px;">
-            <div class="row">
-                <div class="col-8">
-                    <p class="mb-1">This is a computer-generated tax invoice issued through InvoiceGO in compliance with FBR Sales Tax Rules 2006 &amp; PRAL Digital Invoicing API v1.12.</p>
-                    <p class="mb-0">Powered by <strong>InvoiceGO Multi-Tenant SaaS Platform</strong>.</p>
-                </div>
-                <div class="col-4 text-center">
-                    <div style="border-bottom: 1px solid #CBD5E1; height: 35px; margin-bottom: 6px;"></div>
-                    <div class="text-secondary">Authorized Signature &amp; Stamp</div>
-                </div>
+        <!-- Footer -->
+        <div class="d-flex justify-content-between align-items-center border-top pt-3 mt-4 text-muted" style="font-size: 10px;">
+            <div>{{ $business->name }}</div>
+            <div class="text-end">
+                Generated: {{ now()->format('d/m/Y, H:i:s') }}<br>
+                This is a computer-generated document
             </div>
         </div>
     </div>
 
 </body>
 </html>
-
