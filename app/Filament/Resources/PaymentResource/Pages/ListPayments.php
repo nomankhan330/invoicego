@@ -17,3 +17,4 @@ class ListPayments extends ListRecords
         ];
     }
 }
+

@@ -9,3 +9,4 @@ class CreatePayment extends CreateRecord
 {
     protected static string $resource = PaymentResource::class;
 }
+

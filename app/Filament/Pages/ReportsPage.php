@@ -128,3 +128,4 @@ class ReportsPage extends Page
         }, 200, $headers);
     }
 }
+

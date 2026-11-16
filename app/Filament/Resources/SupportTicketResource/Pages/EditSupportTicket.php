@@ -17,3 +17,4 @@ class EditSupportTicket extends EditRecord
         ];
     }
 }
+

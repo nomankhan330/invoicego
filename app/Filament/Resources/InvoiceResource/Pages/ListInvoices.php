@@ -14,3 +14,4 @@ class ListInvoices extends ListRecords
         return [];
     }
 }
+

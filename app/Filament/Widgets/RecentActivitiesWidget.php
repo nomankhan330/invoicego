@@ -58,3 +58,4 @@ class RecentActivitiesWidget extends BaseWidget
             ->paginated(false);
     }
 }
+

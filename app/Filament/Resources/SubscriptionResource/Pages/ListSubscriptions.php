@@ -17,3 +17,4 @@ class ListSubscriptions extends ListRecords
         ];
     }
 }
+

@@ -17,3 +17,4 @@ class EditAnnouncement extends EditRecord
         ];
     }
 }
+

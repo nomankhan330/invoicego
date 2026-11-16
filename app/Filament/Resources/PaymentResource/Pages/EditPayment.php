@@ -17,3 +17,4 @@ class EditPayment extends EditRecord
         ];
     }
 }
+

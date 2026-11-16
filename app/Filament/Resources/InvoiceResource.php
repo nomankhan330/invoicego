@@ -219,3 +219,4 @@ class InvoiceResource extends Resource
         ];
     }
 }
+

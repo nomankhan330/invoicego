@@ -42,3 +42,4 @@ class Announcement extends Model
             });
     }
 }
+

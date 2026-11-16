@@ -17,3 +17,4 @@ class ListAnnouncements extends ListRecords
         ];
     }
 }
+

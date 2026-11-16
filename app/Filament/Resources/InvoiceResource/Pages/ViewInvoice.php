@@ -15,3 +15,4 @@ class ViewInvoice extends ViewRecord
         return [];
     }
 }
+

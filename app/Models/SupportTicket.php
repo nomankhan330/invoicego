@@ -55,3 +55,4 @@ class SupportTicket extends Model
         return $this->belongsTo(User::class, 'replied_by');
     }
 }
+

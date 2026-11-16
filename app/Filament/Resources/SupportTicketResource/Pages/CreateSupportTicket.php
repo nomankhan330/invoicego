@@ -9,3 +9,4 @@ class CreateSupportTicket extends CreateRecord
 {
     protected static string $resource = SupportTicketResource::class;
 }
+

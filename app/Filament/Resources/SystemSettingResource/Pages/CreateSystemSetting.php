@@ -9,3 +9,4 @@ class CreateSystemSetting extends CreateRecord
 {
     protected static string $resource = SystemSettingResource::class;
 }
+

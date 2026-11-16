@@ -208,4 +208,27 @@ class AdminPanelAndSpecificationTest extends TestCase
 
         $response->assertSessionHas('success');
     }
+
+    public function test_admin_login_redirect_and_session_persistence(): void
+    {
+        // 1. Direct login via AuthController should redirect super admin to /admin
+        $loginResponse = $this->post('/login', [
+            'email' => 'admininvoicego@gmail.com',
+            'password' => 'AdminPass123!',
+        ]);
+
+        $loginResponse->assertRedirect('/admin');
+        $this->assertAuthenticatedAs($this->admin);
+
+        // 2. Follow-up request to admin dashboard remains authenticated
+        $dashboardResponse = $this->actingAs($this->admin)->get('/admin');
+        $dashboardResponse->assertStatus(200);
+
+        // 3. Subsequent navigation to admin resources retains authentication without logout
+        $usersResponse = $this->actingAs($this->admin)->get('/admin/users');
+        $usersResponse->assertStatus(200);
+
+        $subsResponse = $this->actingAs($this->admin)->get('/admin/subscriptions');
+        $subsResponse->assertStatus(200);
+    }
 }

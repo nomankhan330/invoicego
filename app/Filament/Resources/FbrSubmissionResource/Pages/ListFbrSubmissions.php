@@ -14,3 +14,4 @@ class ListFbrSubmissions extends ListRecords
         return [];
     }
 }
+

@@ -14,3 +14,4 @@ class ViewActivityLog extends ViewRecord
         return [];
     }
 }
+

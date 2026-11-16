@@ -191,3 +191,4 @@ class PaymentResource extends Resource
         ];
     }
 }
+

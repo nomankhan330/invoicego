@@ -40,8 +40,8 @@ class AuthController extends Controller
                 return back()->withErrors(['email' => 'Your user account has been suspended by administration.']);
             }
 
-            // If user is super admin and visits /admin
-            if ($user->is_super_admin && !$user->businesses()->exists()) {
+            // If user is super admin, redirect to Admin Panel
+            if ($user->is_super_admin) {
                 return redirect()->intended('/admin');
             }
 

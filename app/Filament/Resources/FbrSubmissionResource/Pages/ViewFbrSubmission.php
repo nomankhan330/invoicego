@@ -14,3 +14,4 @@ class ViewFbrSubmission extends ViewRecord
         return [];
     }
 }
+

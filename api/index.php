@@ -20,11 +20,16 @@ try {
         }
     }
 
-    // 2. Prepare writable SQLite database in /tmp
+    // 2. Prepare writable SQLite database in /tmp from pre-seeded template
     $dbFile = '/tmp/database.sqlite';
-    $isNewDb = !file_exists($dbFile) || filesize($dbFile) === 0;
-    if ($isNewDb) {
-        @touch($dbFile);
+    $seededTemplate = __DIR__ . '/../database/database.sqlite';
+
+    if (!file_exists($dbFile) || filesize($dbFile) === 0) {
+        if (file_exists($seededTemplate) && filesize($seededTemplate) > 0) {
+            @copy($seededTemplate, $dbFile);
+        } else {
+            @touch($dbFile);
+        }
         @chmod($dbFile, 0666);
     }
 
@@ -32,7 +37,7 @@ try {
     $bootstrapCache = '/tmp/bootstrap/cache';
     $envOverrides = [
         'APP_ENV' => getenv('APP_ENV') ?: 'production',
-        'APP_DEBUG' => getenv('APP_DEBUG') ?: 'false',
+        'APP_DEBUG' => getenv('APP_DEBUG') ?: 'true',
         'APP_KEY' => getenv('APP_KEY') ?: 'base64:thVoqnDOi6ATwz6gx/uIiEul1sfNELiQx5N4o+HBAHE=',
         'APP_STORAGE' => '/tmp/storage',
         'APP_PACKAGES_CACHE' => $bootstrapCache . '/packages.php',
@@ -70,12 +75,12 @@ try {
     $app = require_once __DIR__ . '/../bootstrap/app.php';
     $app->useStoragePath('/tmp/storage');
 
-    // 5. Run migrations & seed super-admin on cold start if SQLite database is fresh or unseeded
+    // 5. Ensure database is functional (failsafe only if template copy failed or tables missing)
     if (getenv('DB_CONNECTION') === 'sqlite' || !getenv('DB_CONNECTION')) {
         try {
-            $kernel = $app->make(\Illuminate\Contracts\Console\Kernel::class);
-            $kernel->call('migrate', ['--force' => true]);
-            if (!\App\Models\User::where('email', 'admin@invoicego.pk')->exists()) {
+            if (!\Illuminate\Support\Facades\Schema::hasTable('users')) {
+                $kernel = $app->make(\Illuminate\Contracts\Console\Kernel::class);
+                $kernel->call('migrate', ['--force' => true]);
                 $kernel->call('db:seed', ['--force' => true]);
             }
         } catch (\Throwable $e) {
