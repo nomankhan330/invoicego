@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\ActivityLog;
 use App\Models\Announcement;
 use App\Models\Business;
 use App\Models\Customer;
@@ -273,6 +274,71 @@ class DatabaseSeeder extends Seeder
             SystemSetting::firstOrCreate(
                 ['key' => $key],
                 ['value' => $val, 'group' => 'general', 'type' => 'string']
+            );
+        }
+
+        // 12. Seed Activity Logs
+        $logs = [
+            [
+                'business_id' => $demoBusiness->id,
+                'user_id' => $primaryAdmin->id,
+                'action' => 'login',
+                'description' => 'Super Administrator (admininvoicego@gmail.com) authenticated successfully.',
+                'properties' => ['browser' => 'Chrome', 'os' => 'Windows', 'panel' => 'admin'],
+                'ip_address' => '127.0.0.1',
+                'created_at' => now()->subHours(5),
+            ],
+            [
+                'business_id' => $demoBusiness->id,
+                'user_id' => $primaryAdmin->id,
+                'action' => 'business_approved',
+                'description' => "Business 'OC1' (NTN: 1234125) approved for Sandbox testing.",
+                'properties' => ['status' => 'approved', 'reviewed_by' => 'InvoiceGO Super Admin'],
+                'ip_address' => '127.0.0.1',
+                'created_at' => now()->subHours(4),
+            ],
+            [
+                'business_id' => $demoBusiness->id,
+                'user_id' => $primaryAdmin->id,
+                'action' => 'payment_verified',
+                'description' => 'Verified initial subscription activation payment of Rs 5,000.00 (Ref: TXN-INVGO-202601).',
+                'properties' => ['amount' => 5000, 'method' => 'Bank Transfer'],
+                'ip_address' => '127.0.0.1',
+                'created_at' => now()->subHours(3),
+            ],
+            [
+                'business_id' => $demoBusiness->id,
+                'user_id' => $demoUser->id,
+                'action' => 'sandbox_scenario_run',
+                'description' => 'Executed Sandbox Qualification Scenario SN001 - Standard Rate Goods Supply.',
+                'properties' => ['scenario_code' => 'SN001', 'status' => 'passed'],
+                'ip_address' => '127.0.0.1',
+                'created_at' => now()->subHours(2),
+            ],
+            [
+                'business_id' => $demoBusiness->id,
+                'user_id' => $demoUser->id,
+                'action' => 'invoice_created',
+                'description' => 'Invoice INV-202601-0001 created for Apex Logistics Pvt Ltd (Total: Rs 449,000.00).',
+                'properties' => ['invoice_number' => 'INV-202601-0001', 'total' => 449000],
+                'ip_address' => '127.0.0.1',
+                'created_at' => now()->subHour(),
+            ],
+            [
+                'business_id' => $demoBusiness->id,
+                'user_id' => $demoUser->id,
+                'action' => 'fbr_submission',
+                'description' => 'Invoice INV-202601-0001 accepted by FBR DI API (FBR #: 6110196137679DIABSXED179925).',
+                'properties' => ['fbr_invoice_number' => '6110196137679DIABSXED179925', 'result' => 'ACCEPTED'],
+                'ip_address' => '127.0.0.1',
+                'created_at' => now()->subMinutes(30),
+            ],
+        ];
+
+        foreach ($logs as $log) {
+            ActivityLog::firstOrCreate(
+                ['description' => $log['description']],
+                $log
             );
         }
     }

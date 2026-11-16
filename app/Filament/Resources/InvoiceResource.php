@@ -18,7 +18,7 @@ class InvoiceResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $navigationLabel = 'Invoice Management';
-    protected static ?string $navigationGroup = 'Invoices & FBR Integration';
+    protected static ?string $navigationGroup = 'Invoices & FBR';
     protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form

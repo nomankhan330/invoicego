@@ -16,8 +16,8 @@ class ActivityLogResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-shield-check';
     protected static ?string $navigationLabel = 'Security & Audit Logs';
-    protected static ?string $navigationGroup = 'System & Security';
-    protected static ?int $navigationSort = 2;
+    protected static ?string $navigationGroup = 'System & Support';
+    protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form
     {

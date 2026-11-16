@@ -17,7 +17,7 @@ class SupportTicketResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-left-right';
     protected static ?string $navigationLabel = 'Customer Support';
-    protected static ?string $navigationGroup = 'Support & Communication';
+    protected static ?string $navigationGroup = 'System & Support';
     protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form

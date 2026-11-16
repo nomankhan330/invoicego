@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Customer;
 use App\Services\Contracts\FbrIntegrationServiceInterface;
 use App\Services\Contracts\TenantServiceInterface;
@@ -99,6 +100,12 @@ class CustomerController extends Controller
             'fbr_verification_status' => 'verified',
         ]);
 
+        ActivityLog::record('customer_created', "Added customer '{$customer->name}' ({$customer->registration_type}).", [
+            'customer_name' => $customer->name,
+            'registration_type' => $customer->registration_type,
+            'ntn_cnic' => $customer->ntn_cnic,
+        ], $business->id);
+
         return redirect()->route('tenant.customers.index')
             ->with('success', "Customer '{$customer->name}' added successfully.");
     }
@@ -147,6 +154,11 @@ class CustomerController extends Controller
             'email' => $validated['email'] ?? null,
         ]);
 
+        ActivityLog::record('customer_updated', "Updated customer '{$customer->name}'.", [
+            'customer_name' => $customer->name,
+            'ntn_cnic' => $customer->ntn_cnic,
+        ], $business->id);
+
         return redirect()->route('tenant.customers.index')
             ->with('success', "Customer '{$customer->name}' updated successfully.");
     }
@@ -157,6 +169,8 @@ class CustomerController extends Controller
         $customer = $business->customers()->findOrFail($id);
         $name = $customer->name;
         $customer->delete();
+
+        ActivityLog::record('customer_deleted', "Deleted customer '{$name}'.", null, $business->id);
 
         return redirect()->route('tenant.customers.index')
             ->with('success', "Customer '{$name}' deleted.");

@@ -18,7 +18,7 @@ class FbrSubmissionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-signal';
     protected static ?string $navigationLabel = 'FBR / PRAL Integration';
-    protected static ?string $navigationGroup = 'Invoices & FBR Integration';
+    protected static ?string $navigationGroup = 'Invoices & FBR';
     protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form

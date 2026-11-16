@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\SandboxScenario;
 use App\Services\Contracts\FbrIntegrationServiceInterface;
 use App\Services\Contracts\TenantServiceInterface;
@@ -40,6 +41,11 @@ class SandboxScenarioController extends Controller
         }
 
         $result = $this->fbrService->runSandboxScenario($business, $scenario, $customPayload);
+
+        ActivityLog::record('sandbox_scenario_run', "Executed Sandbox Scenario {$scenario->scenario_code} - {$scenario->title}.", [
+            'scenario_code' => $scenario->scenario_code,
+            'result' => $result['status'] ?? 'passed',
+        ], $business->id);
 
         return back()->with('success', "Scenario {$scenario->scenario_code} executed and verified by PRAL sandbox validator!");
     }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Business;
 use App\Services\Contracts\TenantServiceInterface;
 use Illuminate\Http\Request;
@@ -42,10 +43,19 @@ class AuthController extends Controller
 
             // If user is super admin, redirect to Admin Panel
             if ($user->is_super_admin) {
+                ActivityLog::record('login', "Super Admin ({$user->email}) logged into InvoiceGO.", [
+                    'email' => $user->email,
+                    'is_super_admin' => true,
+                ], null, $user->id);
                 return redirect()->intended('/admin');
             }
 
             $business = $this->tenantService->getActiveBusiness();
+
+            ActivityLog::record('login', "User {$user->email} logged in successfully.", [
+                'email' => $user->email,
+                'business_id' => $business?->id,
+            ], $business?->id, $user->id);
 
             if ($business && $business->isPending()) {
                 return redirect()->route('tenant.pending');
@@ -108,6 +118,12 @@ class AuthController extends Controller
 
         $business = $this->tenantService->registerBusiness($userData, $businessData);
 
+        ActivityLog::record('register', "New business registration submitted: {$business->name} (NTN: {$business->ntn_cnic}) by {$userData['email']}.", [
+            'business_name' => $business->name,
+            'ntn_cnic' => $business->ntn_cnic,
+            'email' => $userData['email'],
+        ], $business->id);
+
         // Auto login owner
         if (!Auth::check()) {
             Auth::attempt([
@@ -121,6 +137,10 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        if ($user = Auth::user()) {
+            ActivityLog::record('logout', "User {$user->email} logged out.", null, null, $user->id);
+        }
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
@@ -172,6 +192,12 @@ class AuthController extends Controller
                 'status' => 'approved',
                 'approved_at' => now(),
             ]);
+
+            ActivityLog::record('business_approved', "Business '{$business->name}' (NTN: {$business->ntn_cnic}) was approved by administrator.", [
+                'business_name' => $business->name,
+                'status' => 'approved',
+            ], $business->id);
+
             return redirect()->route('tenant.dashboard')->with('success', "Business '{$business->name}' has been approved! Welcome to your InvoiceGO Dashboard.");
         }
 

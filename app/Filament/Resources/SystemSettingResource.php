@@ -16,8 +16,8 @@ class SystemSettingResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
     protected static ?string $navigationLabel = 'System Settings';
-    protected static ?string $navigationGroup = 'System & Security';
-    protected static ?int $navigationSort = 1;
+    protected static ?string $navigationGroup = 'System & Support';
+    protected static ?int $navigationSort = 4;
 
     public static function form(Form $form): Form
     {

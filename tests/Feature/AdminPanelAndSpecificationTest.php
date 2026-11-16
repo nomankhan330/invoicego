@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ActivityLog;
 use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Invoice;
@@ -232,5 +233,33 @@ class AdminPanelAndSpecificationTest extends TestCase
 
         $subsResponse = $this->actingAs($this->admin)->get('/admin/subscriptions');
         $subsResponse->assertStatus(200);
+    }
+
+    public function test_activity_logs_recorded_and_visible_in_admin(): void
+    {
+        // 1. Logging in creates an activity log
+        $this->post('/login', [
+            'email' => 'regular@example.com',
+            'password' => 'Password123!',
+        ]);
+
+        $this->assertDatabaseHas('activity_logs', [
+            'action' => 'login',
+            'user_id' => $this->regularUser->id,
+        ]);
+
+        // 2. Direct recording test
+        ActivityLog::record('test_action', 'Test description for security audit.', ['meta' => 123], $this->business->id, $this->admin->id);
+
+        $this->assertDatabaseHas('activity_logs', [
+            'action' => 'test_action',
+            'description' => 'Test description for security audit.',
+        ]);
+
+        // 3. Admin can view activity logs list
+        $logsResponse = $this->actingAs($this->admin)->get('/admin/activity-logs');
+        $logsResponse->assertStatus(200);
+        $logsResponse->assertSee('Security & Audit Logs');
+        $logsResponse->assertSee('Test description for security audit.');
     }
 }

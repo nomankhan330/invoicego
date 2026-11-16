@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Customer;
 use App\Models\HsCode;
 use App\Models\Invoice;
@@ -311,13 +312,28 @@ class InvoiceController extends Controller
 
         $invoice = $this->invoiceService->createInvoice($validated, $business, Auth::id());
 
+        ActivityLog::record('invoice_created', "Invoice {$invoice->invoice_number} created as {$invoice->status} (Total: Rs " . number_format($invoice->total_invoice_value, 2) . ").", [
+            'invoice_number' => $invoice->invoice_number,
+            'status' => $invoice->status,
+            'buyer_name' => $invoice->buyer_name,
+            'total' => $invoice->total_invoice_value,
+        ], $business->id);
+
         // Check if user clicked "Submit to FBR immediately"
         if ($request->has('submit_to_fbr') || $request->input('action') === 'submit') {
             $fbrResult = $this->fbrService->submitInvoice($invoice);
             if ($fbrResult['success']) {
+                ActivityLog::record('fbr_submission', "Invoice {$invoice->invoice_number} successfully submitted to FBR (FBR #: {$fbrResult['fbr_invoice_number']}).", [
+                    'invoice_number' => $invoice->invoice_number,
+                    'fbr_invoice_number' => $fbrResult['fbr_invoice_number'],
+                ], $business->id);
                 return redirect()->route('tenant.invoices.show', $invoice->uuid)
                     ->with('success', "Invoice accepted by FBR! FBR Invoice Number: {$fbrResult['fbr_invoice_number']}");
             } else {
+                ActivityLog::record('fbr_failure', "Invoice {$invoice->invoice_number} FBR submission failed.", [
+                    'invoice_number' => $invoice->invoice_number,
+                    'errors' => $fbrResult['errors'] ?? [],
+                ], $business->id);
                 return redirect()->route('tenant.invoices.show', $invoice->uuid)
                     ->with('error', "FBR Submission failed: " . implode('; ', $fbrResult['errors'] ?? []));
             }
@@ -668,6 +684,10 @@ class InvoiceController extends Controller
         $num = $invoice->invoice_number;
         $this->invoiceService->deleteInvoice($invoice);
 
+        ActivityLog::record('invoice_deleted', "Draft invoice {$num} was deleted.", [
+            'invoice_number' => $num,
+        ], $business->id);
+
         return redirect()->route('tenant.invoices.index')
             ->with('success', "Invoice '{$num}' deleted.");
     }
@@ -873,6 +893,12 @@ class InvoiceController extends Controller
         if ($submitToFbr) {
             $msg .= " ({$submittedCount} submitted and accepted by FBR).";
         }
+
+        ActivityLog::record('bulk_invoice_upload', $msg, [
+            'imported_count' => $importedCount,
+            'submitted_to_fbr' => $submitToFbr,
+            'fbr_accepted_count' => $submittedCount,
+        ], $business->id);
 
         return redirect()->route('tenant.invoices.index')->with('success', $msg);
     }

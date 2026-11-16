@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\HsCode;
 use App\Models\Product;
 use App\Services\Contracts\TenantServiceInterface;
@@ -82,6 +83,12 @@ class ProductController extends Controller
             'is_active' => true,
         ]);
 
+        ActivityLog::record('product_created', "Created product {$product->sku} ({$product->name}).", [
+            'sku' => $product->sku,
+            'hs_code' => $product->hs_code,
+            'unit_price' => $product->unit_price,
+        ], $business->id);
+
         return redirect()->route('tenant.products.index')
             ->with('success', "Product '{$product->sku}' added successfully.");
     }
@@ -121,6 +128,11 @@ class ProductController extends Controller
             'retail_price' => $validated['retail_price'] ?? null,
         ]);
 
+        ActivityLog::record('product_updated', "Updated product {$product->sku}.", [
+            'sku' => $product->sku,
+            'unit_price' => $product->unit_price,
+        ], $business->id);
+
         return redirect()->route('tenant.products.index')
             ->with('success', "Product '{$product->sku}' updated successfully.");
     }
@@ -131,6 +143,8 @@ class ProductController extends Controller
         $product = $business->products()->findOrFail($id);
         $sku = $product->sku;
         $product->delete();
+
+        ActivityLog::record('product_deleted', "Deleted product {$sku}.", null, $business->id);
 
         return redirect()->route('tenant.products.index')
             ->with('success', "Product '{$sku}' deleted.");
