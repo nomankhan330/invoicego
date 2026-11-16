@@ -27,8 +27,23 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->brandName('InvoiceGO Admin')
+            ->brandLogo(fn () => view('filament.components.brand-logo'))
+            ->brandLogoHeight('2rem')
+            ->font('Inter')
             ->colors([
-                'primary' => Color::Indigo,
+                'primary' => [
+                    50 => '#EEF2FF',
+                    100 => '#E0E7FF',
+                    200 => '#C7D2FE',
+                    300 => '#A5B4FC',
+                    400 => '#818CF8',
+                    500 => '#5850EC', // InvoiceGO Brand Primary
+                    600 => '#4F46E5',
+                    700 => '#4338CA',
+                    800 => '#3730A3',
+                    900 => '#312E81',
+                    950 => '#1E1B4B',
+                ],
                 'gray' => Color::Slate,
                 'info' => Color::Sky,
                 'success' => Color::Emerald,
@@ -39,11 +54,32 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 \Filament\View\PanelsRenderHook::HEAD_END,
                 fn (): string => '
+                    <!-- InvoiceGO Fonts & Design System Styling -->
+                    <link rel="preconnect" href="https://fonts.googleapis.com">
+                    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
                     <style>
-                        /* Streamlined, Compact Premium Sidebar Without Scrollbar */
+                        :root {
+                            --ig-purple-primary: #5850EC;
+                            --ig-purple-hover: #4F46E5;
+                            --ig-purple-light: #EEF2FF;
+                            --ig-bg-light: #F8FAFC;
+                            --ig-card-border: #E2E8F0;
+                        }
+
+                        body, .fi-body {
+                            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+                            -webkit-font-smoothing: antialiased !important;
+                        }
+
+                        /* Streamlined, Compact Premium Sidebar (Matching InvoiceGO Tenant Portal) */
                         .fi-sidebar {
                             scrollbar-width: none !important;
                             -ms-overflow-style: none !important;
+                            border-right-color: #F1F5F9 !important;
+                        }
+                        .dark .fi-sidebar {
+                            border-right-color: #1E293B !important;
                         }
                         .fi-sidebar::-webkit-scrollbar {
                             display: none !important;
@@ -74,30 +110,138 @@ class AdminPanelProvider extends PanelProvider
                         }
                         .fi-sidebar-group-label {
                             font-size: 0.65rem !important;
-                            font-weight: 800 !important;
+                            font-weight: 700 !important;
                             letter-spacing: 0.08em !important;
                             text-transform: uppercase !important;
-                            opacity: 0.75 !important;
+                            color: #94A3B8 !important;
+                            margin-top: 0.35rem !important;
                         }
+
+                        /* Sidebar Item Buttons Styled Like InvoiceGO .nav-link-ig */
                         .fi-sidebar-item-button {
-                            padding: 0.35rem 0.625rem !important;
-                            border-radius: 0.5rem !important;
-                            font-size: 0.8125rem !important;
+                            padding: 0.4rem 0.65rem !important;
+                            border-radius: 8px !important;
+                            font-size: 13.5px !important;
+                            font-weight: 500 !important;
+                            color: #475569 !important;
                             transition: all 0.15s ease !important;
                         }
+                        .dark .fi-sidebar-item-button {
+                            color: #94A3B8 !important;
+                        }
                         .fi-sidebar-item-button:hover {
+                            color: #5850EC !important;
+                            background-color: #F8FAFC !important;
                             transform: translateX(2px) !important;
                         }
-                        .fi-sidebar-item-icon {
-                            width: 1.125rem !important;
-                            height: 1.125rem !important;
+                        .dark .fi-sidebar-item-button:hover {
+                            color: #A5B4FC !important;
+                            background-color: rgba(88, 80, 236, 0.12) !important;
                         }
+
+                        /* Active Item (Matching InvoiceGO Tenant Sidebar Active State) */
+                        .fi-sidebar-item.fi-active .fi-sidebar-item-button {
+                            background-color: #EEF2FF !important;
+                            color: #5850EC !important;
+                            font-weight: 600 !important;
+                        }
+                        .dark .fi-sidebar-item.fi-active .fi-sidebar-item-button {
+                            background-color: rgba(88, 80, 236, 0.22) !important;
+                            color: #A5B4FC !important;
+                        }
+                        .fi-sidebar-item.fi-active .fi-sidebar-item-icon {
+                            color: #5850EC !important;
+                        }
+                        .dark .fi-sidebar-item.fi-active .fi-sidebar-item-icon {
+                            color: #A5B4FC !important;
+                        }
+
+                        .fi-sidebar-item-icon {
+                            width: 1.15rem !important;
+                            height: 1.15rem !important;
+                            color: #64748B !important;
+                            transition: color 0.15s ease !important;
+                        }
+
                         .fi-sidebar-header {
-                            height: 3.5rem !important;
-                            padding-left: 1rem !important;
-                            padding-right: 1rem !important;
+                            height: 4rem !important;
+                            padding-left: 1.25rem !important;
+                            padding-right: 1.25rem !important;
+                            border-bottom: 1px solid #F1F5F9 !important;
+                        }
+                        .dark .fi-sidebar-header {
+                            border-bottom-color: #1E293B !important;
+                        }
+
+                        /* Topbar Matching InvoiceGO Tenant Topbar */
+                        .fi-topbar {
+                            height: 4rem !important;
+                            border-bottom: 1px solid #F1F5F9 !important;
+                        }
+                        .dark .fi-topbar {
+                            border-bottom-color: #1E293B !important;
+                        }
+
+                        /* Main Content Background */
+                        .fi-main-ctn {
+                            background-color: #F8FAFC !important;
+                        }
+                        .dark .fi-main-ctn {
+                            background-color: #0B1120 !important;
+                        }
+
+                        /* Cards & Sections Rounded Style */
+                        .fi-section, .fi-ta-ctn {
+                            border-radius: 12px !important;
+                            border-color: #E2E8F0 !important;
+                            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+                        }
+                        .dark .fi-section, .dark .fi-ta-ctn {
+                            border-color: #1E293B !important;
+                        }
+
+                        /* Primary Buttons Matching .btn-ig-primary */
+                        .fi-btn-primary {
+                            background-color: #5850EC !important;
+                            border-radius: 8px !important;
+                            font-weight: 600 !important;
+                            transition: all 0.2s ease !important;
+                        }
+                        .fi-btn-primary:hover {
+                            background-color: #4F46E5 !important;
+                            box-shadow: 0 4px 12px rgba(88, 80, 236, 0.25) !important;
+                        }
+
+                        /* Table Header Styling */
+                        .fi-ta-header-cell {
+                            background-color: #F8FAFC !important;
+                            font-size: 11px !important;
+                            font-weight: 700 !important;
+                            letter-spacing: 0.05em !important;
+                            text-transform: uppercase !important;
+                            color: #475569 !important;
+                        }
+                        .dark .fi-ta-header-cell {
+                            background-color: #0F172A !important;
+                            color: #94A3B8 !important;
+                        }
+
+                        /* User Menu Avatar Matching Tenant Portal */
+                        .fi-user-avatar {
+                            background-color: #5850EC !important;
+                            color: #FFFFFF !important;
+                            font-weight: 700 !important;
                         }
                     </style>
+                '
+            )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::TOPBAR_START,
+                fn (): string => '
+                    <div class="hidden lg:flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 pl-2">
+                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span style="font-size: 12px;">Times shown in Pakistan Standard Time (Asia/Karachi)</span>
+                    </div>
                 '
             )
             ->renderHook(
