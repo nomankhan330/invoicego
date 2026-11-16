@@ -35,6 +35,11 @@ class AdminPanelProvider extends PanelProvider
                 'warning' => Color::Amber,
                 'danger' => Color::Rose,
             ])
+            ->darkMode(true)
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::USER_MENU_BEFORE,
+                fn (): string => \Illuminate\Support\Facades\Blade::render('<div class="mr-2 flex items-center"><x-filament-panels::theme-switcher /></div>')
+            )
             ->sidebarCollapsibleOnDesktop()
             ->navigationGroups([
                 'Overview',

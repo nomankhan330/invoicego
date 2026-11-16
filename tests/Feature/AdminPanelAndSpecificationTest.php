@@ -115,6 +115,8 @@ class AdminPanelAndSpecificationTest extends TestCase
         $response->assertSee('User Registrations');
         $response->assertSee('Subscription Status');
         $response->assertSee('Export User Report (CSV)');
+        $response->assertSee('rp-card');
+        $response->assertSee('rp-theme-toggle');
     }
 
     public function test_registered_unregistered_mismatch_error_handling(): void
