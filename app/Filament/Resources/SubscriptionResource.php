@@ -34,17 +34,69 @@ class SubscriptionResource extends Resource
                             ->searchable()
                             ->required(),
 
-                        Forms\Components\TextInput::make('plan_name')
+                        Forms\Components\Hidden::make('pricing_plan_id'),
+
+                        Forms\Components\Select::make('plan_name')
                             ->label('Plan Name')
-                            ->default('Monthly Professional')
-                            ->required(),
+                            ->options(function (?Subscription $record) {
+                                $options = [];
+                                try {
+                                    $plans = \App\Models\PricingPlan::ordered()->get();
+                                    foreach ($plans as $plan) {
+                                        $options[$plan->name] = "{$plan->name} ({$plan->price})";
+                                    }
+                                } catch (\Throwable) {}
+
+                                if ($record && !empty($record->plan_name) && !isset($options[$record->plan_name])) {
+                                    $options[$record->plan_name] = $record->plan_name;
+                                }
+
+                                if (empty($options)) {
+                                    $options = [
+                                        'Starter' => 'Starter (PKR 2,500)',
+                                        'Professional' => 'Professional (PKR 5,000)',
+                                        'Enterprise' => 'Enterprise (Custom)',
+                                    ];
+                                }
+
+                                return $options;
+                            })
+                            ->default('Professional')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->live()
+                            ->hintAction(
+                                Forms\Components\Actions\Action::make('managePlans')
+                                    ->label('Manage Plans')
+                                    ->icon('heroicon-m-arrow-top-right-on-square')
+                                    ->url(fn () => route('filament.admin.resources.pricing-plans.index'))
+                                    ->openUrlInNewTab()
+                            )
+                            ->afterStateUpdated(function (Forms\Set $set, ?string $state) {
+                                if ($state) {
+                                    try {
+                                        $plan = \App\Models\PricingPlan::where('name', $state)->first();
+                                        if ($plan) {
+                                            $set('pricing_plan_id', $plan->id);
+                                            if (preg_match('/([\d,]+)/', $plan->price, $matches)) {
+                                                $cleaned = (float) str_replace(',', '', $matches[1]);
+                                                if ($cleaned > 0) {
+                                                    $set('monthly_fee', $cleaned);
+                                                }
+                                            }
+                                        }
+                                    } catch (\Throwable) {}
+                                }
+                            }),
 
                         Forms\Components\TextInput::make('monthly_fee')
                             ->label('Monthly Fee (PKR)')
                             ->numeric()
                             ->prefix('PKR')
                             ->default(5000.00)
-                            ->required(),
+                            ->required()
+                            ->helperText('Auto-filled from chosen Pricing Plan, or specify custom fee.'),
 
                         Forms\Components\Select::make('status')
                             ->options([
@@ -90,7 +142,10 @@ class SubscriptionResource extends Resource
                 Tables\Columns\TextColumn::make('plan_name')
                     ->label('Plan')
                     ->badge()
-                    ->color('primary'),
+                    ->color('primary')
+                    ->url(fn (Subscription $record) => $record->pricing_plan_id ? route('filament.admin.resources.pricing-plans.edit', ['record' => $record->pricing_plan_id]) : null)
+                    ->openUrlInNewTab()
+                    ->tooltip('Click to view/edit plan definition'),
 
                 Tables\Columns\TextColumn::make('monthly_fee')
                     ->label('Fee')

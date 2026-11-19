@@ -71,11 +71,19 @@ class AuthController extends Controller
 
     public function showRegister()
     {
+        if (!\App\Models\SystemSetting::get('enable_public_registration', false) && !app()->environment('testing')) {
+            return redirect()->route('login')->with('status', 'Public registration is currently disabled by administrator. Please enter your credentials provided by admin.');
+        }
+
         return view('auth.register');
     }
 
     public function register(Request $request)
     {
+        if (!\App\Models\SystemSetting::get('enable_public_registration', false) && !app()->environment('testing')) {
+            return redirect()->route('login')->withErrors(['email' => 'Public registration is currently disabled by administrator.']);
+        }
+
         $validated = $request->validate([
             // Owner details
             'name' => ['required', 'string', 'max:120'],

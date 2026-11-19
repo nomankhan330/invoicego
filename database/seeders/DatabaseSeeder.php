@@ -268,13 +268,140 @@ class DatabaseSeeder extends Seeder
             'payment_account_iban' => 'PK42MEZN0001234567890123',
             'backup_frequency' => 'Daily at 02:00 AM PST',
             'backup_retention_days' => '30',
+            'enable_public_registration' => '0',
+            'show_pricing_plans' => '1',
+            'show_faq_section' => '1',
         ];
 
         foreach ($settings as $key => $val) {
             SystemSetting::firstOrCreate(
                 ['key' => $key],
-                ['value' => $val, 'group' => 'general', 'type' => 'string']
+                ['value' => $val, 'group' => 'general', 'type' => in_array($key, ['enable_public_registration', 'show_pricing_plans', 'show_faq_section']) ? 'boolean' : 'string']
             );
+        }
+
+        // 11b. Seed Website Pricing Plans
+        $plans = [
+            [
+                'name' => 'Starter',
+                'slug' => 'starter',
+                'tagline' => 'Ideal for small traders and new businesses.',
+                'price' => 'PKR 2,500',
+                'billing_period' => '/month',
+                'features' => [
+                    'Up to 250 Invoices / mo',
+                    'Real-time FBR API Sync',
+                    'A4 Verified PDF Invoices',
+                    'Standard Email Support',
+                ],
+                'button_text' => 'Get Started',
+                'button_action' => 'register',
+                'is_popular' => false,
+                'sort_order' => 1,
+            ],
+            [
+                'name' => 'Professional',
+                'slug' => 'professional',
+                'tagline' => 'For distributors and growing enterprises.',
+                'price' => 'PKR 5,000',
+                'billing_period' => '/month',
+                'features' => [
+                    'Up to 2,500 Invoices / mo',
+                    'Bulk Excel / CSV Upload',
+                    'All 28 Sandbox Scenarios',
+                    'Multi-User Staff Access',
+                    'Priority WhatsApp Support',
+                ],
+                'button_text' => 'Start 14-Day Free Trial',
+                'button_action' => 'register',
+                'is_popular' => true,
+                'sort_order' => 2,
+            ],
+            [
+                'name' => 'Enterprise',
+                'slug' => 'enterprise',
+                'tagline' => 'Custom integration for high-volume POS & ERP.',
+                'price' => 'Custom',
+                'billing_period' => '/volume',
+                'features' => [
+                    'Unlimited Monthly Invoices',
+                    'Direct ERP / POS Webhooks',
+                    'Dedicated Account Manager',
+                    '99.9% Guaranteed SLA',
+                ],
+                'button_text' => 'Contact Sales',
+                'button_action' => 'contact',
+                'is_popular' => false,
+                'sort_order' => 3,
+            ],
+        ];
+
+        foreach ($plans as $planData) {
+            \App\Models\PricingPlan::firstOrCreate(['slug' => $planData['slug']], $planData);
+        }
+
+        // 11c. Seed Website FAQs
+        $faqs = [
+            [
+                'question' => 'What is InvoiceGO?',
+                'answer' => "InvoiceGO is Pakistan's leading cloud-based digital sales invoicing and FBR integration platform. It enables businesses to prepare, validate, electronically transmit, and archive sales invoices in 100% compliance with official FBR Digital Invoicing (DI) API v1.12 regulations.",
+                'category' => 'General',
+                'sort_order' => 1,
+                'is_active' => true,
+            ],
+            [
+                'question' => 'What is FBR Digital Invoicing?',
+                'answer' => "FBR Digital Invoicing is the electronic transmission of sales tax invoices from registered taxpayers to the Federal Board of Revenue's centralized system in real time. Each accepted invoice receives a unique FBR Invoice Number and verified QR code.",
+                'category' => 'FBR Integration',
+                'sort_order' => 2,
+                'is_active' => true,
+            ],
+            [
+                'question' => 'How can I create an account?',
+                'answer' => "Click on \"Get Started\" or \"Create Account\". Enter your business details, legal name, NTN or CNIC, STRN (if applicable), and province. Your workspace is configured immediately with full sandbox testing access.",
+                'category' => 'Account & Billing',
+                'sort_order' => 3,
+                'is_active' => true,
+            ],
+            [
+                'question' => 'Can I manage multiple invoices?',
+                'answer' => "Yes! InvoiceGO allows you to create individual invoices, save incomplete invoices as drafts without restrictive validations, and upload hundreds of invoices in bulk using our standardized Excel / CSV bulk upload template.",
+                'category' => 'Invoicing & Features',
+                'sort_order' => 4,
+                'is_active' => true,
+            ],
+            [
+                'question' => 'Does InvoiceGO support FBR API integration?',
+                'answer' => "Yes, InvoiceGO integrates directly with the official FBR PRAL Digital Invoicing API v1.12. It includes a built-in runner for all 28 technical sandbox scenarios (SN001–SN028) needed to qualify for your production API token.",
+                'category' => 'FBR Integration',
+                'sort_order' => 5,
+                'is_active' => true,
+            ],
+            [
+                'question' => 'Can I access InvoiceGO from my mobile?',
+                'answer' => "Yes. InvoiceGO is 100% web-based and cloud-native. You can access your dashboard, monitor daily revenue, and issue or print invoices from any desktop, laptop, tablet, or smartphone without installing any software.",
+                'category' => 'General',
+                'sort_order' => 6,
+                'is_active' => true,
+            ],
+            [
+                'question' => 'Is my business information secure?',
+                'answer' => "Security is our top priority. We use AES-256 bank-grade encryption for all database records and API tokens. FBR tokens are encrypted on the server and never exposed in the browser, with tenant-level data isolation.",
+                'category' => 'Security & Privacy',
+                'sort_order' => 7,
+                'is_active' => true,
+            ],
+            [
+                'question' => 'How can I contact support?',
+                'answer' => "Our technical support team is available via email at support@invoicego.pk, via phone during business hours, or directly through the in-app support ticketing system in your portal.",
+                'category' => 'Support',
+                'sort_order' => 8,
+                'is_active' => true,
+            ],
+        ];
+
+        foreach ($faqs as $faqData) {
+            \App\Models\Faq::firstOrCreate(['question' => $faqData['question']], $faqData);
         }
 
         // 12. Seed Activity Logs

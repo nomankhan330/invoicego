@@ -21,11 +21,10 @@
     <aside class="tenant-sidebar">
         <div class="d-flex flex-column flex-grow-1">
             <!-- Brand Logo -->
-            <div class="d-flex align-items-center gap-2 mb-3 px-1">
-                <div class="bg-primary text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; background: #5850EC !important;">
-                    <i class="bi bi-file-earmark-arrow-up-fill fs-6"></i>
-                </div>
-                <span class="font-display fw-bold text-dark fs-5">InvoiceGO</span>
+            <div class="d-flex align-items-center mb-3 px-1">
+                <a href="{{ route('tenant.dashboard') }}" class="d-inline-block">
+                    <img src="{{ asset('images/invoicego-logo.png') }}" alt="InvoiceGO" style="height: 36px; width: auto; object-fit: contain;">
+                </a>
             </div>
 
             <!-- Business Switcher Card (Screenshot 4) -->

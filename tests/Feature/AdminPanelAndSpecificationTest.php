@@ -5,11 +5,14 @@ namespace Tests\Feature;
 use App\Models\ActivityLog;
 use App\Models\Business;
 use App\Models\Customer;
+use App\Models\Faq;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\PricingPlan;
 use App\Models\SandboxScenario;
 use App\Models\Subscription;
 use App\Models\SupportTicket;
+use App\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -261,5 +264,83 @@ class AdminPanelAndSpecificationTest extends TestCase
         $logsResponse->assertStatus(200);
         $logsResponse->assertSee('Security & Audit Logs');
         $logsResponse->assertSee('Test description for security audit.');
+    }
+
+    public function test_admin_can_view_system_settings_with_registration_toggle(): void
+    {
+        \App\Models\SystemSetting::set('enable_public_registration', '0', 'general', 'boolean');
+
+        $response = $this->actingAs($this->admin)->get('/admin/system-settings');
+        $response->assertStatus(200);
+        $response->assertSee('System Settings');
+        $response->assertSee('enable_public_registration');
+        $response->assertSee('Disabled (Admin Only)');
+    }
+
+    public function test_admin_can_manage_pricing_plans_and_toggle_section_visibility(): void
+    {
+        $response = $this->actingAs($this->admin)->get('/admin/pricing-plans');
+        $response->assertStatus(200);
+        $response->assertSee('Website Pricing Plans');
+    }
+
+    public function test_subscription_edit_page_renders_with_plan_options_from_pricing_plans(): void
+    {
+        $plan = PricingPlan::create([
+            'name' => 'Growth Enterprise',
+            'slug' => 'growth-enterprise',
+            'price' => 'PKR 12,500',
+            'billing_period' => '/month',
+            'features' => ['Unlimited Features'],
+            'button_text' => 'Get Started',
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+
+        $subscription = Subscription::create([
+            'business_id' => $this->business->id,
+            'pricing_plan_id' => $plan->id,
+            'plan_name' => $plan->name,
+            'starts_at' => now(),
+            'expires_at' => now()->addDays(30),
+            'status' => 'active',
+            'monthly_fee' => 12500.00,
+            'auto_renew' => true,
+        ]);
+
+        $response = $this->actingAs($this->admin)->get("/admin/subscriptions/{$subscription->id}/edit");
+        $response->assertStatus(200);
+        $response->assertSee('Plan Name');
+        $response->assertSee('Growth Enterprise');
+        $this->assertEquals($plan->id, $subscription->pricingPlan->id);
+    }
+
+    public function test_admin_can_manage_faqs_and_toggle_faq_section_visibility(): void
+    {
+        $faq = Faq::create([
+            'question' => 'How does FBR DI API work in real-time?',
+            'answer' => 'InvoiceGO validates and submits invoices electronically to FBR PRAL gateway.',
+            'category' => 'FBR Integration',
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($this->admin)->get('/admin/faqs');
+        $response->assertStatus(200);
+        $response->assertSee('Website FAQs');
+        $response->assertSee('How does FBR DI API work in real-time?');
+
+        // Verify landing page sees the seeded dynamic FAQ
+        SystemSetting::set('show_faq_section', '1');
+        $landingResponse = $this->get('/');
+        $landingResponse->assertStatus(200);
+        $landingResponse->assertSee('How does FBR DI API work in real-time?');
+        $landingResponse->assertSee('Frequently Asked Questions');
+
+        // Toggle off: verify landing page hides the FAQ section
+        SystemSetting::set('show_faq_section', '0');
+        $landingHiddenResponse = $this->get('/');
+        $landingHiddenResponse->assertStatus(200);
+        $landingHiddenResponse->assertDontSee('How does FBR DI API work in real-time?');
     }
 }

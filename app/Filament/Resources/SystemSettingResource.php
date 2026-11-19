@@ -6,9 +6,11 @@ use App\Filament\Resources\SystemSettingResource\Pages;
 use App\Models\SystemSetting;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 
 class SystemSettingResource extends Resource
 {
@@ -45,7 +47,8 @@ class SystemSettingResource extends Resource
                             ->required(),
 
                         Forms\Components\Textarea::make('value')
-                            ->label('Setting Value')
+                            ->label(fn (?SystemSetting $record) => in_array($record?->key, ['enable_public_registration', 'show_pricing_plans', 'show_faq_section']) ? 'Setting Value (1 = Enabled, 0 = Disabled)' : 'Setting Value')
+                            ->helperText(fn (?SystemSetting $record) => in_array($record?->key, ['enable_public_registration', 'show_pricing_plans', 'show_faq_section']) ? 'Enter 1 to enable, or 0 to disable.' : null)
                             ->rows(3)
                             ->columnSpanFull()
                             ->required(),
@@ -61,11 +64,29 @@ class SystemSettingResource extends Resource
                     ->label('Setting Key')
                     ->searchable()
                     ->sortable()
-                    ->weight('bold'),
+                    ->weight('bold')
+                    ->description(fn (SystemSetting $record) => match ($record->key) {
+                        'enable_public_registration' => 'Controls whether users can self-register or if admin credentials are required',
+                        'show_pricing_plans' => 'Controls whether the Pricing Plans section is shown on public website',
+                        'show_faq_section' => 'Controls whether the FAQ section is shown on public website',
+                        default => null,
+                    }),
 
                 Tables\Columns\TextColumn::make('value')
                     ->label('Current Value')
-                    ->limit(50)
+                    ->formatStateUsing(function ($state, SystemSetting $record) {
+                        if ($record->key === 'enable_public_registration') {
+                            return filter_var($state, FILTER_VALIDATE_BOOLEAN) ? 'Enabled (Public)' : 'Disabled (Admin Only)';
+                        }
+                        if (in_array($record->key, ['show_pricing_plans', 'show_faq_section'])) {
+                            return filter_var($state, FILTER_VALIDATE_BOOLEAN) ? 'Visible' : 'Hidden';
+                        }
+                        return Str::limit($state, 50);
+                    })
+                    ->badge(fn (SystemSetting $record) => in_array($record->key, ['enable_public_registration', 'show_pricing_plans', 'show_faq_section']))
+                    ->color(fn (SystemSetting $record, $state) => in_array($record->key, ['enable_public_registration', 'show_pricing_plans', 'show_faq_section'])
+                        ? (filter_var($state, FILTER_VALIDATE_BOOLEAN) ? 'success' : 'danger')
+                        : null)
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('group')
@@ -97,6 +118,46 @@ class SystemSettingResource extends Resource
                     ]),
             ])
             ->actions([
+                Tables\Actions\Action::make('toggle_status')
+                    ->label(fn (SystemSetting $record) => filter_var($record->value, FILTER_VALIDATE_BOOLEAN) ? 'Disable' : 'Enable')
+                    ->icon(fn (SystemSetting $record) => filter_var($record->value, FILTER_VALIDATE_BOOLEAN) ? 'heroicon-o-no-symbol' : 'heroicon-o-check-circle')
+                    ->color(fn (SystemSetting $record) => filter_var($record->value, FILTER_VALIDATE_BOOLEAN) ? 'danger' : 'success')
+                    ->visible(fn (SystemSetting $record) => in_array($record->key, ['enable_public_registration', 'show_pricing_plans', 'show_faq_section']))
+                    ->requiresConfirmation()
+                    ->modalHeading(function (SystemSetting $record) {
+                        $current = filter_var($record->value, FILTER_VALIDATE_BOOLEAN);
+                        return match ($record->key) {
+                            'enable_public_registration' => $current ? 'Disable Public Registration' : 'Enable Public Registration',
+                            'show_pricing_plans' => $current ? 'Hide Pricing Plans Section' : 'Show Pricing Plans Section',
+                            'show_faq_section' => $current ? 'Hide FAQ Section' : 'Show FAQ Section',
+                            default => 'Toggle Setting',
+                        };
+                    })
+                    ->modalDescription(function (SystemSetting $record) {
+                        $current = filter_var($record->value, FILTER_VALIDATE_BOOLEAN);
+                        return match ($record->key) {
+                            'enable_public_registration' => $current
+                                ? 'Users will not be able to self-register. "Get Started" will redirect to Sign In and the Create Account link will be hidden.'
+                                : 'Users will be able to register accounts publicly directly from the website.',
+                            'show_pricing_plans' => $current
+                                ? 'Are you sure you want to hide the Pricing section from the public website?'
+                                : 'Are you sure you want to show the Pricing section on the public website?',
+                            'show_faq_section' => $current
+                                ? 'Are you sure you want to hide the Frequently Asked Questions section from the public website?'
+                                : 'Are you sure you want to show the Frequently Asked Questions section on the public website?',
+                            default => 'Are you sure you want to toggle this setting?',
+                        };
+                    })
+                    ->action(function (SystemSetting $record) {
+                        $current = filter_var($record->value, FILTER_VALIDATE_BOOLEAN);
+                        $record->update(['value' => $current ? '0' : '1']);
+
+                        Notification::make()
+                            ->title(Str::headline($record->key) . ($current ? ' Disabled / Hidden' : ' Enabled / Visible'))
+                            ->success()
+                            ->send();
+                    }),
+
                 Tables\Actions\EditAction::make(),
             ]);
     }
@@ -115,4 +176,3 @@ class SystemSettingResource extends Resource
         ];
     }
 }
-

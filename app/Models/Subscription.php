@@ -14,6 +14,7 @@ class Subscription extends Model
 
     protected $fillable = [
         'business_id',
+        'pricing_plan_id',
         'plan_name',
         'starts_at',
         'expires_at',
@@ -33,6 +34,11 @@ class Subscription extends Model
     public function business(): BelongsTo
     {
         return $this->belongsTo(Business::class);
+    }
+
+    public function pricingPlan(): BelongsTo
+    {
+        return $this->belongsTo(PricingPlan::class);
     }
 
     public function payments(): HasMany

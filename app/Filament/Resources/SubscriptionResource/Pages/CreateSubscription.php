@@ -9,5 +9,19 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateSubscription extends CreateRecord
 {
     protected static string $resource = SubscriptionResource::class;
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        if (!empty($data['plan_name'])) {
+            try {
+                $plan = \App\Models\PricingPlan::where('name', $data['plan_name'])->first();
+                if ($plan) {
+                    $data['pricing_plan_id'] = $plan->id;
+                }
+            } catch (\Throwable) {}
+        }
+
+        return $data;
+    }
 }
 

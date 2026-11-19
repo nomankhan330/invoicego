@@ -17,12 +17,15 @@ class ScreensRenderingTest extends TestCase
         $response = $this->get('/');
         $response->assertStatus(200);
         $response->assertSee('InvoiceGO');
-        $response->assertSee('FBR DIGITAL INVOICING · DI API V1.12');
-        $response->assertSee('Sales tax invoices for Pakistani businesses');
-        $response->assertSee('From sign-up to live invoicing');
-        $response->assertSee('What InvoiceGO does');
-        $response->assertSee('Sandbox scenarios, built in');
-        $response->assertSee('How access to FBR works');
+        $response->assertSee('Smart Digital Invoicing.');
+        $response->assertSee('Simplified');
+        $response->assertSee('Built for Pakistani Businesses');
+        $response->assertSee('Everything You Need for Smarter Invoicing');
+        $response->assertSee('Get Started in Three Simple Steps');
+        $response->assertSee('Your Entire Invoicing Business in One Place');
+        $response->assertSee('Why Businesses Choose InvoiceGO');
+        $response->assertSee('Frequently Asked Questions');
+        $response->assertSee('Ready to Simplify Your Digital Invoicing?');
     }
 
     public function test_screen_2_signin_page_renders_with_split_purple_layout(): void
@@ -30,12 +33,29 @@ class ScreensRenderingTest extends TestCase
         $response = $this->get('/login');
         $response->assertStatus(200);
         $response->assertSee('InvoiceGO');
-        $response->assertSee('FBR Digital Invoicing,');
-        $response->assertSee('done carefully.');
-        $response->assertSee('Business account sign-in');
-        $response->assertSee('Sign in');
+        $response->assertSee('Digital Invoicing Simplified for Pakistan');
+        $response->assertSee('Sign In');
+        $response->assertSee('Enter your login credentials provided by admin');
+        $response->assertSee('Business Email');
         $response->assertSee('Forgot password?');
-        $response->assertSee('Create account');
+        $response->assertDontSee('Create Account');
+        $response->assertSee('Sign In to Dashboard');
+    }
+
+    public function test_registration_toggle_setting_dynamically_controls_website_and_login_view(): void
+    {
+        // 1. When disabled (default)
+        \App\Models\SystemSetting::set('enable_public_registration', '0', 'general', 'boolean');
+        $resDisabled = $this->get('/login');
+        $resDisabled->assertSee('Enter your login credentials provided by admin');
+        $resDisabled->assertDontSee('Create Account');
+
+        // 2. When enabled by Admin
+        \App\Models\SystemSetting::set('enable_public_registration', '1', 'general', 'boolean');
+        $resEnabled = $this->get('/login');
+        $resEnabled->assertSee('Create Account');
+        $resEnabled->assertSee('Sign In to Your Workspace');
+        $resEnabled->assertSee('Enter your credentials to access InvoiceGO');
     }
 
     public function test_screen_3_register_page_renders_with_fbr_profile_fields(): void
@@ -127,5 +147,19 @@ class ScreensRenderingTest extends TestCase
         $response->assertSee('Recent FBR activity');
         $response->assertSee('No invoices yet.');
         $response->assertSee('No FBR calls yet.');
+    }
+
+    public function test_pricing_section_visibility_can_be_toggled_from_system_setting(): void
+    {
+        // 1. When pricing is enabled
+        \App\Models\SystemSetting::set('show_pricing_plans', '1', 'general', 'boolean');
+        $res = $this->get('/');
+        $res->assertSee('Simple, Predictable Plans');
+        $res->assertSee('Pricing');
+
+        // 2. When pricing is disabled
+        \App\Models\SystemSetting::set('show_pricing_plans', '0', 'general', 'boolean');
+        $resHidden = $this->get('/');
+        $resHidden->assertDontSee('Simple, Predictable Plans');
     }
 }
