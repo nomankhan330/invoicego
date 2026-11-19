@@ -162,4 +162,15 @@ class ScreensRenderingTest extends TestCase
         $resHidden = $this->get('/');
         $resHidden->assertDontSee('Simple, Predictable Plans');
     }
+
+    public function test_logo_images_are_served_statically(): void
+    {
+        $res = $this->get('/images/invoicego-logo.png');
+        $res->assertStatus(200);
+        $res->assertHeader('Content-Type', 'image/png');
+
+        $resDark = $this->get('/images/invoicego-logo-dark.png');
+        $resDark->assertStatus(200);
+        $resDark->assertHeader('Content-Type', 'image/png');
+    }
 }

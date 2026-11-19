@@ -17,6 +17,28 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
+// Static images fallback for environments like Vercel
+Route::get('/images/{filename}', function (string $filename) {
+    $path = public_path('images/' . $filename);
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+    $mimeTypes = [
+        'png' => 'image/png',
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'svg' => 'image/svg+xml',
+        'ico' => 'image/x-icon',
+        'webp' => 'image/webp',
+    ];
+    $contentType = $mimeTypes[$extension] ?? 'image/png';
+    return response()->file($path, [
+        'Content-Type' => $contentType,
+        'Cache-Control' => 'public, max-age=31536000, immutable',
+    ]);
+})->where('filename', '.*');
+
 // 2. Screen 2: Sign-in & Auth
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');

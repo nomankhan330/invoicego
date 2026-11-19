@@ -78,7 +78,7 @@ try {
     // 5. Ensure database is functional (failsafe only if template copy failed or tables missing)
     if (getenv('DB_CONNECTION') === 'sqlite' || !getenv('DB_CONNECTION')) {
         try {
-            if (!\Illuminate\Support\Facades\Schema::hasTable('users')) {
+            if (!\Illuminate\Support\Facades\Schema::hasTable('users') || !\Illuminate\Support\Facades\Schema::hasTable('pricing_plans') || !\Illuminate\Support\Facades\Schema::hasTable('faqs')) {
                 $kernel = $app->make(\Illuminate\Contracts\Console\Kernel::class);
                 $kernel->call('migrate', ['--force' => true]);
                 $kernel->call('db:seed', ['--force' => true]);
