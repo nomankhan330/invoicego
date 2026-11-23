@@ -27,6 +27,16 @@ class Business extends Model
         'rejection_reason',
         'sandbox_token',
         'production_token',
+        'fbr_sandbox_token',
+        'fbr_production_token',
+        'sandbox_url',
+        'sandbox_validation_url',
+        'production_url',
+        'production_validation_url',
+        'sandbox_verified_at',
+        'production_verified_at',
+        'sandbox_connection_status',
+        'production_connection_status',
         'production_submissions_enabled',
         'current_environment',
         'approved_by',
@@ -39,6 +49,8 @@ class Business extends Model
         'production_submissions_enabled' => 'boolean',
         'sandbox_token' => 'encrypted',
         'production_token' => 'encrypted',
+        'sandbox_verified_at' => 'datetime',
+        'production_verified_at' => 'datetime',
         'approved_at' => 'datetime',
     ];
 
@@ -71,6 +83,26 @@ class Business extends Model
     public function isRejected(): bool
     {
         return $this->status === 'rejected';
+    }
+
+    public function getFbrSandboxTokenAttribute()
+    {
+        return $this->sandbox_token;
+    }
+
+    public function setFbrSandboxTokenAttribute($value)
+    {
+        $this->sandbox_token = $value;
+    }
+
+    public function getFbrProductionTokenAttribute()
+    {
+        return $this->production_token;
+    }
+
+    public function setFbrProductionTokenAttribute($value)
+    {
+        $this->production_token = $value;
     }
 
     public function users(): BelongsToMany

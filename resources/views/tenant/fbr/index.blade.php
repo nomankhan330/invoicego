@@ -2,127 +2,309 @@
 
 @section('title', 'FBR Integration')
 
+@push('styles')
+<style>
+    .fbr-card {
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 12px;
+        padding: 24px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .fbr-card-title {
+        font-size: 14.5px;
+        font-weight: 700;
+        color: #0F172A;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .fbr-label {
+        font-size: 11.5px;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 4px;
+    }
+    .fbr-input {
+        font-size: 13px;
+        padding: 7px 12px;
+        border-radius: 6px;
+        border: 1px solid #CBD5E1;
+    }
+    .fbr-input:focus {
+        border-color: #4F46E5;
+        box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+    }
+    .fbr-hint {
+        font-size: 11px;
+        color: #64748B;
+        margin-top: 3px;
+    }
+    .fbr-footer-note {
+        font-size: 11px;
+        color: #64748B;
+        line-height: 1.45;
+        border-top: 1px solid #F1F5F9;
+        padding-top: 14px;
+        margin-top: 18px;
+    }
+</style>
+@endpush
+
 @section('content')
-<div class="mb-4">
-    <h1 class="font-display fw-bold text-dark fs-3 mb-1">FBR / PRAL API Integration</h1>
-    <div class="text-muted small">
-        Connect your IRIS Digital Invoicing credentials with end-to-end server encryption
-    </div>
-</div>
+<div class="container-fluid px-0">
+    <!-- Feedback Alerts -->
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show py-2 px-3 small rounded-3 mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-1"></i> {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
 
-<div class="row g-4">
-    <div class="col-lg-7">
-        <div class="ig-content-card">
-            <h5 class="card-title">Fiscal Integration Credentials</h5>
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show py-2 px-3 small rounded-3 mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
 
-            <form method="POST" action="{{ route('tenant.fbr-integration.update') }}">
-                @csrf
+    @if (session('info'))
+        <div class="alert alert-info alert-dismissible fade show py-2 px-3 small rounded-3 mb-4" role="alert">
+            <i class="bi bi-info-circle-fill me-1"></i> {{ session('info') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
 
-                <!-- Environment Selector -->
-                <div class="mb-4">
-                    <label class="form-label">Operating Environment <span class="text-danger">*</span></label>
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <div class="form-check p-3 border rounded-3 {{ ($business->current_environment ?? 'sandbox') === 'sandbox' ? 'bg-light border-primary' : '' }}">
-                                <input class="form-check-input" type="radio" name="current_environment" id="env_sandbox" value="sandbox" {{ ($business->current_environment ?? 'sandbox') === 'sandbox' ? 'checked' : '' }}>
-                                <label class="form-check-label fw-bold text-dark d-block" for="env_sandbox">
-                                    Sandbox (Testing)
-                                </label>
-                                <span class="text-muted small" style="font-size: 11.5px;">For scenario validation and invoice testing without tax liability.</span>
-                            </div>
+    <!-- Top Row: Sandbox & Production Credentials Cards -->
+    <div class="row g-4 mb-4">
+        <!-- 1. SANDBOX CREDENTIALS CARD -->
+        <div class="col-lg-6">
+            <div class="fbr-card shadow-sm">
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="fbr-card-title">
+                            <span class="text-warning" style="font-size: 16px;">&bull;</span>
+                            <span class="text-uppercase fw-bold font-monospace" style="letter-spacing: 0.05em; font-size: 12px; color: #D97706;">SANDBOX</span>
+                            <span>Sandbox credentials</span>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check p-3 border rounded-3 {{ ($business->current_environment ?? 'sandbox') === 'production' ? 'bg-light border-primary' : '' }}">
-                                <input class="form-check-input" type="radio" name="current_environment" id="env_prod" value="production" {{ ($business->current_environment ?? 'sandbox') === 'production' ? 'checked' : '' }}>
-                                <label class="form-check-label fw-bold text-dark d-block" for="env_prod">
-                                    Live Production
-                                </label>
-                                <span class="text-muted small" style="font-size: 11.5px;">Transmits fiscalized invoices to live PRAL government servers.</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Sandbox Token -->
-                <div class="mb-4">
-                    <label for="sandbox_token" class="form-label">
-                        Sandbox Bearer Token
                         @if (!empty($business->sandbox_token))
-                            <span class="badge bg-success bg-opacity-10 text-success ms-1">Configured &amp; Encrypted</span>
+                            <span class="badge bg-success bg-opacity-10 text-success fw-semibold" style="font-size: 11px;">
+                                <i class="bi bi-check-circle-fill me-1"></i> Token active
+                            </span>
                         @else
-                            <span class="badge bg-secondary bg-opacity-10 text-secondary ms-1">Not Set</span>
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold" style="font-size: 11px;">
+                                No token
+                            </span>
                         @endif
-                    </label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light"><i class="bi bi-key"></i></span>
-                        <input type="password" class="form-control" id="sandbox_token" name="sandbox_token" placeholder="{{ !empty($business->sandbox_token) ? '•••••••••••••••••••••••• (Leave blank to keep existing)' : 'Paste IRIS Sandbox Token' }}">
                     </div>
-                    <div class="form-text">Issued via IRIS (Digital Invoicing &rarr; API Integration). Token is encrypted at rest using AES-256-CBC.</div>
+
+                    <form method="POST" action="{{ route('tenant.fbr-integration.sandbox.save') }}" id="sandboxForm">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="fbr-label">Sandbox URL (post)</label>
+                            <input type="text" name="sandbox_url" class="form-control fbr-input"
+                                   value="{{ old('sandbox_url', $business->sandbox_url ?? 'https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata_sb') }}" required>
+                            <div class="fbr-hint">Default: https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata_sb</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="fbr-label">Sandbox validation URL</label>
+                            <input type="text" name="sandbox_validation_url" class="form-control fbr-input"
+                                   value="{{ old('sandbox_validation_url', $business->sandbox_validation_url ?? 'https://gw.fbr.gov.pk/di_data/v1/di/validatedata_sb') }}" required>
+                            <div class="fbr-hint">Default: https://gw.fbr.gov.pk/di_data/v1/di/validatedata_sb</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="fbr-label">Sandbox token / API key</label>
+                            <input type="password" name="sandbox_token" id="sandbox_token" class="form-control fbr-input"
+                                   placeholder="Paste the security token from IRIS">
+                            <div class="fbr-hint">Sent only as 'Authorization: Bearer ...' from the server</div>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-3">
+                            <button type="submit" class="btn btn-primary btn-sm px-3 fw-semibold d-inline-flex align-items-center gap-1" style="background: #4F46E5; border-color: #4F46E5;">
+                                <i class="bi bi-save"></i> Save
+                            </button>
+                            <button type="submit" formaction="{{ route('tenant.fbr-integration.sandbox.verify') }}" class="btn btn-link text-decoration-none p-0 text-primary small d-inline-flex align-items-center gap-1 fw-semibold">
+                                <i class="bi bi-wifi"></i> Verify connection
+                            </button>
+                        </div>
+                    </form>
                 </div>
 
-                <!-- Production Token -->
-                <div class="mb-4">
-                    <label for="production_token" class="form-label">
-                        Production Bearer Token
+                <div class="fbr-footer-note">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Connection status:</span>
+                        <strong class="{{ $business->sandbox_connection_status === 'verified' ? 'text-success' : 'text-secondary' }}">
+                            {{ $business->sandbox_connection_status === 'verified' ? 'Verified' : 'Not tested yet' }}
+                        </strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Last checked:</span>
+                        <span>{{ $business->sandbox_verified_at ? $business->sandbox_verified_at->format('d M Y, H:i T') : '—' }}</span>
+                    </div>
+                    <div>
+                        Verification calls the FBR Provinces reference API with this token. It never creates an invoice. Only https://gw.fbr.gov.pk with the documented paths is accepted.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. PRODUCTION CREDENTIALS CARD -->
+        <div class="col-lg-6">
+            <div class="fbr-card shadow-sm">
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="fbr-card-title">
+                            <span class="text-success" style="font-size: 16px;">&bull;</span>
+                            <span class="text-uppercase fw-bold font-monospace" style="letter-spacing: 0.05em; font-size: 12px; color: #16A34A;">PRODUCTION</span>
+                            <span>Production credentials</span>
+                        </div>
                         @if (!empty($business->production_token))
-                            <span class="badge bg-success bg-opacity-10 text-success ms-1">Configured &amp; Encrypted</span>
+                            <span class="badge bg-success bg-opacity-10 text-success fw-semibold" style="font-size: 11px;">
+                                <i class="bi bi-check-circle-fill me-1"></i> Token active
+                            </span>
                         @else
-                            <span class="badge bg-secondary bg-opacity-10 text-secondary ms-1">Not Set</span>
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold" style="font-size: 11px;">
+                                No token
+                            </span>
                         @endif
-                    </label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light"><i class="bi bi-shield-lock"></i></span>
-                        <input type="password" class="form-control" id="production_token" name="production_token" placeholder="{{ !empty($business->production_token) ? '•••••••••••••••••••••••• (Leave blank to keep existing)' : 'Paste IRIS Production Token' }}">
                     </div>
-                    <div class="form-text">Issued after passing required sandbox scenarios in IRIS. Never exposed to browser or frontend.</div>
+
+                    <form method="POST" action="{{ route('tenant.fbr-integration.production.save') }}" id="productionForm">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="fbr-label">Production URL (post)</label>
+                            <input type="text" name="production_url" class="form-control fbr-input"
+                                   value="{{ old('production_url', $business->production_url ?? 'https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata') }}" required>
+                            <div class="fbr-hint">Default: https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="fbr-label">Production validation URL</label>
+                            <input type="text" name="production_validation_url" class="form-control fbr-input"
+                                   value="{{ old('production_validation_url', $business->production_validation_url ?? 'https://gw.fbr.gov.pk/di_data/v1/di/validateinvoicedata') }}" required>
+                            <div class="fbr-hint">Default: https://gw.fbr.gov.pk/di_data/v1/di/validateinvoicedata</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="fbr-label">Production token / API key</label>
+                            <input type="password" name="production_token" id="production_token" class="form-control fbr-input"
+                                   placeholder="Paste the security token from IRIS">
+                            <div class="fbr-hint">Sent only as 'Authorization: Bearer ...' from the server</div>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-3">
+                            <button type="submit" class="btn btn-primary btn-sm px-3 fw-semibold d-inline-flex align-items-center gap-1" style="background: #4F46E5; border-color: #4F46E5;">
+                                <i class="bi bi-save"></i> Save
+                            </button>
+                            <button type="submit" formaction="{{ route('tenant.fbr-integration.production.verify') }}" class="btn btn-link text-decoration-none p-0 text-primary small d-inline-flex align-items-center gap-1 fw-semibold">
+                                <i class="bi bi-wifi"></i> Verify connection
+                            </button>
+                        </div>
+                    </form>
                 </div>
 
-                <!-- Production Submissions Gate -->
-                <div class="mb-4 p-3 bg-light rounded-3 border">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="production_submissions_enabled" value="1" id="prod_enabled" {{ $business->production_submissions_enabled ? 'checked' : '' }}>
-                        <label class="form-check-label fw-bold text-dark" for="prod_enabled">
-                            Enable Live Production Submissions
-                        </label>
+                <div class="fbr-footer-note">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Connection status:</span>
+                        <strong class="{{ $business->production_connection_status === 'verified' ? 'text-success' : 'text-secondary' }}">
+                            {{ $business->production_connection_status === 'verified' ? 'Verified' : 'Not tested yet' }}
+                        </strong>
                     </div>
-                    <div class="text-muted small ps-4 mt-1" style="font-size: 11.5px;">
-                        Safety Lock: When unchecked, real live invoices cannot be submitted to PRAL to prevent accidental fiscalization.
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Last checked:</span>
+                        <span>{{ $business->production_verified_at ? $business->production_verified_at->format('d M Y, H:i T') : '—' }}</span>
                     </div>
-                </div>
-
-                <button type="submit" class="btn btn-ig-primary px-4">
-                    Save FBR Configuration
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Guidance Sidebar -->
-    <div class="col-lg-5">
-        <div class="ig-content-card mb-4">
-            <h6 class="fw-bold text-dark fs-6 mb-3"><i class="bi bi-info-circle text-primary me-1"></i> How to Obtain PRAL Credentials</h6>
-            <ol class="small text-secondary ps-3 mb-0" style="line-height: 1.65;">
-                <li class="mb-2">Log into the official FBR <strong>IRIS portal</strong> using your business credentials.</li>
-                <li class="mb-2">Navigate to <strong>Digital Invoicing &rarr; API Integration</strong>.</li>
-                <li class="mb-2">Enter technical contact details and perform <strong>IP Whitelisting</strong> for your server static IP.</li>
-                <li class="mb-2">Copy the provided <strong>Sandbox Token</strong> into InvoiceGO.</li>
-                <li class="mb-2">Run the required test scenarios (SN001–SN028) in the <strong>Sandbox Scenarios</strong> menu.</li>
-                <li>Once accepted by PRAL, IRIS will generate your <strong>Production Token</strong> for live fiscalization.</li>
-            </ol>
-        </div>
-
-        <div class="ig-content-card bg-light border-0">
-            <div class="d-flex gap-2">
-                <i class="bi bi-shield-shaded text-success fs-4 flex-shrink-0"></i>
-                <div class="small">
-                    <div class="fw-bold text-dark mb-1">Zero-Exposure Security Guarantee</div>
-                    <div class="text-muted" style="font-size: 11.5px;">
-                        InvoiceGO securely stores all FBR credentials on the server using authenticated encryption. Tokens are injected into backend HTTP clients only and never transmitted to the browser or JavaScript console.
+                    <div>
+                        Verification calls the FBR Provinces reference API with this token. It never creates an invoice. Only https://gw.fbr.gov.pk with the documented paths is accepted.
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Middle Row: Production submission Card -->
+    <div class="fbr-card shadow-sm mb-4">
+        <h6 class="fw-bold text-dark mb-2">Production submission</h6>
+        <div class="text-secondary small mb-3" style="line-height: 1.55;">
+            Production submission is <strong class="{{ $business->production_submissions_enabled ? 'text-success' : 'text-danger' }}">{{ $business->production_submissions_enabled ? 'enabled' : 'disabled' }}</strong>. Enable it after IRIS has issued your production token and the connection test succeeds.<br>
+            The sandbox workspace always uses the sandbox URLs and token; production invoices always use the production URLs and token. Replacing the production token disables production until it is tested again.
+        </div>
+        <form method="POST" action="{{ route('tenant.fbr-integration.production.toggle') }}">
+            @csrf
+            @if ($business->production_submissions_enabled)
+                <button type="submit" class="btn btn-outline-danger btn-sm px-3 fw-semibold">
+                    <i class="bi bi-shield-x me-1"></i> Disable production
+                </button>
+            @else
+                <button type="submit" class="btn btn-primary btn-sm px-3 fw-semibold" style="background: #4F46E5; border-color: #4F46E5;">
+                    <i class="bi bi-shield-check me-1"></i> Enable production
+                </button>
+            @endif
+        </form>
+    </div>
+
+    <!-- Bottom Row: Recent FBR calls Card -->
+    <div class="fbr-card shadow-sm">
+        <h6 class="fw-bold text-dark mb-3">Recent FBR calls</h6>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0" style="font-size: 12.5px;">
+                <thead class="table-light">
+                    <tr>
+                        <th class="text-secondary text-uppercase" style="font-size: 11px;">WHEN</th>
+                        <th class="text-secondary text-uppercase" style="font-size: 11px;">ENVIRONMENT</th>
+                        <th class="text-secondary text-uppercase" style="font-size: 11px;">OPERATION</th>
+                        <th class="text-secondary text-uppercase" style="font-size: 11px;">OUTCOME</th>
+                        <th class="text-secondary text-uppercase" style="font-size: 11px;">INVOICE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($recentCalls as $call)
+                        <tr>
+                            <td class="text-nowrap text-secondary">{{ $call->executed_at ? $call->executed_at->diffForHumans() : $call->created_at->diffForHumans() }}</td>
+                            <td>
+                                @if ($call->environment === 'production')
+                                    <span class="badge bg-success bg-opacity-10 text-success fw-semibold">production</span>
+                                @else
+                                    <span class="badge bg-warning bg-opacity-10 text-warning fw-semibold">sandbox</span>
+                                @endif
+                            </td>
+                            <td class="font-monospace text-dark">{{ basename($call->endpoint) ?: ($call->scenario_code ?? 'Invoice Operation') }}</td>
+                            <td>
+                                @if (in_array(strtolower($call->outcome), ['verified', 'accepted', 'success', 'passed']))
+                                    <span class="badge bg-success bg-opacity-10 text-success">
+                                        <i class="bi bi-check me-1"></i> {{ strtoupper($call->outcome) }}
+                                    </span>
+                                @else
+                                    <span class="badge bg-danger bg-opacity-10 text-danger">
+                                        <i class="bi bi-x me-1"></i> {{ strtoupper($call->outcome) }}
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="font-monospace">
+                                @if ($call->invoice)
+                                    <a href="{{ route('tenant.invoices.show', $call->invoice->uuid) }}" class="text-primary text-decoration-none fw-semibold">
+                                        {{ $call->invoice->invoice_number }}
+                                    </a>
+                                @else
+                                    <span class="text-muted">{{ $call->scenario_code ?? '—' }}</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted small">
+                                No recent FBR calls recorded yet.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 @endsection
-

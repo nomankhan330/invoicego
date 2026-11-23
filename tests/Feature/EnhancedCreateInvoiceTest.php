@@ -81,13 +81,13 @@ class EnhancedCreateInvoiceTest extends TestCase
         $response->assertStatus(200);
 
         // Header & badges matching media_1794574767306_a2f4afbf.jpg
-        $response->assertSee('Create invoice');
+        $response->assertSee('SALE INVOICES');
         $response->assertSee('Seller details come from your business profile.');
         $response->assertSee('PRODUCTION');
         $response->assertDontSee('Production is not enabled yet');
 
         // Section 1: Invoice details
-        $response->assertSee('Invoice details');
+        $response->assertSee('INVOICE DETAILS');
         $response->assertSee('Sale Invoice');
         $response->assertSee('Debit Note');
         $response->assertSee('Credit Note');
@@ -97,32 +97,32 @@ class EnhancedCreateInvoiceTest extends TestCase
         $response->assertSee('Only for debit notes');
 
         // Section 2: Seller details
-        $response->assertSee('Seller details (from business profile)');
+        $response->assertSee('SELLER DETAILS (FROM BUSINESS PROFILE)');
         $response->assertSee('Edit profile');
         $response->assertSee('1234125');
         $response->assertSee('OC1');
         $response->assertSee('Punjab');
 
         // Section 3: Buyer details
-        $response->assertSee('Buyer details');
-        $response->assertSee('Saved customer');
+        $response->assertSee('BUYER INFORMATION');
+        $response->assertSee('SAVED CUSTOMER');
         $response->assertSee('Search and select, or type a new buyer below');
-        $response->assertSee('Buyer NTN / CNIC');
+        $response->assertSee('BUYER NTN / CNIC');
         $response->assertSee('7-digit NTN or 13-digit CNIC; optional for unregistered buyers');
-        $response->assertSee('Buyer name');
-        $response->assertSee('Buyer province');
+        $response->assertSee('BUYER NAME');
+        $response->assertSee('BUYER PROVINCE');
         $response->assertSee('Verify registration with FBR');
-        $response->assertSee('Buyer type');
+        $response->assertSee('BUYER TYPE');
         $response->assertSee('Registered');
         $response->assertSee('Unregistered');
 
         // Section 4: Items details
-        $response->assertSee('Items details');
+        $response->assertSee('ITEMS & CALCULATIONS');
         $response->assertSee('Automatic calculation');
         $response->assertSee('Add item');
 
         // Section 5: Totals preview
-        $response->assertSee('Totals preview');
+        $response->assertSee('TOTALS & FBR SUMMARY');
         $response->assertSee('Value excl. ST');
         $response->assertSee('Sales tax');
         $response->assertSee('Further tax');
@@ -312,7 +312,7 @@ class EnhancedCreateInvoiceTest extends TestCase
         $response = $this->get(route('tenant.invoices.edit', $invoice->uuid));
 
         $response->assertStatus(200);
-        $response->assertSee('Edit invoice: INV-202611-0001');
+        $response->assertSee('EDIT SALE INVOICE: INV-202611-0001');
         $response->assertSee('Pre-saved Buyer');
         $response->assertSee('7654321');
     }

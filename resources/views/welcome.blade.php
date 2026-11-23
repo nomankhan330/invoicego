@@ -160,7 +160,7 @@
         .site-navbar {
             background: #FFFFFF;
             border-bottom: 1px solid #EBF1FA;
-            padding: 16px 0;
+            padding: 10px 0;
             position: sticky;
             top: 0;
             z-index: 1040;
@@ -202,28 +202,6 @@
 
         .site-nav-link:hover {
             color: var(--ig-primary);
-        }
-
-        .btn-open-dashboard {
-            background-color: var(--ig-emerald);
-            color: #FFFFFF;
-            font-weight: 600;
-            font-size: 13.5px;
-            padding: 8px 18px;
-            border-radius: 9px;
-            border: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            transition: all 0.2s ease;
-        }
-
-        .btn-open-dashboard:hover {
-            background-color: var(--ig-emerald-hover);
-            color: #FFFFFF;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 135, 90, 0.25);
         }
 
         .btn-nav-login {
@@ -892,7 +870,7 @@
     <header class="site-navbar">
         <div class="container d-flex align-items-center justify-content-between">
             <a href="{{ url('/') }}" class="site-logo">
-                <img src="{{ asset('images/invoicego-logo.png') }}" alt="InvoiceGO" style="height: 38px; width: auto; object-fit: contain;">
+                <img src="{{ asset('images/invoicego-logo.png') }}" alt="InvoiceGO" style="height: 54px; width: auto; object-fit: contain; display: block;">
             </a>
 
             <nav class="d-none d-lg-flex align-items-center gap-1">
@@ -910,15 +888,11 @@
 
             <div class="d-flex align-items-center gap-2">
                 @auth
-                    <a href="{{ route('tenant.dashboard') }}" class="btn-open-dashboard">
+                    <a href="{{ route('tenant.dashboard') }}" class="btn-primary-blue">
                         <i class="bi bi-grid-fill"></i>
-                        <span>Open Dashboard</span>
+                        <span>Dashboard</span>
                     </a>
                 @else
-                    <a href="{{ route('login') }}" class="btn-open-dashboard d-none d-sm-inline-flex">
-                        <i class="bi bi-grid-fill"></i>
-                        <span>Open Dashboard</span>
-                    </a>
                     <a href="{{ route('login') }}" class="btn-nav-login">
                         <i class="bi bi-box-arrow-in-right"></i>
                         <span>Login</span>
@@ -953,9 +927,8 @@
                     </p>
 
                     <div class="d-flex flex-wrap align-items-center gap-3">
-                        <a href="{{ route('login') }}" class="btn-primary-blue py-3 px-4 fs-6">
-                            <i class="bi bi-grid-fill me-1"></i>
-                            <span>Open Dashboard Now</span>
+                        <a href="{{ $registrationEnabled ? route('register') : route('login') }}" class="btn-primary-blue py-3 px-4 fs-6">
+                            <span>Get Started</span>
                             <i class="bi bi-arrow-right ms-1"></i>
                         </a>
                         <a href="#features" class="btn-secondary-white py-3 px-4 fs-6">
@@ -1988,7 +1961,7 @@
                 <!-- Col 1: Brand Info -->
                 <div class="col-lg-4 pe-lg-5">
                     <a href="{{ url('/') }}" class="d-inline-block mb-3">
-                        <img src="{{ asset('images/invoicego-logo-dark.png') }}" alt="InvoiceGO" style="height: 44px; width: auto; object-fit: contain;">
+                        <img src="{{ asset('images/invoicego-logo-dark.png') }}" alt="InvoiceGO" style="height: 60px; width: auto; object-fit: contain; display: block;">
                     </a>
                     <p class="text-white-50 small mb-2" style="line-height: 1.65;">
                         InvoiceGO is Pakistan's premier digital sales invoicing and FBR integration platform, empowering businesses with streamlined financial workflows and secure cloud compliance.

@@ -26,6 +26,7 @@ class ScreensRenderingTest extends TestCase
         $response->assertSee('Why Businesses Choose InvoiceGO');
         $response->assertSee('Frequently Asked Questions');
         $response->assertSee('Ready to Simplify Your Digital Invoicing?');
+        $response->assertDontSee('Open Dashboard');
     }
 
     public function test_screen_2_signin_page_renders_with_split_purple_layout(): void

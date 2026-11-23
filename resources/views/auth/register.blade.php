@@ -83,6 +83,23 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
         }
 
+        .register-brand-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #FFFFFF;
+            padding: 10px 18px;
+            border-radius: 14px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .register-brand-badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.22);
+        }
+
         .left-h1 {
             font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 26px;
@@ -227,8 +244,8 @@
         <!-- Left Royal Blue Pane -->
         <div class="register-left-pane">
             <div>
-                <a href="{{ url('/') }}" class="d-inline-block mb-3">
-                    <img src="{{ asset('images/invoicego-logo-dark.png') }}" alt="InvoiceGO" style="height: 44px; width: auto; object-fit: contain;">
+                <a href="{{ url('/') }}" class="register-brand-badge mb-3">
+                    <img src="{{ asset('images/invoicego-logo.png') }}" alt="InvoiceGO" style="height: 50px; width: auto; object-fit: contain; display: block;">
                 </a>
 
                 <div style="margin-top: 36px;">

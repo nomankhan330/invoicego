@@ -115,6 +115,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     // Sandbox Scenarios Runner (SN001 - SN028)
     Route::prefix('sandbox-scenarios')->name('tenant.sandbox-scenarios')->group(function () {
         Route::get('/', [SandboxScenarioController::class, 'index']);
+        Route::post('/validate', [SandboxScenarioController::class, 'validateScenario'])->name('.validate');
         Route::post('/{code}/run', [SandboxScenarioController::class, 'run'])->name('.run');
     });
 
@@ -122,6 +123,11 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::prefix('fbr-integration')->name('tenant.fbr-integration')->group(function () {
         Route::get('/', [FbrIntegrationController::class, 'index']);
         Route::post('/', [FbrIntegrationController::class, 'update'])->name('.update');
+        Route::post('/sandbox', [FbrIntegrationController::class, 'saveSandbox'])->name('.sandbox.save');
+        Route::post('/sandbox/verify', [FbrIntegrationController::class, 'verifySandbox'])->name('.sandbox.verify');
+        Route::post('/production', [FbrIntegrationController::class, 'saveProduction'])->name('.production.save');
+        Route::post('/production/verify', [FbrIntegrationController::class, 'verifyProduction'])->name('.production.verify');
+        Route::post('/production/toggle', [FbrIntegrationController::class, 'toggleProduction'])->name('.production.toggle');
     });
 
     // Business Settings

@@ -160,7 +160,7 @@
 <div class="container-fluid px-0">
     <div class="d-flex justify-content-between align-items-start mb-3">
         <div>
-            <h1 class="fw-bold text-dark fs-3 mb-1 font-display">Create invoice</h1>
+            <h1 class="fw-bold text-dark fs-3 mb-1 font-display text-uppercase" style="letter-spacing: 0.04em;">SALE INVOICES</h1>
             <div class="text-secondary small">Seller details come from your business profile. Fields marked <span class="text-danger">*</span> are required.</div>
         </div>
         <div>
@@ -195,10 +195,10 @@
 
         <!-- SECTION 1: INVOICE DETAILS & PROVINCES -->
         <div class="card-section">
-            <div class="section-title">Invoice details</div>
+            <div class="section-title fw-bold text-uppercase" style="letter-spacing: 0.04em;">INVOICE DETAILS</div>
             <div class="row g-3">
                 <div class="col-md-3">
-                    <label class="form-label-xs">Invoice Type (DROPDOWN) <span class="text-danger">*</span></label>
+                    <label class="form-label-xs fw-bold text-uppercase">INVOICE TYPE <span class="text-danger">*</span></label>
                     <select name="invoice_type" id="invoice_type" class="form-select form-select-sm" required>
                         <option value="standard" {{ old('invoice_type') === 'standard' ? 'selected' : '' }}>Sale Invoice</option>
                         <option value="credit_note" {{ old('invoice_type') === 'credit_note' ? 'selected' : '' }}>Credit Note</option>
@@ -208,45 +208,39 @@
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label-xs">Invoice No</label>
+                    <label class="form-label-xs fw-bold text-uppercase">INVOICE NO</label>
                     <input type="text" name="invoice_number" id="invoice_number" class="form-control form-control-sm" value="{{ old('invoice_number') }}" placeholder="Auto-generated if empty">
                     <div class="form-helper-xs text-muted">Shown on the invoice; not sent to FBR</div>
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label-xs">Date with calendar (DD.MM.YY) <span class="text-danger">*</span></label>
+                    <label class="form-label-xs fw-bold text-uppercase">INVOICE DATE (DD.MM.YY) <span class="text-danger">*</span></label>
                     <input type="date" name="invoice_date" id="invoice_date" class="form-control form-control-sm" value="{{ old('invoice_date', $defaultDate) }}" min="{{ $minDate }}" max="{{ $maxDate }}" required>
                     <div class="form-helper-xs">Current month only ({{ $minDate }} to {{ $maxDate }}, PKT)</div>
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label-xs">Current time</label>
+                    <label class="form-label-xs fw-bold text-uppercase">CURRENT TIME</label>
                     <div class="input-group input-group-sm">
                         <input type="text" name="invoice_time" id="invoice_time" class="form-control form-control-sm" value="{{ old('invoice_time', $currentTime) }}">
                         <span class="input-group-text bg-white text-muted"><i class="bi bi-clock"></i></span>
                     </div>
                 </div>
 
-                <div class="col-md-3">
-                    <label class="form-label-xs">Province of Supplier (Dropdown with Search) <span class="text-danger">*</span></label>
-                    <select name="supplier_province" id="supplier_province" class="searchable-select" data-placeholder="Select Supplier Province..." required>
+                <!-- Combined Single Province Box -->
+                <div class="col-md-4">
+                    <label class="form-label-xs fw-bold text-uppercase">PROVINCE <span class="text-danger">*</span></label>
+                    <select name="province" id="province_select" class="searchable-select" data-placeholder="Select Province..." required>
                         @foreach ($provinces as $prov)
-                            <option value="{{ $prov }}" {{ old('supplier_province', $business->province ?? 'Punjab') === $prov ? 'selected' : '' }}>{{ $prov }}</option>
+                            <option value="{{ $prov }}" {{ old('province', old('destination_of_supply', old('supplier_province', $business->province ?? 'Punjab'))) === $prov ? 'selected' : '' }}>{{ $prov }}</option>
                         @endforeach
                     </select>
+                    <input type="hidden" name="supplier_province" id="supplier_province" value="{{ old('supplier_province', $business->province ?? 'Punjab') }}">
+                    <input type="hidden" name="destination_of_supply" id="destination_of_supply" value="{{ old('destination_of_supply', 'Punjab') }}">
                 </div>
 
-                <div class="col-md-3">
-                    <label class="form-label-xs">Destination of Supply (Dropdown with Search) <span class="text-danger">*</span></label>
-                    <select name="destination_of_supply" id="destination_of_supply" class="searchable-select" data-placeholder="Select Destination..." required>
-                        @foreach ($destinations as $dest)
-                            <option value="{{ $dest }}" {{ old('destination_of_supply', 'Punjab') === $dest ? 'selected' : '' }}>{{ $dest }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label-xs">Payment mode</label>
+                <div class="col-md-4">
+                    <label class="form-label-xs fw-bold text-uppercase">PAYMENT MODE</label>
                     <select name="payment_mode" id="payment_mode" class="form-select form-select-sm">
                         @foreach ($paymentModes as $pm)
                             <option value="{{ $pm }}" {{ old('payment_mode', 'Cash') === $pm ? 'selected' : '' }}>{{ $pm }}</option>
@@ -255,8 +249,8 @@
                     <div class="form-helper-xs text-muted">How the buyer pays; not sent to FBR</div>
                 </div>
 
-                <div class="col-md-3">
-                    <label class="form-label-xs">Reference invoice no.</label>
+                <div class="col-md-4">
+                    <label class="form-label-xs fw-bold text-uppercase">REFERENCE INVOICE NO.</label>
                     <input type="text" name="reference_invoice_no" id="reference_invoice_no" class="form-control form-control-sm" value="{{ old('reference_invoice_no') }}" placeholder="For credit/debit notes">
                     <div class="form-helper-xs text-muted">Only for debit notes</div>
                 </div>
@@ -266,31 +260,31 @@
         <!-- SECTION 2: SELLER DETAILS -->
         <div class="card-section">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <div class="section-title mb-0">Seller details (from business profile)</div>
+                <div class="section-title mb-0 fw-bold text-uppercase" style="letter-spacing: 0.04em;">SELLER DETAILS (FROM BUSINESS PROFILE)</div>
                 <a href="{{ route('tenant.settings') }}" class="text-primary small text-decoration-none fw-semibold">Edit profile</a>
             </div>
             <div class="row g-2">
                 <div class="col-md-3 col-6">
                     <div class="info-tile">
-                        <div class="info-tile-label">Seller NTN/CNIC</div>
+                        <div class="info-tile-label fw-bold text-uppercase">SELLER NTN/CNIC</div>
                         <div class="info-tile-value">{{ $business->ntn_cnic }}</div>
                     </div>
                 </div>
                 <div class="col-md-3 col-6">
                     <div class="info-tile">
-                        <div class="info-tile-label">Business name</div>
+                        <div class="info-tile-label fw-bold text-uppercase">BUSINESS NAME</div>
                         <div class="info-tile-value">{{ $business->business_name ?? $business->name }}</div>
                     </div>
                 </div>
                 <div class="col-md-3 col-6">
                     <div class="info-tile">
-                        <div class="info-tile-label">STRN</div>
+                        <div class="info-tile-label fw-bold text-uppercase">STRN</div>
                         <div class="info-tile-value">{{ $business->strn ?: 'N/A' }}</div>
                     </div>
                 </div>
                 <div class="col-md-3 col-6">
                     <div class="info-tile">
-                        <div class="info-tile-label">Address</div>
+                        <div class="info-tile-label fw-bold text-uppercase">ADDRESS</div>
                         <div class="info-tile-value">{{ $business->business_address ?? 'Registered Business Office' }}</div>
                     </div>
                 </div>
@@ -299,10 +293,10 @@
 
         <!-- SECTION 3: BUYER DETAILS -->
         <div class="card-section">
-            <div class="section-title">Buyer details</div>
+            <div class="section-title fw-bold text-uppercase" style="letter-spacing: 0.04em;">BUYER INFORMATION</div>
             <div class="row g-3">
                 <div class="col-md-3">
-                    <label class="form-label-xs">Saved customer</label>
+                    <label class="form-label-xs fw-bold text-uppercase">SAVED CUSTOMER</label>
                     <select id="saved_customer_select" name="customer_id" class="searchable-select" data-placeholder="Search customers...">
                         <option value="">New buyer</option>
                         @foreach ($customers as $c)
@@ -320,18 +314,18 @@
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label-xs">Buyer NTN / CNIC</label>
+                    <label class="form-label-xs fw-bold text-uppercase">BUYER NTN / CNIC</label>
                     <input type="text" name="buyer_ntn_cnic" id="buyer_ntn_cnic" class="form-control form-control-sm" value="{{ old('buyer_ntn_cnic') }}" placeholder="7-digit NTN or 13-digit CNIC">
                     <div class="form-helper-xs">7-digit NTN or 13-digit CNIC; optional for unregistered buyers</div>
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label-xs">Buyer name <span class="text-danger">*</span></label>
+                    <label class="form-label-xs fw-bold text-uppercase">BUYER NAME <span class="text-danger">*</span></label>
                     <input type="text" name="buyer_name" id="buyer_name" class="form-control form-control-sm" value="{{ old('buyer_name') }}" required>
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label-xs">Buyer province <span class="text-danger">*</span></label>
+                    <label class="form-label-xs fw-bold text-uppercase">BUYER PROVINCE <span class="text-danger">*</span></label>
                     <select name="buyer_province" id="buyer_province" class="searchable-select" data-placeholder="Select Province..." required>
                         @foreach ($provinces as $prov)
                             <option value="{{ $prov }}" {{ old('buyer_province', 'Punjab') === $prov ? 'selected' : '' }}>{{ $prov }}</option>
@@ -340,7 +334,7 @@
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label-xs">Buyer type <span class="text-danger">*</span></label>
+                    <label class="form-label-xs fw-bold text-uppercase">BUYER TYPE <span class="text-danger">*</span></label>
                     <select name="buyer_type" id="buyer_type" class="form-select form-select-sm" required>
                         <option value="registered" {{ old('buyer_type') === 'registered' ? 'selected' : '' }}>Registered</option>
                         <option value="unregistered" {{ old('buyer_type', 'unregistered') === 'unregistered' ? 'selected' : '' }}>Unregistered</option>
@@ -355,7 +349,7 @@
                 </div>
 
                 <div class="col-md-9">
-                    <label class="form-label-xs">Buyer Address <span class="text-danger">*</span></label>
+                    <label class="form-label-xs fw-bold text-uppercase">BUYER ADDRESS <span class="text-danger">*</span></label>
                     <input type="text" name="buyer_address" id="buyer_address" class="form-control form-control-sm" value="{{ old('buyer_address', 'Pakistan') }}" required>
                 </div>
             </div>
@@ -365,8 +359,8 @@
         <div class="card-section">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
-                    <div class="section-title mb-0">Items details</div>
-                    <div class="text-muted small">Items Entry Table (The Core) — Configure products, HS codes, tax rates, SRO/Schedule and item serial numbers</div>
+                    <div class="section-title mb-0 fw-bold text-uppercase" style="letter-spacing: 0.04em;">ITEMS &amp; CALCULATIONS</div>
+                    <div class="text-muted small">Configure products, HS codes, tax rates, SRO/Schedule and item serial numbers</div>
                 </div>
                 <div class="d-flex align-items-center gap-3">
                     <div class="form-check form-check-inline m-0">
@@ -390,7 +384,7 @@
             <div class="col-md-6 col-lg-5">
                 <div class="card border shadow-sm rounded-3 p-3 bg-white">
                     <div class="fw-bold text-dark pb-2 mb-2 border-bottom d-flex align-items-center justify-content-between">
-                        <span><i class="bi bi-calculator me-1 text-primary"></i> Totals preview</span>
+                        <span class="fw-bold text-uppercase" style="letter-spacing: 0.04em;"><i class="bi bi-calculator me-1 text-primary"></i> TOTALS &amp; FBR SUMMARY</span>
                         <span class="badge bg-light text-muted border" id="summaryItemCount">1 item</span>
                     </div>
                     <div class="d-flex justify-content-between py-1 small text-secondary">
@@ -477,24 +471,20 @@ document.addEventListener('DOMContentLoaded', function () {
     let itemCount = 0;
     const tomSelectInstances = {};
 
-    // 1. Initialize TomSelect on Province of Supplier & Destination of Supply
-    const supplierProvEl = document.getElementById('supplier_province');
-    if (supplierProvEl) {
-        new TomSelect(supplierProvEl, {
+    // 1. Initialize TomSelect on Single Province Box
+    const provSelectEl = document.getElementById('province_select');
+    if (provSelectEl) {
+        new TomSelect(provSelectEl, {
             plugins: ['dropdown_input'],
             create: false,
-            placeholder: 'Select Supplier Province...',
-            closeAfterSelect: true
-        });
-    }
-
-    const destSupplyEl = document.getElementById('destination_of_supply');
-    if (destSupplyEl) {
-        new TomSelect(destSupplyEl, {
-            plugins: ['dropdown_input'],
-            create: false,
-            placeholder: 'Select Destination of Supply...',
-            closeAfterSelect: true
+            placeholder: 'Select Province...',
+            closeAfterSelect: true,
+            onChange: function (val) {
+                const sEl = document.getElementById('supplier_province');
+                const dEl = document.getElementById('destination_of_supply');
+                if (sEl) sEl.value = val;
+                if (dEl) dEl.value = val;
+            }
         });
     }
 
@@ -506,8 +496,8 @@ document.addEventListener('DOMContentLoaded', function () {
             placeholder: 'Select Buyer Province...',
             closeAfterSelect: true,
             onChange: function (val) {
-                if (val && destSupplyEl && destSupplyEl.tomselect && !destSupplyEl.tomselect.getValue()) {
-                    destSupplyEl.tomselect.setValue(val);
+                if (val && provSelectEl && provSelectEl.tomselect && !provSelectEl.tomselect.getValue()) {
+                    provSelectEl.tomselect.setValue(val);
                 }
             }
         });
@@ -678,14 +668,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label-xs">Sale Type (Dropdown with Search) <span class="text-danger">*</span></label>
+                    <label class="form-label-xs fw-bold text-uppercase">SALE TYPE <span class="text-danger">*</span></label>
                     <select name="items[${index}][sale_type]" class="saletype-select" data-placeholder="Choose Sale Type..." required>
                         ${config.saleTypes.map(st => `<option value="${st}" ${st.includes('Standard') ? 'selected' : ''}>${st}</option>`).join('')}
                     </select>
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label-xs">HS Code (Dropdown with Search) <span class="text-danger">*</span></label>
+                    <label class="form-label-xs fw-bold text-uppercase">HS CODE <span class="text-danger">*</span></label>
                     <select name="items[${index}][hs_code]" class="hscode-select" data-placeholder="Search HS Code..." required>
                         <option value="">Search HS / PCT Code...</option>
                         ${config.hsCodes.map(h => `<option value="${h.pct_code}">${h.pct_code} — ${h.description.substring(0, 40)}</option>`).join('')}
@@ -693,7 +683,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label-xs">Tax Rate (%) (Dropdown with Search) <span class="text-danger">*</span></label>
+                    <label class="form-label-xs fw-bold text-uppercase">TAX RATE (%) <span class="text-danger">*</span></label>
                     <select name="items[${index}][tax_rate]" class="taxrate-select item-tax-rate" data-placeholder="Select Tax Rate..." required>
                         ${config.taxRates.map(tr => `<option value="${tr}" ${tr === '18.00%' ? 'selected' : ''}>${tr}</option>`).join('')}
                     </select>
@@ -703,24 +693,24 @@ document.addEventListener('DOMContentLoaded', function () {
             <!-- Row 2: Product Description, UOM, Quantity, Unit Price -->
             <div class="row g-2 mb-2">
                 <div class="col-md-3">
-                    <label class="form-label-xs">Product Description <span class="text-danger">*</span></label>
+                    <label class="form-label-xs fw-bold text-uppercase">PRODUCT DESCRIPTION <span class="text-danger">*</span></label>
                     <input type="text" name="items[${index}][product_description]" class="form-control form-control-sm item-desc" placeholder="Product details" required>
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label-xs">UoM (Dropdown with Search) <span class="text-danger">*</span></label>
+                    <label class="form-label-xs fw-bold text-uppercase">UOM <span class="text-danger">*</span></label>
                     <select name="items[${index}][uom]" class="uom-select" data-placeholder="Select UoM..." required>
                         ${Object.entries(config.uomList).map(([code, name]) => `<option value="${code}" ${code === 'MT' || code === 'SET' || code === 'KG' ? 'selected' : ''}>${name}</option>`).join('')}
                     </select>
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label-xs">Quantity <span class="text-danger">*</span></label>
+                    <label class="form-label-xs fw-bold text-uppercase">QUANTITY <span class="text-danger">*</span></label>
                     <input type="number" step="any" min="0.001" name="items[${index}][quantity]" class="form-control form-control-sm item-qty" value="1" required>
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label-xs">Unit price (excl. tax) <span class="text-danger">*</span></label>
+                    <label class="form-label-xs fw-bold text-uppercase">UNIT PRICE (EXCL. TAX) <span class="text-danger">*</span></label>
                     <input type="number" step="0.01" min="0" name="items[${index}][unit_price]" class="form-control form-control-sm item-unit-price" value="0.00" required>
                 </div>
             </div>
@@ -728,32 +718,32 @@ document.addEventListener('DOMContentLoaded', function () {
             <!-- Row 3: Discount, Value excl tax, Sales Tax, Fixed/Retail Price, Extra Tax -->
             <div class="row g-2 mb-2">
                 <div class="col-md-2">
-                    <label class="form-label-xs">Discount</label>
+                    <label class="form-label-xs fw-bold text-uppercase">DISCOUNT</label>
                     <input type="number" step="0.01" min="0" name="items[${index}][discount_amount]" class="form-control form-control-sm item-discount" value="0.00">
                     <div class="form-helper-xs">Deducted once</div>
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label-xs">VALUE OF SALES (EXCL. TAX)</label>
+                    <label class="form-label-xs fw-bold text-uppercase">VALUE OF SALES (EXCL. TAX)</label>
                     <input type="text" class="form-control form-control-sm bg-light item-val-excl fw-semibold text-dark" value="0.00" readonly>
                     <div class="form-helper-xs text-muted">Auto: Qty &times; Price</div>
                 </div>
 
                 <div class="col-md-2">
-                    <label class="form-label-xs">Sales Tax</label>
+                    <label class="form-label-xs fw-bold text-uppercase">SALES TAX</label>
                     <input type="number" step="0.01" min="0" name="items[${index}][sales_tax_amount]" class="form-control form-control-sm item-sales-tax" value="0.00">
                     <div class="form-helper-xs text-muted">Auto: Base &times; Tax Rate %</div>
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label-xs">Fixed / notified value or retail price</label>
+                    <label class="form-label-xs fw-bold text-uppercase">FIXED / RETAIL PRICE</label>
                     <input type="number" step="0.01" min="0" name="items[${index}][fixed_notified_value]" class="form-control form-control-sm item-fixed-val" placeholder="0.00">
                     <input type="hidden" name="items[${index}][retail_price]" class="item-retail-price" value="">
                     <div class="form-helper-xs text-muted">Per unit tariff / 3rd Sch. MRP</div>
                 </div>
 
                 <div class="col-md-2">
-                    <label class="form-label-xs">Extra Tax</label>
+                    <label class="form-label-xs fw-bold text-uppercase">EXTRA TAX</label>
                     <input type="number" step="0.01" min="0" name="items[${index}][extra_tax_amount]" class="form-control form-control-sm item-extra-tax" value="0.00">
                 </div>
             </div>
@@ -762,7 +752,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="row g-2">
                 <div class="col-md-2">
                     <div class="d-flex justify-content-between align-items-center">
-                        <label class="form-label-xs mb-0">Further Tax (4%)</label>
+                        <label class="form-label-xs fw-bold text-uppercase mb-0">FURTHER TAX (4%)</label>
                         <div class="form-check form-switch m-0" title="Apply 4% further tax">
                             <input class="form-check-input item-apply-further" type="checkbox" id="apply_further_${index}" ${document.getElementById('buyer_type')?.value === 'unregistered' ? 'checked' : ''}>
                             <label class="form-check-label" for="apply_further_${index}" style="font-size: 10px; color: #2563EB; font-weight: 600;">Apply 4%</label>
@@ -774,7 +764,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
 
                 <div class="col-md-2">
-                    <label class="form-label-xs">SRO No/Schedule No</label>
+                    <label class="form-label-xs fw-bold text-uppercase">SRO NO / SCHEDULE NO</label>
                     <select name="items[${index}][sro_schedule_no]" class="sro-select" data-placeholder="Select SRO...">
                         <option value="">None / Not Applicable</option>
                         ${config.sroList.map(s => `<option value="${s}">${s}</option>`).join('')}
@@ -782,7 +772,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
 
                 <div class="col-md-2">
-                    <label class="form-label-xs">Item S. No (Dropdown)</label>
+                    <label class="form-label-xs fw-bold text-uppercase">ITEM S. NO</label>
                     <select name="items[${index}][sro_item_serial]" class="serial-select item-sro-serial" data-placeholder="Select S. No...">
                         <option value="">None / S. No...</option>
                         ${config.itemSerials.map(s => `<option value="${s}">${s}</option>`).join('')}
@@ -790,17 +780,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
 
                 <div class="col-md-2">
-                    <label class="form-label-xs">FED payable</label>
+                    <label class="form-label-xs fw-bold text-uppercase">FED PAYABLE</label>
                     <input type="number" step="0.01" min="0" name="items[${index}][fed_payable_amount]" class="form-control form-control-sm item-fed" value="0.00">
                 </div>
 
                 <div class="col-md-2">
-                    <label class="form-label-xs">ST withheld at source</label>
+                    <label class="form-label-xs fw-bold text-uppercase">ST WITHHELD AT SOURCE</label>
                     <input type="number" step="0.01" min="0" name="items[${index}][st_withheld_amount]" class="form-control form-control-sm item-st-withheld" value="0.00">
                 </div>
 
                 <div class="col-md-2">
-                    <label class="form-label-xs">Total (incl. taxes)</label>
+                    <label class="form-label-xs fw-bold text-uppercase">TOTAL (INCL. TAXES)</label>
                     <input type="text" class="form-control form-control-sm bg-light item-total-incl fw-bold text-dark" value="0.00" readonly>
                     <div class="form-helper-xs text-muted">Calculated</div>
                 </div>

@@ -10,6 +10,7 @@ use App\Services\FbrIntegrationService;
 use App\Services\FbrValidationService;
 use App\Services\InvoiceService;
 use App\Services\TenantService;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -24,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Paginator::useBootstrap();
+
         if (
             (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
             (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')

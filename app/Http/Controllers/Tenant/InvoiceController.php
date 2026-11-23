@@ -148,6 +148,12 @@ class InvoiceController extends Controller
             if (!$request->filled('buyer_type')) {
                 $request->merge(['buyer_type' => 'unregistered']);
             }
+            if ($request->filled('province')) {
+                $request->merge([
+                    'supplier_province' => $request->input('province'),
+                    'destination_of_supply' => $request->input('province'),
+                ]);
+            }
             if (!$request->filled('destination_of_supply')) {
                 $request->merge(['destination_of_supply' => $request->input('buyer_province', 'Punjab')]);
             }
@@ -517,6 +523,12 @@ class InvoiceController extends Controller
             }
             if (!$request->filled('buyer_type')) {
                 $request->merge(['buyer_type' => $invoice->buyer_type ?? 'unregistered']);
+            }
+            if ($request->filled('province')) {
+                $request->merge([
+                    'supplier_province' => $request->input('province'),
+                    'destination_of_supply' => $request->input('province'),
+                ]);
             }
             if (!$request->filled('destination_of_supply')) {
                 $request->merge(['destination_of_supply' => $invoice->destination_of_supply ?? 'Punjab']);
