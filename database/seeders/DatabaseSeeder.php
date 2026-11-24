@@ -135,41 +135,8 @@ class DatabaseSeeder extends Seeder
         // 6. Seed Standard HS / PCT Codes
         $this->call(HsCodeSeeder::class);
 
-        // 7. Seed Complete Sandbox Scenarios (SN001 - SN028)
-        $scenarios = [
-            ['scenario_code' => 'SN001', 'title' => 'Standard Rate Goods Supply', 'description' => 'Standard rate goods supplied to registered buyers with 18% sales tax.'],
-            ['scenario_code' => 'SN002', 'title' => 'Reduced Rate Supply', 'description' => 'Supplies taxable at reduced rates specified in the Eighth Schedule.'],
-            ['scenario_code' => 'SN003', 'title' => 'Unregistered Buyer with Further Tax', 'description' => 'Supplies to unregistered persons requiring 4% further tax under section 3(1A).'],
-            ['scenario_code' => 'SN004', 'title' => 'Exempt Supply', 'description' => 'Goods exempt from sales tax under Sixth Schedule.'],
-            ['scenario_code' => 'SN005', 'title' => 'Zero-rated Export Supply', 'description' => 'Exports of goods chargeable to sales tax at zero rate under Fifth Schedule.'],
-            ['scenario_code' => 'SN006', 'title' => 'Services Supply at Provincial Rate', 'description' => 'Taxable services invoiced according to provincial sales tax on services enactments.'],
-            ['scenario_code' => 'SN007', 'title' => 'Debit Note for Upward Price Adjustment', 'description' => 'Debit note issued under section 9 for upward revision of price or quantity.'],
-            ['scenario_code' => 'SN008', 'title' => 'Credit Note for Return / Discount', 'description' => 'Credit note issued under section 9 for sales return or downward revision.'],
-            ['scenario_code' => 'SN009', 'title' => 'Withholding Sales Tax Deduction', 'description' => 'Supplies where buyer is an active withholding agent deducting sales tax at source.'],
-            ['scenario_code' => 'SN010', 'title' => 'Third Schedule Goods (MRP Basis)', 'description' => 'Supplies of goods where tax is levied on retail price printed on the pack.'],
-            ['scenario_code' => 'SN011', 'title' => 'Debit Note Cancellation', 'description' => 'Debit note issued for cancellation of standard sales tax invoice.'],
-            ['scenario_code' => 'SN012', 'title' => 'Supply to Withholding Agent (Company to Company)', 'description' => 'B2B supply subject to standard withholding tax rules.'],
-            ['scenario_code' => 'SN013', 'title' => 'Export of Goods with Zero-rating & SRO', 'description' => 'Direct export goods with international consignee details.'],
-            ['scenario_code' => 'SN014', 'title' => 'Supply of Goods with Extra Tax Levied', 'description' => 'Supplies subject to extra tax under special regulatory orders.'],
-            ['scenario_code' => 'SN015', 'title' => 'Advance Payment & Sales Tax Adjustment', 'description' => 'Invoice issued against advance payment receipt.'],
-            ['scenario_code' => 'SN016', 'title' => 'Mixed Supply (Standard + Exempt Items)', 'description' => 'Multi-line invoice containing both standard and exempt items.'],
-            ['scenario_code' => 'SN017', 'title' => 'Multi-Rate Goods Supply', 'description' => 'Invoice containing line items with multiple differing sales tax rates.'],
-            ['scenario_code' => 'SN018', 'title' => 'Credit Note for Partial Sales Return', 'description' => 'Credit note issued for return of a specific portion of previous goods.'],
-            ['scenario_code' => 'SN019', 'title' => 'Debit Note for Supplementary Differential Tax', 'description' => 'Debit note issued to account for tax rate increase.'],
-            ['scenario_code' => 'SN020', 'title' => 'Supply to Government / Public Sector Entity', 'description' => 'Supply to state-owned enterprise with mandatory sales tax withholding.'],
-            ['scenario_code' => 'SN021', 'title' => 'Toll Manufacturing Services Invoice', 'description' => 'Service invoice for contract conversion or processing.'],
-            ['scenario_code' => 'SN022', 'title' => 'Supply from EPZ to Tariff Area', 'description' => 'Goods entering domestic tariff area from Export Processing Zone.'],
-            ['scenario_code' => 'SN023', 'title' => 'Special FED & Sales Tax Combination', 'description' => 'Goods subject to both Federal Excise Duty and Sales Tax.'],
-            ['scenario_code' => 'SN024', 'title' => 'Supply of Energy / Electric Power', 'description' => 'Utility and bulk energy distribution tax invoice.'],
-            ['scenario_code' => 'SN025', 'title' => 'End-to-End Invoice Reversal & Reconciliation', 'description' => 'Full credit note offsetting an accepted invoice.'],
-            ['scenario_code' => 'SN026', 'title' => 'Tier-1 Retailer POS Integration Test', 'description' => 'Invoice issued by registered Tier-1 retailer through integrated POS.'],
-            ['scenario_code' => 'SN027', 'title' => 'Retailer Cash vs Digital Payment', 'description' => 'Tier-1 retailer invoice paid through digital POS card terminal.'],
-            ['scenario_code' => 'SN028', 'title' => 'Retailer Customer Return', 'description' => 'Return and refund slip processed by registered retailer.'],
-        ];
-
-        foreach ($scenarios as $item) {
-            SandboxScenario::firstOrCreate(['scenario_code' => $item['scenario_code']], $item);
-        }
+        // 7. Seed Official FBR Sandbox Scenarios (SN001 - SN028) from Scenario Data specification
+        $this->call(SandboxScenarioSeeder::class);
 
         // 8. Seed Sample Customers and Products for Demo Business
         $customer1 = Customer::firstOrCreate(

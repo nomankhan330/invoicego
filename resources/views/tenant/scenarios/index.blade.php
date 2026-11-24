@@ -182,8 +182,11 @@
         <div class="col-lg-9 col-md-8">
             <!-- Request Card -->
             <div class="scenario-card shadow-sm mb-3">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="fw-bold text-dark mb-0 fs-5" id="requestHeaderTitle">Request &middot; <span id="activeScenarioCode">SN001</span></h5>
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="fw-bold text-dark mb-0 fs-5" id="requestHeaderTitle">Request &middot; <span id="activeScenarioCode">SN001</span></h5>
+                        <div class="text-muted small mt-1" id="activeScenarioTitle">{{ $scenarios->first()->title ?? '' }}</div>
+                    </div>
                     <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" id="resetToTemplateBtn">
                         <i class="bi bi-arrow-clockwise"></i> Reset to template
                     </button>
@@ -259,8 +262,9 @@
                             <div class="col-md-4">
                                 <label class="scenario-label">buyerRegistrationType</label>
                                 <select class="form-select scenario-input" id="field_buyerRegistrationType">
-                                    <option value="Unregistered">Unregistered</option>
+                                    <option value="">— Omitted —</option>
                                     <option value="Registered">Registered</option>
+                                    <option value="Unregistered">Unregistered</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
@@ -284,20 +288,20 @@
                                 </div>
                                 <div class="col-md-3">
                                     <label class="scenario-label">productDescription</label>
-                                    <input type="text" class="form-control scenario-input" id="item_productDescription" value="TEST">
+                                    <input type="text" class="form-control scenario-input" id="item_productDescription" value="test">
                                 </div>
                                 <div class="col-md-3">
                                     <label class="scenario-label">rate</label>
                                     <input type="text" class="form-control scenario-input" id="item_rate" value="18%">
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="scenario-label">uom</label>
-                                    <input type="text" class="form-control scenario-input" id="item_uom" value="Numbers, pieces, units">
+                                    <label class="scenario-label">uoM</label>
+                                    <input type="text" class="form-control scenario-input" id="item_uoM" value="Numbers, pieces, units">
                                 </div>
 
                                 <div class="col-md-3">
                                     <label class="scenario-label">quantity</label>
-                                    <input type="number" step="any" class="form-control scenario-input" id="item_quantity" value="123">
+                                    <input type="number" step="any" class="form-control scenario-input" id="item_quantity" value="400">
                                 </div>
                                 <div class="col-md-3">
                                     <label class="scenario-label">totalValues</label>
@@ -313,8 +317,25 @@
                                 </div>
 
                                 <div class="col-md-3">
+                                    <label class="scenario-label">salesTaxApplicable</label>
+                                    <input type="number" step="any" class="form-control scenario-input" id="item_salesTaxApplicable" value="180">
+                                </div>
+                                <div class="col-md-3">
                                     <label class="scenario-label">salesTaxWithheldAtSource</label>
                                     <input type="number" step="any" class="form-control scenario-input" id="item_salesTaxWithheldAtSource" value="0">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="scenario-label">extraTax</label>
+                                    <input type="text" class="form-control scenario-input" id="item_extraTax" value="" placeholder='"" or 0'>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="scenario-label">furtherTax</label>
+                                    <input type="number" step="any" class="form-control scenario-input" id="item_furtherTax" value="0">
+                                </div>
+
+                                <div class="col-md-3">
+                                    <label class="scenario-label">sroScheduleNo</label>
+                                    <input type="text" class="form-control scenario-input" id="item_sroScheduleNo" value="">
                                 </div>
                                 <div class="col-md-3">
                                     <label class="scenario-label">fedPayable</label>
@@ -325,31 +346,19 @@
                                     <input type="number" step="any" class="form-control scenario-input" id="item_discount" value="0">
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="scenario-label">saleType</label>
-                                    <input type="text" class="form-control scenario-input" id="item_saleType" value="Goods at standard rate">
-                                </div>
-
-                                <div class="col-md-3">
-                                    <label class="scenario-label">sroScheduleNo</label>
-                                    <input type="text" class="form-control scenario-input" id="item_sroScheduleNo" value="">
-                                </div>
-                                <div class="col-md-3">
                                     <label class="scenario-label">sroItemSerialNo</label>
                                     <input type="text" class="form-control scenario-input" id="item_sroItemSerialNo" value="">
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="scenario-label">extraTax</label>
-                                    <input type="number" step="any" class="form-control scenario-input" id="item_extraTax" value="0">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="scenario-label">furtherTax</label>
-                                    <input type="number" step="any" class="form-control scenario-input" id="item_furtherTax" value="0">
+
+                                <div class="col-md-12">
+                                    <label class="scenario-label">saleType</label>
+                                    <input type="text" class="form-control scenario-input" id="item_saleType" value="Goods at standard rate (default)">
                                 </div>
                             </div>
                         </div>
 
                         <div class="text-muted" style="font-size: 11.5px; line-height: 1.45;">
-                            Values are sent exactly as entered (scenario examples are not recalculated). Leave extra/title empty only if FBR asks for it (error 0019).
+                            Values are sent exactly as entered (scenario examples are not recalculated). Leave extraTax empty only if FBR asks for it (error 0019).
                         </div>
                     </div>
 
@@ -439,65 +448,71 @@ document.addEventListener('DOMContentLoaded', function () {
     const businessData = @json($business);
 
     let currentCode = 'SN001';
+    let currentExtraTopFields = {};
+    const standardTopKeys = new Set([
+        'invoiceType', 'invoiceDate', 'sellerNTNCNIC', 'sellerBusinessName', 'sellerProvince',
+        'sellerAddress', 'buyerNTNCNIC', 'buyerBusinessName', 'buyerProvince', 'buyerAddress',
+        'buyerRegistrationType', 'invoiceRefNo', 'scenarioId', 'items'
+    ]);
     const formFields = [
         'field_invoiceType', 'field_invoiceDate', 'field_sellerNTN', 'field_sellerBusinessName',
         'field_sellerProvince', 'field_sellerAddress', 'field_buyerNTN', 'field_buyerBusinessName',
         'field_buyerProvince', 'field_buyerAddress', 'field_buyerRegistrationType', 'field_invoiceRefNo',
-        'field_scenarioId', 'item_hsCode', 'item_productDescription', 'item_rate', 'item_uom',
+        'field_scenarioId', 'item_hsCode', 'item_productDescription', 'item_rate', 'item_uoM',
         'item_quantity', 'item_totalValues', 'item_valueSalesExcludingST', 'item_fixedNotifiedValueOrRetailPrice',
-        'item_salesTaxWithheldAtSource', 'item_fedPayable', 'item_discount', 'item_saleType',
-        'item_sroScheduleNo', 'item_sroItemSerialNo', 'item_extraTax', 'item_furtherTax'
+        'item_salesTaxApplicable', 'item_salesTaxWithheldAtSource', 'item_extraTax', 'item_furtherTax',
+        'item_sroScheduleNo', 'item_fedPayable', 'item_discount', 'item_saleType', 'item_sroItemSerialNo'
     ];
 
-    // Helper: Build default payload object for scenario
+    // Helper: Build payload object for scenario from official FBR sample_payload
     function getTemplatePayload(code) {
         const s = scenariosData[code] || {};
-        const title = s.title || '';
-        const titleLower = title.toLowerCase();
+        const todayStr = '{{ now("Asia/Karachi")->format("Y-m-d") }}';
 
-        const invType = titleLower.includes('credit') ? 'Credit Note' : (titleLower.includes('debit') ? 'Debit Note' : (titleLower.includes('stwh') ? 'STWH' : 'Sale Invoice'));
-        const buyerNTN = titleLower.includes('unregistered') ? '1000000000000' : '7654321';
-        const buyerName = titleLower.includes('unregistered') ? 'FERTILIZER MANUFAC IRS NEW' : 'Apex Logistics Pvt Ltd';
-        const buyerRegType = titleLower.includes('unregistered') ? 'Unregistered' : 'Registered';
-        const rate = titleLower.includes('reduced') ? '10%' : (titleLower.includes('exempt') ? '0%' : (titleLower.includes('further') ? '18%' : '18%'));
-        const rateNum = parseFloat(rate) || 18;
-        const valExcl = 1000;
-        const tax = titleLower.includes('exempt') ? 0 : Math.round(valExcl * (rateNum / 100));
-        const further = titleLower.includes('further') ? 40 : 0;
-        const stwh = titleLower.includes('withheld') || titleLower.includes('stwh') ? 250 : 0;
+        if (s.sample_payload && typeof s.sample_payload === 'object' && !Array.isArray(s.sample_payload)) {
+            const tpl = JSON.parse(JSON.stringify(s.sample_payload));
+            tpl.invoiceDate = todayStr;
+            tpl.scenarioId = tpl.scenarioId || code;
+            if (businessData.ntn_cnic) tpl.sellerNTNCNIC = businessData.ntn_cnic;
+            if (businessData.name) tpl.sellerBusinessName = businessData.name;
+            if (businessData.province) tpl.sellerProvince = businessData.province;
+            if (businessData.address) tpl.sellerAddress = businessData.address;
+            return tpl;
+        }
 
         return {
-            invoiceType: invType,
-            invoiceDate: '{{ now("Asia/Karachi")->format("Y-m-d") }}',
-            sellerNTNCNIC: businessData.ntn_cnic || '1234567',
-            sellerBusinessName: businessData.name || 'invoicego',
-            sellerProvince: businessData.province || 'Punjab',
-            sellerAddress: businessData.address || 'Lahore',
-            buyerNTNCNIC: buyerNTN,
-            buyerBusinessName: buyerName,
+            invoiceType: 'Sale Invoice',
+            invoiceDate: todayStr,
+            sellerBusinessName: businessData.name || 'Company 8',
+            sellerProvince: businessData.province || 'Sindh',
+            sellerNTNCNIC: businessData.ntn_cnic || '8885801',
+            sellerAddress: businessData.address || 'Karachi',
+            buyerNTNCNIC: '2046004',
+            buyerBusinessName: 'FERTILIZER MANUFAC IRS NEW',
             buyerProvince: 'Sindh',
             buyerAddress: 'Karachi',
-            buyerRegistrationType: buyerRegType,
-            invoiceRefNo: 'SI-20250421-001',
+            invoiceRefNo: '',
             scenarioId: code,
+            buyerRegistrationType: 'Registered',
             items: [
                 {
                     hsCode: '0101.2100',
-                    productDescription: title || 'TEST',
-                    rate: rate,
-                    uom: 'Numbers, pieces, units',
-                    quantity: 123,
+                    productDescription: 'test',
+                    rate: '18%',
+                    uoM: 'Numbers, pieces, units',
+                    quantity: 400,
                     totalValues: 0,
-                    valueSalesExcludingST: valExcl,
+                    valueSalesExcludingST: 1000,
                     fixedNotifiedValueOrRetailPrice: 0,
-                    salesTaxWithheldAtSource: stwh,
+                    salesTaxApplicable: 180,
+                    salesTaxWithheldAtSource: 0,
+                    extraTax: '',
+                    furtherTax: 0,
+                    sroScheduleNo: '',
                     fedPayable: 0,
                     discount: 0,
-                    saleType: titleLower.includes('sro') ? 'Goods as per SRO' : 'Goods at standard rate',
-                    sroScheduleNo: titleLower.includes('sro') ? '297(I)/2023-Table-I' : '',
-                    sroItemSerialNo: titleLower.includes('sro') ? '12' : '',
-                    extraTax: 0,
-                    furtherTax: further
+                    saleType: 'Goods at standard rate (default)',
+                    sroItemSerialNo: ''
                 }
             ]
         };
@@ -505,76 +520,102 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Populate Form fields from an object
     function setFormFromPayload(payload) {
-        document.getElementById('field_invoiceType').value = payload.invoiceType || 'Sale Invoice';
-        document.getElementById('field_invoiceDate').value = payload.invoiceDate || '{{ now("Asia/Karachi")->format("Y-m-d") }}';
-        document.getElementById('field_sellerNTN').value = payload.sellerNTNCNIC || businessData.ntn_cnic || '';
-        document.getElementById('field_sellerBusinessName').value = payload.sellerBusinessName || businessData.name || '';
-        document.getElementById('field_sellerProvince').value = payload.sellerProvince || businessData.province || '';
-        document.getElementById('field_sellerAddress').value = payload.sellerAddress || businessData.address || '';
-        document.getElementById('field_buyerNTN').value = payload.buyerNTNCNIC || '';
-        document.getElementById('field_buyerBusinessName').value = payload.buyerBusinessName || '';
-        document.getElementById('field_buyerProvince').value = payload.buyerProvince || 'Sindh';
-        document.getElementById('field_buyerAddress').value = payload.buyerAddress || 'Karachi';
-        document.getElementById('field_buyerRegistrationType').value = payload.buyerRegistrationType || 'Unregistered';
-        document.getElementById('field_invoiceRefNo').value = payload.invoiceRefNo || '';
-        document.getElementById('field_scenarioId').value = payload.scenarioId || currentCode;
+        // Capture any scenario-specific extra top-level keys (e.g. dataSource, additional1..3)
+        currentExtraTopFields = {};
+        Object.keys(payload || {}).forEach(k => {
+            if (!standardTopKeys.has(k)) {
+                currentExtraTopFields[k] = payload[k];
+            }
+        });
+
+        document.getElementById('field_invoiceType').value = payload.invoiceType ?? 'Sale Invoice';
+        document.getElementById('field_invoiceDate').value = payload.invoiceDate ?? '{{ now("Asia/Karachi")->format("Y-m-d") }}';
+        document.getElementById('field_sellerNTN').value = payload.sellerNTNCNIC ?? businessData.ntn_cnic ?? '';
+        document.getElementById('field_sellerBusinessName').value = payload.sellerBusinessName ?? businessData.name ?? '';
+        document.getElementById('field_sellerProvince').value = payload.sellerProvince ?? businessData.province ?? '';
+        document.getElementById('field_sellerAddress').value = payload.sellerAddress ?? businessData.address ?? '';
+        document.getElementById('field_buyerNTN').value = payload.buyerNTNCNIC ?? '';
+        document.getElementById('field_buyerBusinessName').value = payload.buyerBusinessName ?? '';
+        document.getElementById('field_buyerProvince').value = payload.buyerProvince ?? '';
+        document.getElementById('field_buyerAddress').value = payload.buyerAddress ?? '';
+        document.getElementById('field_buyerRegistrationType').value = Object.prototype.hasOwnProperty.call(payload, 'buyerRegistrationType')
+            ? (payload.buyerRegistrationType ?? '')
+            : '';
+        document.getElementById('field_invoiceRefNo').value = payload.invoiceRefNo ?? '';
+        document.getElementById('field_scenarioId').value = payload.scenarioId ?? currentCode;
 
         const itm = (payload.items && payload.items[0]) ? payload.items[0] : {};
-        document.getElementById('item_hsCode').value = itm.hsCode || '0101.2100';
-        document.getElementById('item_productDescription').value = itm.productDescription || 'TEST';
-        document.getElementById('item_rate').value = itm.rate || '18%';
-        document.getElementById('item_uom').value = itm.uom || 'Numbers, pieces, units';
-        document.getElementById('item_quantity').value = itm.quantity !== undefined ? itm.quantity : 1;
-        document.getElementById('item_totalValues').value = itm.totalValues !== undefined ? itm.totalValues : 0;
-        document.getElementById('item_valueSalesExcludingST').value = itm.valueSalesExcludingST !== undefined ? itm.valueSalesExcludingST : 1000;
-        document.getElementById('item_fixedNotifiedValueOrRetailPrice').value = itm.fixedNotifiedValueOrRetailPrice !== undefined ? itm.fixedNotifiedValueOrRetailPrice : 0;
-        document.getElementById('item_salesTaxWithheldAtSource').value = itm.salesTaxWithheldAtSource !== undefined ? itm.salesTaxWithheldAtSource : 0;
-        document.getElementById('item_fedPayable').value = itm.fedPayable !== undefined ? itm.fedPayable : 0;
-        document.getElementById('item_discount').value = itm.discount !== undefined ? itm.discount : 0;
-        document.getElementById('item_saleType').value = itm.saleType || 'Goods at standard rate';
-        document.getElementById('item_sroScheduleNo').value = itm.sroScheduleNo || '';
-        document.getElementById('item_sroItemSerialNo').value = itm.sroItemSerialNo || '';
-        document.getElementById('item_extraTax').value = itm.extraTax !== undefined ? itm.extraTax : 0;
-        document.getElementById('item_furtherTax').value = itm.furtherTax !== undefined ? itm.furtherTax : 0;
+        document.getElementById('item_hsCode').value = itm.hsCode ?? '';
+        document.getElementById('item_productDescription').value = itm.productDescription ?? '';
+        document.getElementById('item_rate').value = itm.rate ?? '';
+        document.getElementById('item_uoM').value = itm.uoM ?? itm.uom ?? '';
+        document.getElementById('item_quantity').value = itm.quantity !== undefined && itm.quantity !== null ? itm.quantity : 0;
+        document.getElementById('item_totalValues').value = itm.totalValues !== undefined && itm.totalValues !== null ? itm.totalValues : 0;
+        document.getElementById('item_valueSalesExcludingST').value = itm.valueSalesExcludingST !== undefined && itm.valueSalesExcludingST !== null ? itm.valueSalesExcludingST : 0;
+        document.getElementById('item_fixedNotifiedValueOrRetailPrice').value = itm.fixedNotifiedValueOrRetailPrice !== undefined && itm.fixedNotifiedValueOrRetailPrice !== null ? itm.fixedNotifiedValueOrRetailPrice : 0;
+        document.getElementById('item_salesTaxApplicable').value = itm.salesTaxApplicable !== undefined && itm.salesTaxApplicable !== null ? itm.salesTaxApplicable : 0;
+        document.getElementById('item_salesTaxWithheldAtSource').value = itm.salesTaxWithheldAtSource !== undefined && itm.salesTaxWithheldAtSource !== null ? itm.salesTaxWithheldAtSource : 0;
+        document.getElementById('item_extraTax').value = itm.extraTax !== undefined && itm.extraTax !== null ? String(itm.extraTax) : '';
+        document.getElementById('item_furtherTax').value = itm.furtherTax !== undefined && itm.furtherTax !== null ? itm.furtherTax : 0;
+        document.getElementById('item_sroScheduleNo').value = itm.sroScheduleNo ?? '';
+        document.getElementById('item_fedPayable').value = itm.fedPayable !== undefined && itm.fedPayable !== null ? itm.fedPayable : 0;
+        document.getElementById('item_discount').value = itm.discount !== undefined && itm.discount !== null ? itm.discount : 0;
+        document.getElementById('item_saleType').value = itm.saleType ?? '';
+        document.getElementById('item_sroItemSerialNo').value = itm.sroItemSerialNo ?? '';
     }
 
     // Build Payload object from Form fields
     function getPayloadFromForm() {
-        return {
+        const extraTaxRaw = document.getElementById('item_extraTax').value.trim();
+        const extraTaxVal = extraTaxRaw === '' ? '' : (isNaN(Number(extraTaxRaw)) ? extraTaxRaw : Number(extraTaxRaw));
+
+        const payload = {
             invoiceType: document.getElementById('field_invoiceType').value,
             invoiceDate: document.getElementById('field_invoiceDate').value,
-            sellerNTNCNIC: document.getElementById('field_sellerNTN').value,
             sellerBusinessName: document.getElementById('field_sellerBusinessName').value,
             sellerProvince: document.getElementById('field_sellerProvince').value,
+            sellerNTNCNIC: document.getElementById('field_sellerNTN').value,
             sellerAddress: document.getElementById('field_sellerAddress').value,
             buyerNTNCNIC: document.getElementById('field_buyerNTN').value,
             buyerBusinessName: document.getElementById('field_buyerBusinessName').value,
             buyerProvince: document.getElementById('field_buyerProvince').value,
             buyerAddress: document.getElementById('field_buyerAddress').value,
-            buyerRegistrationType: document.getElementById('field_buyerRegistrationType').value,
             invoiceRefNo: document.getElementById('field_invoiceRefNo').value,
-            scenarioId: currentCode,
-            items: [
-                {
-                    hsCode: document.getElementById('item_hsCode').value,
-                    productDescription: document.getElementById('item_productDescription').value,
-                    rate: document.getElementById('item_rate').value,
-                    uom: document.getElementById('item_uom').value,
-                    quantity: parseFloat(document.getElementById('item_quantity').value) || 0,
-                    totalValues: parseFloat(document.getElementById('item_totalValues').value) || 0,
-                    valueSalesExcludingST: parseFloat(document.getElementById('item_valueSalesExcludingST').value) || 0,
-                    fixedNotifiedValueOrRetailPrice: parseFloat(document.getElementById('item_fixedNotifiedValueOrRetailPrice').value) || 0,
-                    salesTaxWithheldAtSource: parseFloat(document.getElementById('item_salesTaxWithheldAtSource').value) || 0,
-                    fedPayable: parseFloat(document.getElementById('item_fedPayable').value) || 0,
-                    discount: parseFloat(document.getElementById('item_discount').value) || 0,
-                    saleType: document.getElementById('item_saleType').value,
-                    sroScheduleNo: document.getElementById('item_sroScheduleNo').value,
-                    sroItemSerialNo: document.getElementById('item_sroItemSerialNo').value,
-                    extraTax: parseFloat(document.getElementById('item_extraTax').value) || 0,
-                    furtherTax: parseFloat(document.getElementById('item_furtherTax').value) || 0
-                }
-            ]
+            scenarioId: currentCode
         };
+
+        const buyerRegType = document.getElementById('field_buyerRegistrationType').value;
+        if (buyerRegType !== '') {
+            payload.buyerRegistrationType = buyerRegType;
+        }
+
+        Object.keys(currentExtraTopFields).forEach(k => {
+            payload[k] = currentExtraTopFields[k];
+        });
+
+        payload.items = [
+            {
+                hsCode: document.getElementById('item_hsCode').value,
+                productDescription: document.getElementById('item_productDescription').value,
+                rate: document.getElementById('item_rate').value,
+                uoM: document.getElementById('item_uoM').value,
+                quantity: parseFloat(document.getElementById('item_quantity').value) || 0,
+                totalValues: parseFloat(document.getElementById('item_totalValues').value) || 0,
+                valueSalesExcludingST: parseFloat(document.getElementById('item_valueSalesExcludingST').value) || 0,
+                fixedNotifiedValueOrRetailPrice: parseFloat(document.getElementById('item_fixedNotifiedValueOrRetailPrice').value) || 0,
+                salesTaxApplicable: parseFloat(document.getElementById('item_salesTaxApplicable').value) || 0,
+                salesTaxWithheldAtSource: parseFloat(document.getElementById('item_salesTaxWithheldAtSource').value) || 0,
+                extraTax: extraTaxVal,
+                furtherTax: parseFloat(document.getElementById('item_furtherTax').value) || 0,
+                sroScheduleNo: document.getElementById('item_sroScheduleNo').value,
+                fedPayable: parseFloat(document.getElementById('item_fedPayable').value) || 0,
+                discount: parseFloat(document.getElementById('item_discount').value) || 0,
+                saleType: document.getElementById('item_saleType').value,
+                sroItemSerialNo: document.getElementById('item_sroItemSerialNo').value
+            }
+        ];
+
+        return payload;
     }
 
     // Update JSON Editor from Form
@@ -600,6 +641,10 @@ document.addEventListener('DOMContentLoaded', function () {
     function loadScenario(code) {
         currentCode = code;
         document.getElementById('activeScenarioCode').textContent = code;
+        const titleEl = document.getElementById('activeScenarioTitle');
+        if (titleEl) {
+            titleEl.textContent = (scenariosData[code] && scenariosData[code].title) ? scenariosData[code].title : '';
+        }
         document.getElementById('historyScenarioCode').textContent = code;
         document.getElementById('field_scenarioId').value = code;
 

@@ -154,26 +154,61 @@ class FbrIntegrationService implements FbrIntegrationServiceInterface
 
     public function runSandboxScenario(Business $business, SandboxScenario $scenario, ?array $customPayload = null): array
     {
-        $payload = $customPayload ?? ($scenario->sample_payload ?? [
-            'invoiceType' => 'Sale Invoice',
-            'invoiceDate' => now('Asia/Karachi')->format('Y-m-d'),
-            'sellerNTN' => $business->ntn_cnic,
-            'sellerBusinessName' => $business->name,
-            'buyerNTN' => '7654321',
-            'buyerName' => 'PRAL Test Buyer',
-            'scenario' => $scenario->scenario_code,
-            'items' => [
-                [
-                    'hsCode' => '0101.2100',
-                    'description' => 'Test Scenario Item for ' . $scenario->scenario_code,
-                    'rate' => 18,
-                    'quantity' => 1,
-                    'unitPrice' => 1000,
-                    'salesTax' => 180,
-                ]
-            ],
-            'timestamp' => now()->toIso8601String(),
-        ]);
+        if ($customPayload !== null) {
+            $payload = $customPayload;
+        } elseif (is_array($scenario->sample_payload) && !empty($scenario->sample_payload)) {
+            $payload = $scenario->sample_payload;
+            $payload['invoiceDate'] = now('Asia/Karachi')->format('Y-m-d');
+            if (!empty($business->ntn_cnic)) {
+                $payload['sellerNTNCNIC'] = $business->ntn_cnic;
+            }
+            if (!empty($business->name)) {
+                $payload['sellerBusinessName'] = $business->name;
+            }
+            if (!empty($business->province)) {
+                $payload['sellerProvince'] = $business->province;
+            }
+            if (!empty($business->address)) {
+                $payload['sellerAddress'] = $business->address;
+            }
+        } else {
+            $payload = [
+                'invoiceType' => 'Sale Invoice',
+                'invoiceDate' => now('Asia/Karachi')->format('Y-m-d'),
+                'sellerNTNCNIC' => $business->ntn_cnic,
+                'sellerBusinessName' => $business->name,
+                'sellerProvince' => $business->province,
+                'sellerAddress' => $business->address,
+                'buyerNTNCNIC' => '2046004',
+                'buyerBusinessName' => 'FERTILIZER MANUFAC IRS NEW',
+                'buyerProvince' => 'Sindh',
+                'buyerAddress' => 'Karachi',
+                'invoiceRefNo' => '',
+                'scenarioId' => $scenario->scenario_code,
+                'buyerRegistrationType' => 'Registered',
+                'items' => [
+                    [
+                        'hsCode' => '0101.2100',
+                        'productDescription' => 'test',
+                        'rate' => '18%',
+                        'uoM' => 'Numbers, pieces, units',
+                        'quantity' => 400,
+                        'totalValues' => 0,
+                        'valueSalesExcludingST' => 1000,
+                        'fixedNotifiedValueOrRetailPrice' => 0,
+                        'salesTaxApplicable' => 180,
+                        'salesTaxWithheldAtSource' => 0,
+                        'extraTax' => '',
+                        'furtherTax' => 0,
+                        'sroScheduleNo' => '',
+                        'fedPayable' => 0,
+                        'discount' => 0,
+                        'saleType' => 'Goods at standard rate (default)',
+                        'sroItemSerialNo' => '',
+                    ],
+                ],
+            ];
+        }
 
         // Simulate or execute scenario against PRAL test gateway
         $fbrResponse = [

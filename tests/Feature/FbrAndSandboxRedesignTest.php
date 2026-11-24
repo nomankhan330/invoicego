@@ -213,4 +213,44 @@ class FbrAndSandboxRedesignTest extends TestCase
         $this->assertFalse((bool)$business->production_submissions_enabled);
         $this->assertEquals('sandbox', $business->current_environment);
     }
+
+    public function test_official_28_fbr_sandbox_scenarios_match_scenario_data_specification(): void
+    {
+        $this->seed(\Database\Seeders\SandboxScenarioSeeder::class);
+
+        $this->assertEquals(28, SandboxScenario::count());
+
+        $sn001 = SandboxScenario::where('scenario_code', 'SN001')->firstOrFail();
+        $this->assertEquals('Sale of Standard Rate Goods to Registered Buyers', $sn001->title);
+        $this->assertEquals('Registered', $sn001->sample_payload['buyerRegistrationType']);
+        $this->assertEquals('2046004', $sn001->sample_payload['buyerNTNCNIC']);
+        $this->assertEquals('Numbers, pieces, units', $sn001->sample_payload['items'][0]['uoM']);
+        $this->assertEquals(180, $sn001->sample_payload['items'][0]['salesTaxApplicable']);
+        $this->assertSame('', $sn001->sample_payload['items'][0]['extraTax']);
+        $this->assertEquals('Goods at standard rate (default)', $sn001->sample_payload['items'][0]['saleType']);
+
+        $sn003 = SandboxScenario::where('scenario_code', 'SN003')->firstOrFail();
+        $this->assertEquals('7214.1010', $sn003->sample_payload['items'][0]['hsCode']);
+        $this->assertEquals('MT', $sn003->sample_payload['items'][0]['uoM']);
+        $this->assertEquals(36900, $sn003->sample_payload['items'][0]['salesTaxApplicable']);
+        $this->assertEquals('Steel melting and re-rolling', $sn003->sample_payload['items'][0]['saleType']);
+
+        $sn006 = SandboxScenario::where('scenario_code', 'SN006')->firstOrFail();
+        $this->assertEquals('Exempt', $sn006->sample_payload['items'][0]['rate']);
+        $this->assertEquals('6th Schd Table I', $sn006->sample_payload['items'][0]['sroScheduleNo']);
+        $this->assertEquals('100', $sn006->sample_payload['items'][0]['sroItemSerialNo']);
+
+        $sn022 = SandboxScenario::where('scenario_code', 'SN022')->firstOrFail();
+        $this->assertEquals('3104.2000', $sn022->sample_payload['items'][0]['hsCode']);
+        $this->assertEquals('18% + Rs.60/kg', $sn022->sample_payload['items'][0]['rate']);
+        $this->assertEquals('KG', $sn022->sample_payload['items'][0]['uoM']);
+        $this->assertEquals(78, $sn022->sample_payload['items'][0]['salesTaxApplicable']);
+        $this->assertEquals('Potassium Chlorate', $sn022->sample_payload['items'][0]['saleType']);
+
+        $sn028 = SandboxScenario::where('scenario_code', 'SN028')->firstOrFail();
+        $this->assertEquals('Sale of Goods at Reduced Rate to End Consumers by Retailers', $sn028->title);
+        $this->assertEquals(99.01, $sn028->sample_payload['items'][0]['valueSalesExcludingST']);
+        $this->assertEquals(0.99, $sn028->sample_payload['items'][0]['salesTaxApplicable']);
+        $this->assertEquals('70', $sn028->sample_payload['items'][0]['sroItemSerialNo']);
+    }
 }

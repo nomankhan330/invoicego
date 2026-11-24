@@ -75,13 +75,19 @@ try {
     $app = require_once __DIR__ . '/../bootstrap/app.php';
     $app->useStoragePath('/tmp/storage');
 
-    // 5. Ensure database is functional (failsafe only if template copy failed or tables missing)
+    // 5. Ensure database is functional and all latest migrations are applied (once per container/deploy)
     if (getenv('DB_CONNECTION') === 'sqlite' || !getenv('DB_CONNECTION')) {
         try {
-            if (!\Illuminate\Support\Facades\Schema::hasTable('users') || !\Illuminate\Support\Facades\Schema::hasTable('pricing_plans') || !\Illuminate\Support\Facades\Schema::hasTable('faqs')) {
+            $migrationFiles = scandir(__DIR__ . '/../database/migrations') ?: [];
+            $migrationStamp = '/tmp/.invoicego_migrated_' . md5(implode(',', $migrationFiles));
+            if (!file_exists($migrationStamp)) {
+                $needsSeed = !\Illuminate\Support\Facades\Schema::hasTable('users');
                 $kernel = $app->make(\Illuminate\Contracts\Console\Kernel::class);
                 $kernel->call('migrate', ['--force' => true]);
-                $kernel->call('db:seed', ['--force' => true]);
+                if ($needsSeed) {
+                    $kernel->call('db:seed', ['--force' => true]);
+                }
+                @touch($migrationStamp);
             }
         } catch (\Throwable $e) {
             error_log('Vercel cold start db setup: ' . $e->getMessage());
