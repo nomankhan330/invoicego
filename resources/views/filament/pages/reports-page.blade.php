@@ -145,12 +145,12 @@
                 justify-content: center;
             }
             .rp-icon-indigo {
-                background-color: #eef2ff;
-                color: #4f46e5;
+                background-color: #eff6ff;
+                color: #1e50ff;
             }
             .dark .rp-icon-indigo {
-                background-color: rgba(99, 102, 241, 0.2);
-                color: #818cf8;
+                background-color: rgba(30, 80, 255, 0.2);
+                color: #60a5fa;
             }
             .rp-icon-emerald {
                 background-color: #ecfdf5;
@@ -161,12 +161,12 @@
                 color: #34d399;
             }
             .rp-icon-purple {
-                background-color: #f5f3ff;
-                color: #7c3aed;
+                background-color: #dbeafe;
+                color: #1d4ed8;
             }
             .dark .rp-icon-purple {
-                background-color: rgba(139, 92, 246, 0.2);
-                color: #a78bfa;
+                background-color: rgba(37, 99, 235, 0.2);
+                color: #93c5fd;
             }
             .rp-icon-blue {
                 background-color: #eff6ff;

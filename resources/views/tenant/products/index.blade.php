@@ -35,8 +35,8 @@
     @if ($products->isEmpty())
         <!-- Empty State (Matching Screenshot 2) -->
         <div class="text-center py-5 my-4">
-            <div class="mx-auto mb-3 rounded-4 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; background-color: #F5F3FF;">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <div class="mx-auto mb-3 rounded-4 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; background-color: #EFF6FF;">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1E50FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
                     <path d="m3.3 7 8.7 5 8.7-5"></path>
                     <path d="M12 22V12"></path>

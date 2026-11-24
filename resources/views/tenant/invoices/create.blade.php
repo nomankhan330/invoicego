@@ -25,8 +25,8 @@
     }
     .ts-wrapper.single.focus .ts-control,
     .ts-wrapper.single.dropdown-active .ts-control {
-        border-color: #5850EC !important;
-        box-shadow: 0 0 0 2px rgba(88, 80, 236, 0.15) !important;
+        border-color: #1E50FF !important;
+        box-shadow: 0 0 0 2px rgba(30, 80, 255, 0.15) !important;
     }
     .ts-wrapper.single .ts-control > .item {
         white-space: nowrap !important;
@@ -51,9 +51,9 @@
         background-color: #F8FAFC !important;
     }
     .plugin-dropdown_input .dropdown-input:focus {
-        border-color: #5850EC !important;
+        border-color: #1E50FF !important;
         background-color: #FFFFFF !important;
-        box-shadow: 0 0 0 2px rgba(88, 80, 236, 0.15) !important;
+        box-shadow: 0 0 0 2px rgba(30, 80, 255, 0.15) !important;
         outline: none !important;
     }
     .ts-dropdown {
@@ -70,8 +70,8 @@
     }
     .ts-dropdown .option.active,
     .ts-dropdown .option:hover {
-        background-color: #EEF2FF !important;
-        color: #4338CA !important;
+        background-color: #EFF6FF !important;
+        color: #1E50FF !important;
     }
     .card-section {
         background: #FFFFFF;

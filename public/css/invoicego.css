@@ -1,10 +1,10 @@
 :root {
-    --ig-purple-primary: #5850EC;
-    --ig-purple-dark: #3B28CC;
-    --ig-purple-deep: #2A1F8F;
-    --ig-purple-light: #EEF2FF;
-    --ig-purple-border: #E0E7FF;
-    --ig-purple-hover: #4F46E5;
+    --ig-purple-primary: #1E50FF;
+    --ig-purple-dark: #1D4ED8;
+    --ig-purple-deep: #1E3A8A;
+    --ig-purple-light: #EFF6FF;
+    --ig-purple-border: #DBEAFE;
+    --ig-purple-hover: #1541D9;
     --ig-text-main: #1E293B;
     --ig-text-muted: #64748B;
     --ig-bg-light: #F8FAFC;
@@ -42,7 +42,7 @@ body {
     background-color: var(--ig-purple-hover);
     border-color: var(--ig-purple-hover);
     color: #FFFFFF;
-    box-shadow: 0 4px 12px rgba(88, 80, 236, 0.25);
+    box-shadow: 0 4px 12px rgba(30, 80, 255, 0.25);
 }
 
 .btn-ig-outline {
@@ -69,7 +69,7 @@ body {
 
 .auth-brand-pane {
     width: 42%;
-    background: linear-gradient(135deg, #2D1A8E 0%, #432BB3 45%, #593CD4 100%);
+    background: linear-gradient(135deg, #1855E2 0%, #1E50FF 55%, #2563EB 100%);
     color: #FFFFFF;
     padding: 50px 60px;
     display: flex;
@@ -135,7 +135,7 @@ body {
 
 .form-control:focus, .form-select:focus {
     border-color: var(--ig-purple-primary);
-    box-shadow: 0 0 0 3px rgba(88, 80, 236, 0.15);
+    box-shadow: 0 0 0 3px rgba(30, 80, 255, 0.15);
 }
 
 .form-label {
@@ -270,7 +270,7 @@ body {
 
 .nav-link-ig.active {
     color: var(--ig-purple-primary);
-    background-color: #EEF2FF;
+    background-color: #EFF6FF;
     font-weight: 600;
 }
 

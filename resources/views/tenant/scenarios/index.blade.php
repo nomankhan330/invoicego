@@ -28,8 +28,8 @@
         background: #F8FAFC;
     }
     .scenario-nav-item.active {
-        background: #EEF2FF;
-        border-color: #C7D2FE;
+        background: #EFF6FF;
+        border-color: #BFDBFE;
     }
     .scenario-nav-code {
         font-family: 'Plus Jakarta Sans', monospace;
@@ -60,9 +60,9 @@
         background: #FFFFFF;
     }
     .scenario-nav-item.active .scenario-radio {
-        border-color: #4F46E5;
-        background: #4F46E5;
-        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        border-color: #1E50FF;
+        background: #1E50FF;
+        box-shadow: 0 0 0 3px rgba(30, 80, 255, 0.15);
     }
     .scenario-nav-item.passed .scenario-radio {
         border-color: #16A34A;
@@ -90,8 +90,8 @@
         border-radius: 0;
     }
     .scenario-tabs .nav-link.active {
-        color: #4F46E5;
-        border-bottom-color: #4F46E5;
+        color: #1E50FF;
+        border-bottom-color: #1E50FF;
         background: transparent;
     }
     .scenario-label {
@@ -107,8 +107,8 @@
         border: 1px solid #CBD5E1;
     }
     .scenario-input:focus {
-        border-color: #4F46E5;
-        box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+        border-color: #1E50FF;
+        box-shadow: 0 0 0 2px rgba(30, 80, 255, 0.12);
     }
     .scenario-json-editor {
         font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
@@ -379,7 +379,7 @@
                     <button type="button" class="btn btn-outline-secondary btn-sm px-3" id="btnValidateFbr">
                         <i class="bi bi-shield-check me-1"></i> Validate with FBR sandbox
                     </button>
-                    <button type="button" class="btn btn-primary btn-sm px-4 fw-semibold" id="btnSubmitSandbox" style="background: #4F46E5; border-color: #4F46E5;">
+                    <button type="button" class="btn btn-primary btn-sm px-4 fw-semibold" id="btnSubmitSandbox" style="background: #1E50FF; border-color: #1E50FF;">
                         <span class="spinner-border spinner-border-sm me-1 d-none" id="submitSpinner"></span>
                         <i class="bi bi-send-fill me-1" id="submitIcon"></i> Validate &amp; submit to sandbox
                     </button>

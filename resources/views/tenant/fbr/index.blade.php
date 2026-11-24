@@ -35,8 +35,8 @@
         border: 1px solid #CBD5E1;
     }
     .fbr-input:focus {
-        border-color: #4F46E5;
-        box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+        border-color: #1E50FF;
+        box-shadow: 0 0 0 2px rgba(30, 80, 255, 0.12);
     }
     .fbr-hint {
         font-size: 11px;
@@ -125,7 +125,7 @@
                         </div>
 
                         <div class="d-flex align-items-center gap-3">
-                            <button type="submit" class="btn btn-primary btn-sm px-3 fw-semibold d-inline-flex align-items-center gap-1" style="background: #4F46E5; border-color: #4F46E5;">
+                            <button type="submit" class="btn btn-primary btn-sm px-3 fw-semibold d-inline-flex align-items-center gap-1" style="background: #1E50FF; border-color: #1E50FF;">
                                 <i class="bi bi-save"></i> Save
                             </button>
                             <button type="submit" formaction="{{ route('tenant.fbr-integration.sandbox.verify') }}" class="btn btn-link text-decoration-none p-0 text-primary small d-inline-flex align-items-center gap-1 fw-semibold">
@@ -198,7 +198,7 @@
                         </div>
 
                         <div class="d-flex align-items-center gap-3">
-                            <button type="submit" class="btn btn-primary btn-sm px-3 fw-semibold d-inline-flex align-items-center gap-1" style="background: #4F46E5; border-color: #4F46E5;">
+                            <button type="submit" class="btn btn-primary btn-sm px-3 fw-semibold d-inline-flex align-items-center gap-1" style="background: #1E50FF; border-color: #1E50FF;">
                                 <i class="bi bi-save"></i> Save
                             </button>
                             <button type="submit" formaction="{{ route('tenant.fbr-integration.production.verify') }}" class="btn btn-link text-decoration-none p-0 text-primary small d-inline-flex align-items-center gap-1 fw-semibold">
@@ -241,7 +241,7 @@
                     <i class="bi bi-shield-x me-1"></i> Disable production
                 </button>
             @else
-                <button type="submit" class="btn btn-primary btn-sm px-3 fw-semibold" style="background: #4F46E5; border-color: #4F46E5;">
+                <button type="submit" class="btn btn-primary btn-sm px-3 fw-semibold" style="background: #1E50FF; border-color: #1E50FF;">
                     <i class="bi bi-shield-check me-1"></i> Enable production
                 </button>
             @endif

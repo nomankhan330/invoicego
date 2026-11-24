@@ -32,17 +32,17 @@ class AdminPanelProvider extends PanelProvider
             ->font('Inter')
             ->colors([
                 'primary' => [
-                    50 => '#EEF2FF',
-                    100 => '#E0E7FF',
-                    200 => '#C7D2FE',
-                    300 => '#A5B4FC',
-                    400 => '#818CF8',
-                    500 => '#5850EC', // InvoiceGO Brand Primary
-                    600 => '#4F46E5',
-                    700 => '#4338CA',
-                    800 => '#3730A3',
-                    900 => '#312E81',
-                    950 => '#1E1B4B',
+                    50 => '#EFF6FF',
+                    100 => '#DBEAFE',
+                    200 => '#BFDBFE',
+                    300 => '#93C5FD',
+                    400 => '#60A5FA',
+                    500 => '#1E50FF', // InvoiceGO Brand Primary Blue
+                    600 => '#1541D9',
+                    700 => '#1D4ED8',
+                    800 => '#1E40AF',
+                    900 => '#1E3A8A',
+                    950 => '#172554',
                 ],
                 'gray' => Color::Slate,
                 'info' => Color::Sky,
@@ -60,9 +60,9 @@ class AdminPanelProvider extends PanelProvider
                     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
                     <style>
                         :root {
-                            --ig-purple-primary: #5850EC;
-                            --ig-purple-hover: #4F46E5;
-                            --ig-purple-light: #EEF2FF;
+                            --ig-purple-primary: #1E50FF;
+                            --ig-purple-hover: #1541D9;
+                            --ig-purple-light: #EFF6FF;
                             --ig-bg-light: #F8FAFC;
                             --ig-card-border: #E2E8F0;
                         }
@@ -130,30 +130,30 @@ class AdminPanelProvider extends PanelProvider
                             color: #94A3B8 !important;
                         }
                         .fi-sidebar-item-button:hover {
-                            color: #5850EC !important;
+                            color: #1E50FF !important;
                             background-color: #F8FAFC !important;
                             transform: translateX(2px) !important;
                         }
                         .dark .fi-sidebar-item-button:hover {
-                            color: #A5B4FC !important;
-                            background-color: rgba(88, 80, 236, 0.12) !important;
+                            color: #60A5FA !important;
+                            background-color: rgba(30, 80, 255, 0.12) !important;
                         }
 
                         /* Active Item (Matching InvoiceGO Tenant Sidebar Active State) */
                         .fi-sidebar-item.fi-active .fi-sidebar-item-button {
-                            background-color: #EEF2FF !important;
-                            color: #5850EC !important;
+                            background-color: #EFF6FF !important;
+                            color: #1E50FF !important;
                             font-weight: 600 !important;
                         }
                         .dark .fi-sidebar-item.fi-active .fi-sidebar-item-button {
-                            background-color: rgba(88, 80, 236, 0.22) !important;
-                            color: #A5B4FC !important;
+                            background-color: rgba(30, 80, 255, 0.22) !important;
+                            color: #60A5FA !important;
                         }
                         .fi-sidebar-item.fi-active .fi-sidebar-item-icon {
-                            color: #5850EC !important;
+                            color: #1E50FF !important;
                         }
                         .dark .fi-sidebar-item.fi-active .fi-sidebar-item-icon {
-                            color: #A5B4FC !important;
+                            color: #60A5FA !important;
                         }
 
                         .fi-sidebar-item-icon {
@@ -202,14 +202,14 @@ class AdminPanelProvider extends PanelProvider
 
                         /* Primary Buttons Matching .btn-ig-primary */
                         .fi-btn-primary {
-                            background-color: #5850EC !important;
+                            background-color: #1E50FF !important;
                             border-radius: 8px !important;
                             font-weight: 600 !important;
                             transition: all 0.2s ease !important;
                         }
                         .fi-btn-primary:hover {
-                            background-color: #4F46E5 !important;
-                            box-shadow: 0 4px 12px rgba(88, 80, 236, 0.25) !important;
+                            background-color: #1541D9 !important;
+                            box-shadow: 0 4px 12px rgba(30, 80, 255, 0.25) !important;
                         }
 
                         /* Table Header Styling */
@@ -228,7 +228,7 @@ class AdminPanelProvider extends PanelProvider
 
                         /* User Menu Avatar Matching Tenant Portal */
                         .fi-user-avatar {
-                            background-color: #5850EC !important;
+                            background-color: #1E50FF !important;
                             color: #FFFFFF !important;
                             font-weight: 700 !important;
                         }

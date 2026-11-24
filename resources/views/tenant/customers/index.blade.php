@@ -44,8 +44,8 @@
     @if ($customers->isEmpty())
         <!-- Empty State (Matching Screenshot 4) -->
         <div class="text-center py-5 my-4">
-            <div class="mx-auto mb-3 rounded-4 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; background-color: #F5F3FF;">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <div class="mx-auto mb-3 rounded-4 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; background-color: #EFF6FF;">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1E50FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
                     <circle cx="9" cy="7" r="4"></circle>
                     <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>

@@ -168,7 +168,7 @@
                         <div class="fw-semibold text-dark small" style="line-height: 1.2;">{{ Auth::user()->name ?? 'User' }}</div>
                         <div class="text-muted" style="font-size: 11px;">{{ Auth::user()->email ?? '' }}</div>
                     </div>
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 34px; height: 34px; background: #5850EC !important; font-size: 14px;">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 34px; height: 34px; background: #1E50FF !important; font-size: 14px;">
                         {{ strtoupper(substr(Auth::user()->name ?? 'N', 0, 1)) }}
                     </div>
                 </div>
