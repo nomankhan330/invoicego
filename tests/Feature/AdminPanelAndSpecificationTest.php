@@ -343,4 +343,68 @@ class AdminPanelAndSpecificationTest extends TestCase
         $landingHiddenResponse->assertStatus(200);
         $landingHiddenResponse->assertDontSee('How does FBR DI API work in real-time?');
     }
+
+    public function test_admin_can_register_new_business_with_owner_account_and_owner_can_login(): void
+    {
+        $this->actingAs($this->admin);
+
+        // 1. Admin /admin/businesses/create renders unified registration form
+        $createPage = $this->get('/admin/businesses/create');
+        $createPage->assertStatus(200);
+        $createPage->assertSee('Owner Account Details');
+        $createPage->assertSee('Business Profile');
+        $createPage->assertSee('Approval Status');
+
+        // 2. Submit CreateBusiness Livewire form with new Owner + Business (exact same fields as website /register)
+        \Livewire\Livewire::test(\App\Filament\Resources\BusinessResource\Pages\CreateBusiness::class)
+            ->fillForm([
+                'owner_mode' => 'create_new',
+                'owner_name' => 'Bilal Ahmed',
+                'owner_phone' => '03005554433',
+                'owner_email' => 'bilal@madinatrading.pk',
+                'owner_password' => 'SecurePass123!',
+                'owner_password_confirmation' => 'SecurePass123!',
+                'name' => 'Al-Madina Trading Co.',
+                'ntn_cnic' => '4455667',
+                'strn' => '3277876999888',
+                'province' => 'Punjab',
+                'sector' => 'Fast Moving Consumer Goods (FMCG)',
+                'business_natures' => ['Distributor', 'Wholesaler'],
+                'is_retailer_registered' => false,
+                'address' => 'Plot 15, Gulberg III, Lahore',
+                'status' => 'approved',
+                'current_environment' => 'sandbox',
+                'production_submissions_enabled' => false,
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $owner = User::where('email', 'bilal@madinatrading.pk')->first();
+        $business = Business::where('ntn_cnic', '4455667')->first();
+
+        $this->assertNotNull($owner);
+        $this->assertNotNull($business);
+        $this->assertEquals('approved', $business->status);
+        $this->assertTrue($business->users()->where('users.id', $owner->id)->exists());
+        $this->assertEquals('owner', $business->users()->where('users.id', $owner->id)->first()->pivot->role);
+
+        // 3. Businesses table shows linked owner and User edit page shows linked business
+        $listPage = $this->get('/admin/businesses');
+        $listPage->assertStatus(200);
+        $listPage->assertSee('Al-Madina Trading Co.');
+        $listPage->assertSee('Bilal Ahmed');
+
+        $userEditPage = $this->get("/admin/users/{$owner->id}/edit");
+        $userEditPage->assertStatus(200);
+        $userEditPage->assertSee('Assigned Businesses');
+
+        // 4. Newly registered owner can immediately sign in and open tenant dashboard
+        auth()->logout();
+        $loginRes = $this->post('/login', [
+            'email' => 'bilal@madinatrading.pk',
+            'password' => 'SecurePass123!',
+        ]);
+        $loginRes->assertRedirect(route('tenant.dashboard'));
+        $this->actingAs($owner)->get(route('tenant.dashboard'))->assertStatus(200);
+    }
 }

@@ -36,6 +36,7 @@ class UserResource extends Resource
                         Forms\Components\TextInput::make('email')
                             ->label('Email Address')
                             ->email()
+                            ->unique(ignoreRecord: true)
                             ->required()
                             ->maxLength(255),
 
@@ -61,11 +62,25 @@ class UserResource extends Resource
                         Forms\Components\TextInput::make('password')
                             ->label('Set New Password')
                             ->password()
+                            ->revealable()
                             ->dehydrateStateUsing(fn ($state) => !empty($state) ? Hash::make($state) : null)
                             ->dehydrated(fn ($state) => filled($state))
                             ->required(fn (string $operation): bool => $operation === 'create')
                             ->maxLength(255),
                     ])->columns(2),
+
+                Forms\Components\Section::make('Assigned Businesses')
+                    ->description('Link this user to one or more registered businesses so they can access them in the tenant portal.')
+                    ->schema([
+                        Forms\Components\Select::make('businesses')
+                            ->label('Linked Businesses')
+                            ->relationship('businesses', 'name')
+                            ->getOptionLabelFromRecordUsing(fn (\App\Models\Business $record) => "{$record->name} (NTN: {$record->ntn_cnic} — " . ucfirst($record->status) . ')')
+                            ->multiple()
+                            ->searchable()
+                            ->preload()
+                            ->helperText('Need to register a brand new business + owner together? Go to Businesses & Approvals → New Business.'),
+                    ]),
             ]);
     }
 
