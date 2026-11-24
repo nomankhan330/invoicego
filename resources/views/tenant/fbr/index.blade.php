@@ -13,6 +13,15 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .fbr-card-active-sandbox {
+        border: 2px solid #F59E0B;
+        box-shadow: 0 4px 16px rgba(245, 158, 11, 0.08) !important;
+    }
+    .fbr-card-active-production {
+        border: 2px solid #16A34A;
+        box-shadow: 0 4px 16px rgba(22, 163, 74, 0.1) !important;
     }
     .fbr-card-title {
         font-size: 14.5px;
@@ -38,6 +47,22 @@
         border-color: #1E50FF;
         box-shadow: 0 0 0 2px rgba(30, 80, 255, 0.12);
     }
+    .fbr-token-group .fbr-input {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+    .fbr-token-group .btn-token-action {
+        border: 1px solid #CBD5E1;
+        border-left: none;
+        background: #F8FAFC;
+        color: #475569;
+        font-size: 13px;
+        padding: 6px 10px;
+    }
+    .fbr-token-group .btn-token-action:hover {
+        background: #EFF6FF;
+        color: #1E50FF;
+    }
     .fbr-hint {
         font-size: 11px;
         color: #64748B;
@@ -51,11 +76,47 @@
         padding-top: 14px;
         margin-top: 18px;
     }
+    .env-status-banner {
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 12px;
+        padding: 14px 20px;
+    }
 </style>
 @endpush
 
 @section('content')
+@php
+    $isProductionActive = $business->current_environment === 'production' && $business->production_submissions_enabled;
+    $sandboxStatus = $business->sandbox_connection_status ?? 'not_tested';
+    $productionStatus = $business->production_connection_status ?? 'not_tested';
+    $sandboxVerified = in_array($sandboxStatus, ['connected', 'verified'], true);
+    $productionVerified = in_array($productionStatus, ['connected', 'verified'], true);
+@endphp
+
 <div class="container-fluid px-0">
+    <!-- Active Environment Header Banner -->
+    <div class="env-status-banner shadow-sm d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h1 class="font-display fw-bold text-dark fs-4 mb-0">FBR Integration</h1>
+            <div class="text-muted small">Manage your IRIS Digital Invoicing API credentials and active submission environment.</div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small fw-medium">Active Environment:</span>
+            @if ($isProductionActive)
+                <span class="badge rounded-pill bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 fw-bold d-inline-flex align-items-center gap-2" style="font-size: 12px;">
+                    <span class="rounded-circle bg-success d-inline-block" style="width: 8px; height: 8px;"></span>
+                    PRODUCTION (Live)
+                </span>
+            @else
+                <span class="badge rounded-pill bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-2 fw-bold d-inline-flex align-items-center gap-2" style="font-size: 12px; color: #B45309 !important;">
+                    <span class="rounded-circle bg-warning d-inline-block" style="width: 8px; height: 8px;"></span>
+                    SANDBOX (Testing)
+                </span>
+            @endif
+        </div>
+    </div>
+
     <!-- Feedback Alerts -->
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show py-2 px-3 small rounded-3 mb-4" role="alert">
@@ -82,7 +143,7 @@
     <div class="row g-4 mb-4">
         <!-- 1. SANDBOX CREDENTIALS CARD -->
         <div class="col-lg-6">
-            <div class="fbr-card shadow-sm">
+            <div class="fbr-card shadow-sm {{ !$isProductionActive ? 'fbr-card-active-sandbox' : '' }}">
                 <div>
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <div class="fbr-card-title">
@@ -90,15 +151,22 @@
                             <span class="text-uppercase fw-bold font-monospace" style="letter-spacing: 0.05em; font-size: 12px; color: #D97706;">SANDBOX</span>
                             <span>Sandbox credentials</span>
                         </div>
-                        @if (!empty($business->sandbox_token))
-                            <span class="badge bg-success bg-opacity-10 text-success fw-semibold" style="font-size: 11px;">
-                                <i class="bi bi-check-circle-fill me-1"></i> Token active
-                            </span>
-                        @else
-                            <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold" style="font-size: 11px;">
-                                No token
-                            </span>
-                        @endif
+                        <div class="d-flex align-items-center gap-2">
+                            @if (!$isProductionActive)
+                                <span class="badge bg-warning text-dark fw-bold" style="font-size: 10.5px;">
+                                    ACTIVE ENV
+                                </span>
+                            @endif
+                            @if (!empty($business->sandbox_token))
+                                <span class="badge bg-success bg-opacity-10 text-success fw-semibold" style="font-size: 11px;">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Token saved
+                                </span>
+                            @else
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold" style="font-size: 11px;">
+                                    No token
+                                </span>
+                            @endif
+                        </div>
                     </div>
 
                     <form method="POST" action="{{ route('tenant.fbr-integration.sandbox.save') }}" id="sandboxForm">
@@ -119,9 +187,18 @@
 
                         <div class="mb-4">
                             <label class="fbr-label">Sandbox token / API key</label>
-                            <input type="password" name="sandbox_token" id="sandbox_token" class="form-control fbr-input"
-                                   placeholder="Paste the security token from IRIS">
-                            <div class="fbr-hint">Sent only as 'Authorization: Bearer ...' from the server</div>
+                            <div class="input-group fbr-token-group">
+                                <input type="password" name="sandbox_token" id="sandbox_token" class="form-control fbr-input font-monospace"
+                                       value="{{ old('sandbox_token', $business->sandbox_token) }}"
+                                       placeholder="Paste the security token from IRIS" autocomplete="off">
+                                <button type="button" class="btn btn-token-action toggle-token-btn" data-target="sandbox_token" title="Show / Hide token">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button type="button" class="btn btn-token-action copy-token-btn" data-target="sandbox_token" title="Copy token">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                            <div class="fbr-hint">Sent only as 'Authorization: Bearer ...' from the server. Click the eye icon to view your saved token.</div>
                         </div>
 
                         <div class="d-flex align-items-center gap-3">
@@ -138,13 +215,17 @@
                 <div class="fbr-footer-note">
                     <div class="d-flex justify-content-between mb-1">
                         <span>Connection status:</span>
-                        <strong class="{{ $business->sandbox_connection_status === 'verified' ? 'text-success' : 'text-secondary' }}">
-                            {{ $business->sandbox_connection_status === 'verified' ? 'Verified' : 'Not tested yet' }}
-                        </strong>
+                        @if ($sandboxVerified)
+                            <strong class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Connected &amp; Verified</strong>
+                        @elseif ($sandboxStatus === 'configured')
+                            <strong class="text-primary">Saved (Not tested yet)</strong>
+                        @else
+                            <strong class="text-secondary">Not tested yet</strong>
+                        @endif
                     </div>
                     <div class="d-flex justify-content-between mb-2">
                         <span>Last checked:</span>
-                        <span>{{ $business->sandbox_verified_at ? $business->sandbox_verified_at->format('d M Y, H:i T') : '—' }}</span>
+                        <span>{{ $business->sandbox_verified_at ? $business->sandbox_verified_at->timezone('Asia/Karachi')->format('d M Y, H:i T') : '—' }}</span>
                     </div>
                     <div>
                         Verification calls the FBR Provinces reference API with this token. It never creates an invoice. Only https://gw.fbr.gov.pk with the documented paths is accepted.
@@ -155,7 +236,7 @@
 
         <!-- 2. PRODUCTION CREDENTIALS CARD -->
         <div class="col-lg-6">
-            <div class="fbr-card shadow-sm">
+            <div class="fbr-card shadow-sm {{ $isProductionActive ? 'fbr-card-active-production' : '' }}">
                 <div>
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <div class="fbr-card-title">
@@ -163,15 +244,22 @@
                             <span class="text-uppercase fw-bold font-monospace" style="letter-spacing: 0.05em; font-size: 12px; color: #16A34A;">PRODUCTION</span>
                             <span>Production credentials</span>
                         </div>
-                        @if (!empty($business->production_token))
-                            <span class="badge bg-success bg-opacity-10 text-success fw-semibold" style="font-size: 11px;">
-                                <i class="bi bi-check-circle-fill me-1"></i> Token active
-                            </span>
-                        @else
-                            <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold" style="font-size: 11px;">
-                                No token
-                            </span>
-                        @endif
+                        <div class="d-flex align-items-center gap-2">
+                            @if ($isProductionActive)
+                                <span class="badge bg-success text-white fw-bold" style="font-size: 10.5px;">
+                                    ACTIVE ENV
+                                </span>
+                            @endif
+                            @if (!empty($business->production_token))
+                                <span class="badge bg-success bg-opacity-10 text-success fw-semibold" style="font-size: 11px;">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Token saved
+                                </span>
+                            @else
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold" style="font-size: 11px;">
+                                    No token
+                                </span>
+                            @endif
+                        </div>
                     </div>
 
                     <form method="POST" action="{{ route('tenant.fbr-integration.production.save') }}" id="productionForm">
@@ -192,9 +280,18 @@
 
                         <div class="mb-4">
                             <label class="fbr-label">Production token / API key</label>
-                            <input type="password" name="production_token" id="production_token" class="form-control fbr-input"
-                                   placeholder="Paste the security token from IRIS">
-                            <div class="fbr-hint">Sent only as 'Authorization: Bearer ...' from the server</div>
+                            <div class="input-group fbr-token-group">
+                                <input type="password" name="production_token" id="production_token" class="form-control fbr-input font-monospace"
+                                       value="{{ old('production_token', $business->production_token) }}"
+                                       placeholder="Paste the security token from IRIS" autocomplete="off">
+                                <button type="button" class="btn btn-token-action toggle-token-btn" data-target="production_token" title="Show / Hide token">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button type="button" class="btn btn-token-action copy-token-btn" data-target="production_token" title="Copy token">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                            <div class="fbr-hint">Sent only as 'Authorization: Bearer ...' from the server. Click the eye icon to view your saved token.</div>
                         </div>
 
                         <div class="d-flex align-items-center gap-3">
@@ -211,13 +308,17 @@
                 <div class="fbr-footer-note">
                     <div class="d-flex justify-content-between mb-1">
                         <span>Connection status:</span>
-                        <strong class="{{ $business->production_connection_status === 'verified' ? 'text-success' : 'text-secondary' }}">
-                            {{ $business->production_connection_status === 'verified' ? 'Verified' : 'Not tested yet' }}
-                        </strong>
+                        @if ($productionVerified)
+                            <strong class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Connected &amp; Verified</strong>
+                        @elseif ($productionStatus === 'configured')
+                            <strong class="text-primary">Saved (Not tested yet)</strong>
+                        @else
+                            <strong class="text-secondary">Not tested yet</strong>
+                        @endif
                     </div>
                     <div class="d-flex justify-content-between mb-2">
                         <span>Last checked:</span>
-                        <span>{{ $business->production_verified_at ? $business->production_verified_at->format('d M Y, H:i T') : '—' }}</span>
+                        <span>{{ $business->production_verified_at ? $business->production_verified_at->timezone('Asia/Karachi')->format('d M Y, H:i T') : '—' }}</span>
                     </div>
                     <div>
                         Verification calls the FBR Provinces reference API with this token. It never creates an invoice. Only https://gw.fbr.gov.pk with the documented paths is accepted.
@@ -229,7 +330,12 @@
 
     <!-- Middle Row: Production submission Card -->
     <div class="fbr-card shadow-sm mb-4">
-        <h6 class="fw-bold text-dark mb-2">Production submission</h6>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+            <h6 class="fw-bold text-dark mb-0">Production submission</h6>
+            <span class="badge {{ $isProductionActive ? 'bg-success bg-opacity-10 text-success' : 'bg-warning bg-opacity-10 text-warning' }} fw-semibold" style="font-size: 11px; {{ !$isProductionActive ? 'color: #B45309 !important;' : '' }}">
+                Current mode: {{ $isProductionActive ? 'Production (Live)' : 'Sandbox (Testing)' }}
+            </span>
+        </div>
         <div class="text-secondary small mb-3" style="line-height: 1.55;">
             Production submission is <strong class="{{ $business->production_submissions_enabled ? 'text-success' : 'text-danger' }}">{{ $business->production_submissions_enabled ? 'enabled' : 'disabled' }}</strong>. Enable it after IRIS has issued your production token and the connection test succeeds.<br>
             The sandbox workspace always uses the sandbox URLs and token; production invoices always use the production URLs and token. Replacing the production token disables production until it is tested again.
@@ -308,3 +414,42 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.toggle-token-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const input = document.getElementById(this.getAttribute('data-target'));
+            const icon = this.querySelector('i');
+            if (!input) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        });
+    });
+
+    document.querySelectorAll('.copy-token-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const input = document.getElementById(this.getAttribute('data-target'));
+            const icon = this.querySelector('i');
+            if (!input || !input.value) return;
+            navigator.clipboard.writeText(input.value).then(() => {
+                icon.classList.remove('bi-clipboard');
+                icon.classList.add('bi-check2', 'text-success');
+                setTimeout(() => {
+                    icon.classList.remove('bi-check2', 'text-success');
+                    icon.classList.add('bi-clipboard');
+                }, 1500);
+            });
+        });
+    });
+});
+</script>
+@endpush

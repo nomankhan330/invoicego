@@ -137,6 +137,10 @@ class FbrAndSandboxRedesignTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('FBR integration');
+        $response->assertSee('Active Environment:');
+        $response->assertSee('SANDBOX (Testing)');
+        $response->assertSee('ACTIVE ENV');
+        $response->assertSee('test-sandbox-token');
         $response->assertSee('SANDBOX');
         $response->assertSee('Sandbox credentials');
         $response->assertSee('Sandbox URL (post)');
@@ -181,6 +185,11 @@ class FbrAndSandboxRedesignTest extends TestCase
         $business->refresh();
         $this->assertEquals('connected', $business->sandbox_connection_status);
         $this->assertNotNull($business->sandbox_verified_at);
+
+        $pageAfterVerify = $this->get(route('tenant.fbr-integration'));
+        $pageAfterVerify->assertStatus(200);
+        $pageAfterVerify->assertSee('updated-sb-token-123');
+        $pageAfterVerify->assertSee('Connected &amp; Verified', false);
     }
 
     public function test_fbr_production_submission_toggle(): void

@@ -46,9 +46,12 @@ class FbrIntegrationController extends Controller
 
         if (!empty($token)) {
             $token = trim($token);
+            $tokenChanged = $token !== (string) $business->sandbox_token;
             $updateData['sandbox_token'] = $token;
             $updateData['fbr_sandbox_token'] = $token;
-            $updateData['sandbox_connection_status'] = 'configured';
+            if ($tokenChanged || empty($business->sandbox_connection_status) || $business->sandbox_connection_status === 'not_tested') {
+                $updateData['sandbox_connection_status'] = 'configured';
+            }
         }
 
         $business->update($updateData);
@@ -104,10 +107,15 @@ class FbrIntegrationController extends Controller
 
         if (!empty($token)) {
             $token = trim($token);
+            $tokenChanged = $token !== (string) $business->production_token;
             $updateData['production_token'] = $token;
             $updateData['fbr_production_token'] = $token;
-            $updateData['production_connection_status'] = 'configured';
-            $updateData['production_submissions_enabled'] = false;
+            if ($tokenChanged) {
+                $updateData['production_connection_status'] = 'configured';
+                $updateData['production_submissions_enabled'] = false;
+            } elseif (empty($business->production_connection_status) || $business->production_connection_status === 'not_tested') {
+                $updateData['production_connection_status'] = 'configured';
+            }
         }
 
         $business->update($updateData);
