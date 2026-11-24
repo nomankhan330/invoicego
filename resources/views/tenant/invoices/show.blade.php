@@ -75,11 +75,17 @@
 @elseif ($invoice->status === 'failed')
     <div class="alert alert-danger p-3 rounded-3 mb-4 border-0 shadow-sm" style="background-color: #FEF2F2; border-left: 4px solid #EF4444 !important;">
         <div class="fw-bold text-danger mb-1"><i class="bi bi-x-circle-fill me-1"></i> FBR Validation / Submission Errors:</div>
-        <ul class="mb-0 small ps-3">
+        <ul class="mb-2 small ps-3 font-monospace">
             @foreach ($invoice->fbr_validation_errors ?? ['Submission rejected by FBR gateway'] as $err)
                 <li>{{ $err }}</li>
             @endforeach
         </ul>
+        @if (!empty($invoice->fbr_raw_response))
+            <details class="mt-2">
+                <summary class="small fw-semibold text-danger" style="cursor: pointer;">View Raw FBR API Response</summary>
+                <pre class="bg-dark text-warning p-2 rounded-2 mt-2 mb-0" style="font-size: 11.5px; max-height: 260px; overflow: auto;">{{ json_encode($invoice->fbr_raw_response, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
+            </details>
+        @endif
     </div>
 @endif
 

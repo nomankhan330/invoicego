@@ -126,8 +126,27 @@
     @endif
 
     @if (session('error'))
-        <div class="alert alert-danger alert-dismissible fade show py-2 px-3 small rounded-3 mb-4" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ session('error') }}
+        <div class="alert alert-danger alert-dismissible fade show p-3 small rounded-3 mb-4" role="alert">
+            <div class="d-flex align-items-center gap-2 fw-bold mb-1">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span>{{ session('error') }}</span>
+                @if (session('fbr_http_status') !== null)
+                    <span class="badge bg-danger text-white ms-1">HTTP {{ session('fbr_http_status') }}</span>
+                @endif
+            </div>
+            @if (is_array(session('fbr_errors')) && count(session('fbr_errors')) > 0)
+                <ul class="mb-2 ps-3 mt-2">
+                    @foreach (session('fbr_errors') as $fbrErr)
+                        <li class="font-monospace" style="font-size: 12px;">{{ $fbrErr }}</li>
+                    @endforeach
+                </ul>
+            @endif
+            @if (!empty(session('fbr_raw_response')))
+                <details class="mt-2" open>
+                    <summary class="fw-semibold" style="cursor: pointer; font-size: 12px;">Raw FBR Gateway Response</summary>
+                    <pre class="bg-dark text-warning p-2 rounded-2 mt-1 mb-0" style="font-size: 11.5px; max-height: 220px; overflow: auto;">{{ json_encode(session('fbr_raw_response'), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
+                </details>
+            @endif
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
@@ -180,9 +199,14 @@
 
                         <div class="mb-3">
                             <label class="fbr-label">Sandbox validation URL</label>
+                            @php
+                                $sbValUrl = ($business->sandbox_validation_url && $business->sandbox_validation_url !== 'https://gw.fbr.gov.pk/di_data/v1/di/validatedata_sb')
+                                    ? $business->sandbox_validation_url
+                                    : 'https://gw.fbr.gov.pk/di_data/v1/di/validateinvoicedata_sb';
+                            @endphp
                             <input type="text" name="sandbox_validation_url" class="form-control fbr-input"
-                                   value="{{ old('sandbox_validation_url', $business->sandbox_validation_url ?? 'https://gw.fbr.gov.pk/di_data/v1/di/validatedata_sb') }}" required>
-                            <div class="fbr-hint">Default: https://gw.fbr.gov.pk/di_data/v1/di/validatedata_sb</div>
+                                   value="{{ old('sandbox_validation_url', $sbValUrl) }}" required>
+                            <div class="fbr-hint">Default: https://gw.fbr.gov.pk/di_data/v1/di/validateinvoicedata_sb</div>
                         </div>
 
                         <div class="mb-4">
@@ -217,6 +241,8 @@
                         <span>Connection status:</span>
                         @if ($sandboxVerified)
                             <strong class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Connected &amp; Verified</strong>
+                        @elseif ($sandboxStatus === 'failed')
+                            <strong class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>Connection Failed / Rejected</strong>
                         @elseif ($sandboxStatus === 'configured')
                             <strong class="text-primary">Saved (Not tested yet)</strong>
                         @else
@@ -310,6 +336,8 @@
                         <span>Connection status:</span>
                         @if ($productionVerified)
                             <strong class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Connected &amp; Verified</strong>
+                        @elseif ($productionStatus === 'failed')
+                            <strong class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>Connection Failed / Rejected</strong>
                         @elseif ($productionStatus === 'configured')
                             <strong class="text-primary">Saved (Not tested yet)</strong>
                         @else
@@ -365,7 +393,8 @@
                         <th class="text-secondary text-uppercase" style="font-size: 11px;">ENVIRONMENT</th>
                         <th class="text-secondary text-uppercase" style="font-size: 11px;">OPERATION</th>
                         <th class="text-secondary text-uppercase" style="font-size: 11px;">OUTCOME</th>
-                        <th class="text-secondary text-uppercase" style="font-size: 11px;">INVOICE</th>
+                        <th class="text-secondary text-uppercase" style="font-size: 11px;">INVOICE / SCENARIO</th>
+                        <th class="text-secondary text-uppercase" style="font-size: 11px;">HTTP / FBR DETAILS</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -400,10 +429,22 @@
                                     <span class="text-muted">{{ $call->scenario_code ?? '—' }}</span>
                                 @endif
                             </td>
+                            <td class="small" style="max-width: 340px;">
+                                @if ($call->http_status)
+                                    <span class="badge bg-light text-dark border me-1">HTTP {{ $call->http_status }}</span>
+                                @endif
+                                @if ($call->error_message)
+                                    <span class="text-danger">{{ $call->error_message }}</span>
+                                @elseif (is_array($call->response_payload) && !empty($call->response_payload['invoiceNumber']))
+                                    <span class="text-success font-monospace">{{ $call->response_payload['invoiceNumber'] }}</span>
+                                @else
+                                    <span class="text-muted">OK</span>
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="text-center py-4 text-muted small">
+                            <td colspan="6" class="text-center py-4 text-muted small">
                                 No recent FBR calls recorded yet.
                             </td>
                         </tr>

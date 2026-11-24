@@ -133,8 +133,16 @@
             <div class="text-secondary small">Official PRAL Digital Invoicing API v1.12 compliance testing &middot; Form &amp; editable JSON payload runners</div>
         </div>
         <div class="d-flex align-items-center gap-2">
+            @php
+                $passedCount = $progress->filter(fn ($p) => ($p->pivot->status ?? '') === 'passed')->count();
+            @endphp
+            @if (empty($business->sandbox_token))
+                <a href="{{ route('tenant.fbr-integration') }}" class="badge rounded-pill bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 fw-semibold text-decoration-none" style="color: #B45309 !important;">
+                    <i class="bi bi-key me-1"></i> Add Sandbox Token
+                </a>
+            @endif
             <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-3 py-2 fw-semibold">
-                <i class="bi bi-shield-check me-1"></i> <span id="completedCount">{{ count($progress) }}</span> / {{ count($scenarios) }} Completed
+                <i class="bi bi-shield-check me-1"></i> <span id="completedCount">{{ $passedCount }}</span> / {{ count($scenarios) }} Completed
             </span>
         </div>
     </div>
@@ -377,12 +385,43 @@
                         <i class="bi bi-code-slash me-1"></i> Check schema &amp; preview request
                     </button>
                     <button type="button" class="btn btn-outline-secondary btn-sm px-3" id="btnValidateFbr">
-                        <i class="bi bi-shield-check me-1"></i> Validate with FBR sandbox
+                        <span class="spinner-border spinner-border-sm me-1 d-none" id="validateSpinner"></span>
+                        <i class="bi bi-shield-check me-1" id="validateIcon"></i> Validate with FBR sandbox
                     </button>
                     <button type="button" class="btn btn-primary btn-sm px-4 fw-semibold" id="btnSubmitSandbox" style="background: #1E50FF; border-color: #1E50FF;">
                         <span class="spinner-border spinner-border-sm me-1 d-none" id="submitSpinner"></span>
                         <i class="bi bi-send-fill me-1" id="submitIcon"></i> Validate &amp; submit to sandbox
                     </button>
+                </div>
+            </div>
+
+            <!-- Live FBR Gateway Response & Errors Card -->
+            <div class="scenario-card shadow-sm mb-3 d-none" id="fbrResponseCard">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <h6 class="fw-bold text-dark mb-0" id="fbrResponseTitle">FBR Gateway Response</h6>
+                        <span class="badge bg-light text-dark border font-monospace" id="fbrResponseHttpBadge">HTTP 200</span>
+                        <span class="badge" id="fbrResponseStatusBadge">VALID</span>
+                    </div>
+                    <span class="text-muted font-monospace" style="font-size: 11px;" id="fbrResponseEndpoint"></span>
+                </div>
+
+                <!-- FBR Invoice Number (when accepted) -->
+                <div class="alert alert-success py-2 px-3 small rounded-3 mb-3 d-none" id="fbrInvoiceNumberBox">
+                    <i class="bi bi-check-circle-fill me-1"></i>
+                    Official FBR Invoice Number: <strong class="font-monospace user-select-all" id="fbrInvoiceNumberVal"></strong>
+                </div>
+
+                <!-- Detailed FBR Errors List (header + item-level errors) -->
+                <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3 d-none" id="fbrErrorsBox">
+                    <div class="fw-bold mb-1"><i class="bi bi-exclamation-octagon-fill me-1"></i> FBR Validation / Gateway Errors:</div>
+                    <ul class="mb-0 ps-3 font-monospace" style="font-size: 12px;" id="fbrErrorsList"></ul>
+                </div>
+
+                <!-- Raw FBR JSON Response -->
+                <div>
+                    <div class="text-muted fw-semibold mb-1" style="font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase;">Raw FBR Response JSON</div>
+                    <pre class="bg-dark text-info p-3 rounded-3 mb-0" style="font-size: 12px; max-height: 300px; overflow: auto;" id="fbrRawResponsePre">{}</pre>
                 </div>
             </div>
 
@@ -663,6 +702,65 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function escapeHtml(str) {
+        return String(str ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function renderFbrResponsePanel(opts) {
+        const card = document.getElementById('fbrResponseCard');
+        const titleEl = document.getElementById('fbrResponseTitle');
+        const httpBadge = document.getElementById('fbrResponseHttpBadge');
+        const statusBadge = document.getElementById('fbrResponseStatusBadge');
+        const endpointEl = document.getElementById('fbrResponseEndpoint');
+        const invBox = document.getElementById('fbrInvoiceNumberBox');
+        const invVal = document.getElementById('fbrInvoiceNumberVal');
+        const errBox = document.getElementById('fbrErrorsBox');
+        const errList = document.getElementById('fbrErrorsList');
+        const rawPre = document.getElementById('fbrRawResponsePre');
+
+        card.classList.remove('d-none');
+        titleEl.textContent = opts.title || 'FBR Gateway Response';
+        httpBadge.textContent = opts.httpStatus ? ('HTTP ' + opts.httpStatus) : 'NO RESPONSE';
+        endpointEl.textContent = opts.endpoint || '';
+
+        if (opts.success) {
+            statusBadge.className = 'badge bg-success bg-opacity-10 text-success';
+            statusBadge.textContent = 'VALID / ACCEPTED';
+        } else {
+            statusBadge.className = 'badge bg-danger bg-opacity-10 text-danger';
+            statusBadge.textContent = 'REJECTED / ERROR';
+        }
+
+        if (opts.invoiceNumber) {
+            invVal.textContent = opts.invoiceNumber;
+            invBox.classList.remove('d-none');
+        } else {
+            invBox.classList.add('d-none');
+        }
+
+        const errors = Array.isArray(opts.errors) ? opts.errors.filter(Boolean) : [];
+        if (!opts.success && (errors.length > 0 || opts.message)) {
+            errList.innerHTML = '';
+            const listItems = errors.length > 0 ? errors : [opts.message];
+            listItems.forEach(e => {
+                const li = document.createElement('li');
+                li.textContent = e;
+                errList.appendChild(li);
+            });
+            errBox.classList.remove('d-none');
+        } else {
+            errBox.classList.add('d-none');
+        }
+
+        const rawObj = opts.rawResponse !== undefined ? opts.rawResponse : {};
+        rawPre.textContent = typeof rawObj === 'string' ? rawObj : JSON.stringify(rawObj, null, 2);
+    }
+
     // Load attempt history table
     function loadHistory(code) {
         const attempts = recentAttempts[code] || [];
@@ -680,19 +778,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
             attempts.forEach(att => {
                 const tr = document.createElement('tr');
-                const isSuccess = att.outcome === 'success' || att.outcome === 'passed' || att.http_status === 200;
+                const isSuccess = att.outcome === 'success' || att.outcome === 'passed';
                 const statusBadge = isSuccess
                     ? '<span class="badge bg-success bg-opacity-10 text-success">PASSED</span>'
                     : '<span class="badge bg-danger bg-opacity-10 text-danger">FAILED</span>';
 
-                let fbrCode = att.response_payload && att.response_payload.FBRCode ? att.response_payload.FBRCode : (att.response_payload && att.response_payload.FBRInvoiceNumber ? att.response_payload.FBRInvoiceNumber : 'PRAL-SB-' + att.id);
-                let message = att.error_message || (att.response_payload && att.response_payload.Message ? att.response_payload.Message : 'Validated by PRAL sandbox validator');
+                const rp = att.response_payload || {};
+                const fbrCode = rp.invoiceNumber
+                    || rp.FBRInvoiceNumber
+                    || rp.FBRCode
+                    || (att.http_status ? ('HTTP ' + att.http_status) : '—');
+                const message = att.error_message
+                    || (rp.validationResponse && rp.validationResponse.error)
+                    || rp.Message
+                    || rp.Result
+                    || (isSuccess ? 'Accepted by FBR Sandbox' : 'Rejected by FBR Sandbox');
 
                 tr.innerHTML = `
                     <td class="text-nowrap text-secondary">${new Date(att.executed_at || att.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
                     <td>${statusBadge}</td>
-                    <td class="font-monospace text-dark">${fbrCode}</td>
-                    <td class="small text-secondary">${message}</td>
+                    <td class="font-monospace text-dark">${escapeHtml(fbrCode)}</td>
+                    <td class="small ${isSuccess ? 'text-secondary' : 'text-danger'}">${escapeHtml(message)}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -747,17 +853,24 @@ document.addEventListener('DOMContentLoaded', function () {
         new bootstrap.Modal(document.getElementById('schemaPreviewModal')).show();
     });
 
-    // Validate with FBR Sandbox
+    // Validate with FBR Sandbox (LIVE)
     document.getElementById('btnValidateFbr').addEventListener('click', function () {
         let payload;
         try {
             payload = JSON.parse(jsonEditor.value);
         } catch (e) {
-            showAlert('danger', 'JSON validation failed: ' + e.message);
+            showAlert('danger', 'JSON validation failed: ' + escapeHtml(e.message));
             return;
         }
 
-        showAlert('info', 'Validating payload against PRAL DI API v1.12 sandbox schema...');
+        const btn = this;
+        const spinner = document.getElementById('validateSpinner');
+        const icon = document.getElementById('validateIcon');
+        btn.disabled = true;
+        spinner.classList.remove('d-none');
+        icon.classList.add('d-none');
+
+        showAlert('info', 'Sending ' + escapeHtml(currentCode) + ' to live FBR Sandbox Validation API...');
 
         fetch('{{ route("tenant.sandbox-scenarios.validate") }}', {
             method: 'POST',
@@ -774,24 +887,54 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .then(async res => {
             const data = await res.json().catch(() => null);
-            if (!res.ok) {
-                throw new Error((data && data.message) ? data.message : `HTTP ${res.status}`);
+            if (!data) {
+                throw new Error(`HTTP ${res.status} — Unexpected non-JSON response from server.`);
             }
             return data;
         })
         .then(data => {
-            if (data && data.success) {
-                showAlert('success', '✓ ' + data.message);
+            btn.disabled = false;
+            spinner.classList.add('d-none');
+            icon.classList.remove('d-none');
+
+            renderFbrResponsePanel({
+                title: 'FBR Sandbox Validation Response · ' + currentCode,
+                success: !!data.success,
+                httpStatus: data.http_status,
+                endpoint: data.endpoint,
+                message: data.message,
+                errors: data.errors || [],
+                rawResponse: data.fbr_response || data
+            });
+
+            if (data.success) {
+                showAlert('success', '✓ ' + escapeHtml(data.message));
             } else {
-                showAlert('danger', 'Validation error: ' + ((data && data.message) || 'Unknown error'));
+                const errText = (data.errors && data.errors.length) ? ' — ' + data.errors.join(' | ') : '';
+                showAlert('danger', '✗ ' + escapeHtml((data.message || 'Validation rejected by FBR') + errText));
             }
+
+            if (!recentAttempts[currentCode]) {
+                recentAttempts[currentCode] = [];
+            }
+            recentAttempts[currentCode].unshift({
+                executed_at: new Date().toISOString(),
+                outcome: data.success ? 'success' : 'rejected',
+                http_status: data.http_status || 200,
+                error_message: data.success ? null : ((data.errors && data.errors.length) ? data.errors.join('; ') : data.message),
+                response_payload: data.fbr_response || {}
+            });
+            loadHistory(currentCode);
         })
         .catch(err => {
-            showAlert('danger', 'Validation failed: ' + (err.message || 'Error connecting to validation service.'));
+            btn.disabled = false;
+            spinner.classList.add('d-none');
+            icon.classList.remove('d-none');
+            showAlert('danger', 'Validation failed: ' + escapeHtml(err.message || 'Error connecting to validation service.'));
         });
     });
 
-    // Submit to sandbox
+    // Submit to sandbox (LIVE)
     document.getElementById('btnSubmitSandbox').addEventListener('click', function () {
         let payload;
         try {
@@ -808,7 +951,7 @@ document.addEventListener('DOMContentLoaded', function () {
         btn.disabled = true;
         spinner.classList.remove('d-none');
         icon.classList.add('d-none');
-        showAlert('info', 'Submitting scenario ' + currentCode + ' to official FBR Sandbox...');
+        showAlert('info', 'Submitting ' + escapeHtml(currentCode) + ' to live FBR Sandbox Post API...');
 
         fetch(`{{ url('/sandbox-scenarios') }}/${encodeURIComponent(currentCode)}/run`, {
             method: 'POST',
@@ -824,8 +967,8 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .then(async res => {
             const data = await res.json().catch(() => null);
-            if (!res.ok) {
-                throw new Error((data && data.message) ? data.message : `HTTP ${res.status}`);
+            if (!data) {
+                throw new Error(`HTTP ${res.status} — Unexpected non-JSON response from server.`);
             }
             return data;
         })
@@ -834,8 +977,22 @@ document.addEventListener('DOMContentLoaded', function () {
             spinner.classList.add('d-none');
             icon.classList.remove('d-none');
 
-            if (data && data.success) {
-                showAlert('success', '✓ ' + data.message);
+            const rawResp = data.fbr_response || (data.result && data.result.response) || {};
+            const invNo = data.invoice_number || (data.result && data.result.invoice_number) || rawResp.invoiceNumber || rawResp.FBRCode || null;
+
+            renderFbrResponsePanel({
+                title: 'FBR Sandbox Submission Response · ' + currentCode,
+                success: !!data.success,
+                httpStatus: data.http_status || (data.result && data.result.http_status),
+                endpoint: data.endpoint || (data.result && data.result.endpoint),
+                invoiceNumber: data.success ? invNo : null,
+                message: data.message,
+                errors: data.errors || (data.result && data.result.errors) || [],
+                rawResponse: rawResp
+            });
+
+            if (data.success) {
+                showAlert('success', '✓ ' + escapeHtml(data.message));
 
                 // Update sidebar badge to passed & increment completed count if newly passed
                 const navItem = document.querySelector(`.scenario-nav-item[data-code="${currentCode}"]`);
@@ -859,31 +1016,30 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                     }
                 }
-
-                // Append attempt row to history table
-                const resObj = (data.result && data.result.response) ? data.result.response : {};
-                const fbrCode = resObj.FBRCode || resObj.FBRInvoiceNumber || ('PRAL-SB-' + Date.now().toString().slice(-6));
-                const message = resObj.Result || resObj.Message || 'Scenario verified by PRAL sandbox validator';
-
-                if (!recentAttempts[currentCode]) {
-                    recentAttempts[currentCode] = [];
-                }
-                recentAttempts[currentCode].unshift({
-                    executed_at: new Date().toISOString(),
-                    outcome: 'success',
-                    http_status: 200,
-                    response_payload: { FBRCode: fbrCode, Message: message }
-                });
-                loadHistory(currentCode);
             } else {
-                showAlert('danger', 'Execution failed: ' + ((data && data.message) || 'Error executing scenario.'));
+                const errs = data.errors || (data.result && data.result.errors) || [];
+                const errText = errs.length ? ' — ' + errs.join(' | ') : '';
+                showAlert('danger', '✗ ' + escapeHtml((data.message || 'FBR Sandbox rejected scenario') + errText));
             }
+
+            if (!recentAttempts[currentCode]) {
+                recentAttempts[currentCode] = [];
+            }
+            const errs = data.errors || (data.result && data.result.errors) || [];
+            recentAttempts[currentCode].unshift({
+                executed_at: new Date().toISOString(),
+                outcome: data.success ? 'success' : 'rejected',
+                http_status: data.http_status || (data.result && data.result.http_status) || 200,
+                error_message: data.success ? null : (errs.length ? errs.join('; ') : data.message),
+                response_payload: rawResp
+            });
+            loadHistory(currentCode);
         })
         .catch(err => {
             btn.disabled = false;
             spinner.classList.add('d-none');
             icon.classList.remove('d-none');
-            showAlert('danger', 'Sandbox submission failed: ' + (err.message || 'Error connecting to sandbox gateway.'));
+            showAlert('danger', 'Sandbox submission failed: ' + escapeHtml(err.message || 'Error connecting to sandbox gateway.'));
         });
     });
 

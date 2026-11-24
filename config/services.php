@@ -36,9 +36,12 @@ return [
     ],
 
     'fbr' => [
-        'sandbox_url' => env('FBR_SANDBOX_BASE_URL', 'https://di-api-test.pral.com.pk/api/'),
-        'production_url' => env('FBR_PRODUCTION_BASE_URL', 'https://di-api.pral.com.pk/api/'),
-        'use_simulator' => env('FBR_USE_SIMULATOR', true),
+        'sandbox_url' => env('FBR_SANDBOX_BASE_URL', 'https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata_sb'),
+        'sandbox_validation_url' => env('FBR_SANDBOX_VALIDATION_URL', 'https://gw.fbr.gov.pk/di_data/v1/di/validateinvoicedata_sb'),
+        'production_url' => env('FBR_PRODUCTION_BASE_URL', 'https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata'),
+        'production_validation_url' => env('FBR_PRODUCTION_VALIDATION_URL', 'https://gw.fbr.gov.pk/di_data/v1/di/validateinvoicedata'),
+        'provinces_url' => env('FBR_PROVINCES_URL', 'https://gw.fbr.gov.pk/pdi/v1/provinces'),
+        'use_simulator' => env('FBR_USE_SIMULATOR', false),
     ],
 
 ];

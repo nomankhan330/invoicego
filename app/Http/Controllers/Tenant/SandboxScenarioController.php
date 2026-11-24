@@ -41,27 +41,27 @@ class SandboxScenarioController extends Controller
         $business = $this->tenantService->getActiveBusiness();
         $scenarioCode = $request->input('scenario_code', 'SN001');
 
-        $payload = $request->input('payload');
-        if (is_string($payload)) {
-            $decoded = json_decode($payload, true);
+        $rawPayload = $request->input('payload') ?? $request->input('custom_payload');
+        $decoded = [];
+
+        if (is_string($rawPayload)) {
+            $decoded = json_decode($rawPayload, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 return response()->json([
                     'success' => false,
+                    'http_status' => 422,
                     'message' => 'Invalid JSON format: ' . json_last_error_msg(),
+                    'errors' => ['JSON Syntax Error: ' . json_last_error_msg()],
+                    'fbr_response' => [],
                 ], 422);
             }
+        } elseif (is_array($rawPayload)) {
+            $decoded = $rawPayload;
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => "Schema validation passed for {$scenarioCode}. Payload matches official PRAL v1.12 specifications.",
-            'details' => [
-                'scenario' => $scenarioCode,
-                'status' => 'Valid',
-                'gateway' => 'PRAL Sandbox Reference Gateway',
-                'validated_at' => now('Asia/Karachi')->format('d M Y, H:i:s T'),
-            ],
-        ]);
+        $result = $this->fbrService->validateSandboxPayload($business, $scenarioCode, $decoded);
+
+        return response()->json($result, 200);
     }
 
     public function run(Request $request, string $scenarioCode)
@@ -70,28 +70,53 @@ class SandboxScenarioController extends Controller
         $scenario = SandboxScenario::where('scenario_code', $scenarioCode)->firstOrFail();
 
         $customPayload = null;
-        if ($request->filled('payload')) {
-            $decoded = json_decode($request->input('payload'), true);
-            if (is_array($decoded)) {
-                $customPayload = $decoded;
+        $rawPayload = $request->input('payload') ?? $request->input('custom_payload');
+        if (is_string($rawPayload) && trim($rawPayload) !== '') {
+            $decoded = json_decode($rawPayload, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return response()->json([
+                    'success' => false,
+                    'http_status' => 422,
+                    'message' => 'Invalid JSON syntax: ' . json_last_error_msg(),
+                    'errors' => ['JSON Syntax Error: ' . json_last_error_msg()],
+                ], 422);
             }
+            $customPayload = $decoded;
+        } elseif (is_array($rawPayload)) {
+            $customPayload = $rawPayload;
         }
 
         $result = $this->fbrService->runSandboxScenario($business, $scenario, $customPayload);
 
-        ActivityLog::record('sandbox_scenario_run', "Executed Sandbox Scenario {$scenario->scenario_code} - {$scenario->title}.", [
-            'scenario_code' => $scenario->scenario_code,
-            'result' => $result['response']['Status'] ?? 'Success',
-        ], $business->id);
+        ActivityLog::record(
+            $result['success'] ? 'sandbox_scenario_run' : 'sandbox_scenario_failed',
+            $result['message'] ?? "Executed Sandbox Scenario {$scenario->scenario_code} - {$scenario->title}.",
+            [
+                'scenario_code' => $scenario->scenario_code,
+                'http_status' => $result['http_status'] ?? null,
+                'invoice_number' => $result['invoice_number'] ?? null,
+                'errors' => $result['errors'] ?? [],
+            ],
+            $business->id
+        );
 
         if ($request->expectsJson() || $request->ajax() || $request->isJson()) {
             return response()->json([
-                'success' => true,
-                'message' => "Scenario {$scenario->scenario_code} executed and verified by PRAL sandbox validator!",
+                'success' => (bool) ($result['success'] ?? false),
+                'http_status' => $result['http_status'] ?? 200,
+                'message' => $result['message'] ?? '',
+                'errors' => $result['errors'] ?? [],
+                'invoice_number' => $result['invoice_number'] ?? null,
+                'endpoint' => $result['endpoint'] ?? null,
+                'fbr_response' => $result['response'] ?? [],
                 'result' => $result,
-            ]);
+            ], 200);
         }
 
-        return back()->with('success', "Scenario {$scenario->scenario_code} executed and verified by PRAL sandbox validator!");
+        if ($result['success']) {
+            return back()->with('success', $result['message']);
+        }
+
+        return back()->with('error', $result['message']);
     }
 }

@@ -284,4 +284,117 @@ class FbrAndSandboxRedesignTest extends TestCase
         ]);
         $response->assertJsonPath('result.scenario_code', 'SN001');
     }
+
+    public function test_live_fbr_verify_connection_shows_real_401_errors(): void
+    {
+        config(['services.fbr.use_simulator' => false]);
+
+        Http::fake([
+            'https://gw.fbr.gov.pk/pdi/v1/provinces' => Http::response([
+                'fault' => [
+                    'code' => 900901,
+                    'message' => 'Invalid Credentials',
+                    'description' => 'Access failure for API: /pdi/v1',
+                ],
+            ], 401),
+        ]);
+
+        $user = User::factory()->create();
+        $business = $this->createBusiness();
+        $user->businesses()->attach($business->id, ['role' => 'owner']);
+
+        $this->actingAs($user);
+        app(TenantServiceInterface::class)->setActiveBusiness($business);
+
+        $response = $this->post(route('tenant.fbr-integration.sandbox.verify'), [
+            'sandbox_token' => 'wrong-token-123',
+        ]);
+
+        $response->assertRedirect(route('tenant.fbr-integration'));
+        $response->assertSessionHas('error');
+        $response->assertSessionHas('fbr_http_status', 401);
+        $response->assertSessionHas('fbr_errors');
+        $this->assertStringContainsString('Invalid Credentials', implode(' ', session('fbr_errors')));
+
+        $business->refresh();
+        $this->assertEquals('failed', $business->sandbox_connection_status);
+    }
+
+    public function test_live_fbr_sandbox_submit_returns_real_invoice_number_and_all_item_errors(): void
+    {
+        config(['services.fbr.use_simulator' => false]);
+        $this->seed(\Database\Seeders\SandboxScenarioSeeder::class);
+
+        $user = User::factory()->create();
+        $business = $this->createBusiness();
+        $user->businesses()->attach($business->id, ['role' => 'owner']);
+
+        $this->actingAs($user);
+        app(TenantServiceInterface::class)->setActiveBusiness($business);
+
+        Http::fake([
+            'https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata_sb' => Http::sequence()
+                ->push([
+                    'invoiceNumber' => '',
+                    'dated' => '2026-11-24 15:30:00',
+                    'validationResponse' => [
+                        'statusCode' => '01',
+                        'status' => 'Invalid',
+                        'errorCode' => '0003',
+                        'error' => 'Seller NTN/CNIC is not registered for Digital Invoicing',
+                        'invoiceStatuses' => [
+                            [
+                                'itemSNo' => '1',
+                                'statusCode' => '01',
+                                'status' => 'Invalid',
+                                'errorCode' => '0052',
+                                'error' => 'Provided HS Code does not match UoM',
+                            ],
+                        ],
+                    ],
+                ], 200)
+                ->push([
+                    'invoiceNumber' => '1234125DI1795515999001',
+                    'dated' => '2026-11-24 15:35:00',
+                    'validationResponse' => [
+                        'statusCode' => '00',
+                        'status' => 'Valid',
+                        'error' => '',
+                        'invoiceStatuses' => [
+                            [
+                                'itemSNo' => '1',
+                                'statusCode' => '00',
+                                'status' => 'Valid',
+                                'invoiceNo' => '1234125DI1795515999001-1',
+                                'errorCode' => '',
+                                'error' => '',
+                            ],
+                        ],
+                    ],
+                ], 200),
+        ]);
+
+        // 1. Live FBR rejection with header + item-level errors
+        $failRes = $this->postJson(route('tenant.sandbox-scenarios.run', 'SN001'), [
+            'payload' => json_encode(['scenarioId' => 'SN001']),
+        ]);
+
+        $failRes->assertStatus(200);
+        $failRes->assertJson(['success' => false, 'http_status' => 200]);
+        $errors = $failRes->json('errors');
+        $this->assertCount(2, $errors);
+        $this->assertStringContainsString('0003', $errors[0]);
+        $this->assertStringContainsString('0052', $errors[1]);
+
+        // 2. Live FBR acceptance with real invoiceNumber
+        $okRes = $this->postJson(route('tenant.sandbox-scenarios.run', 'SN001'), [
+            'payload' => json_encode(['scenarioId' => 'SN001']),
+        ]);
+
+        $okRes->assertStatus(200);
+        $okRes->assertJson([
+            'success' => true,
+            'invoice_number' => '1234125DI1795515999001',
+        ]);
+    }
 }
