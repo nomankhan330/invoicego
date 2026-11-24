@@ -29,30 +29,130 @@ class InvoiceController extends Controller
     {
         $business = $this->tenantService->getActiveBusiness();
 
-        $query = $business->invoices()->with('customer')->latest('invoice_date');
+        // 1. Dynamic 8 Summary Cards (Strictly scoped to active business)
+        $baseBizQuery = $business->invoices();
+        $summary = [
+            'total' => (clone $baseBizQuery)->count(),
+            'fbr_submitted' => (clone $baseBizQuery)->where(function ($q) {
+                $q->whereNotNull('fbr_submitted_at')
+                  ->orWhereIn('status', ['submitted', 'accepted', 'failed']);
+            })->count(),
+            'successful' => (clone $baseBizQuery)->where('status', 'accepted')->count(),
+            'failed' => (clone $baseBizQuery)->where('status', 'failed')->count(),
+            'pending' => (clone $baseBizQuery)->whereIn('status', ['draft', 'pending', 'needs_reconciliation'])->count(),
+            'cancelled' => (clone $baseBizQuery)->where('status', 'cancelled')->count(),
+            'total_amount' => (float) (clone $baseBizQuery)->where('status', '!=', 'cancelled')->sum('total_invoice_value'),
+            'total_sales_tax' => (float) (clone $baseBizQuery)->where('status', '!=', 'cancelled')->sum('sales_tax_amount'),
+        ];
+
+        // 2. Daily / Monthly / Yearly Analytics for Active Business
+        $pktNow = Carbon::now('Asia/Karachi');
+        $dailyQ = (clone $baseBizQuery)->whereDate('invoice_date', $pktNow->toDateString());
+        $monthlyQ = (clone $baseBizQuery)->whereYear('invoice_date', $pktNow->year)->whereMonth('invoice_date', $pktNow->month);
+        $yearlyQ = (clone $baseBizQuery)->whereYear('invoice_date', $pktNow->year);
+
+        $analytics = [
+            'daily' => [
+                'label' => 'Today (' . $pktNow->format('d M Y') . ')',
+                'count' => (clone $dailyQ)->count(),
+                'valid' => (clone $dailyQ)->where('status', 'accepted')->count(),
+                'failed' => (clone $dailyQ)->where('status', 'failed')->count(),
+                'sales' => (float) (clone $dailyQ)->where('status', '!=', 'cancelled')->sum('total_invoice_value'),
+                'tax' => (float) (clone $dailyQ)->where('status', '!=', 'cancelled')->sum('sales_tax_amount'),
+            ],
+            'monthly' => [
+                'label' => 'This Month (' . $pktNow->format('M Y') . ')',
+                'count' => (clone $monthlyQ)->count(),
+                'valid' => (clone $monthlyQ)->where('status', 'accepted')->count(),
+                'failed' => (clone $monthlyQ)->where('status', 'failed')->count(),
+                'sales' => (float) (clone $monthlyQ)->where('status', '!=', 'cancelled')->sum('total_invoice_value'),
+                'tax' => (float) (clone $monthlyQ)->where('status', '!=', 'cancelled')->sum('sales_tax_amount'),
+            ],
+            'yearly' => [
+                'label' => 'This Year (' . $pktNow->year . ')',
+                'count' => (clone $yearlyQ)->count(),
+                'valid' => (clone $yearlyQ)->where('status', 'accepted')->count(),
+                'failed' => (clone $yearlyQ)->where('status', 'failed')->count(),
+                'sales' => (float) (clone $yearlyQ)->where('status', '!=', 'cancelled')->sum('total_invoice_value'),
+                'tax' => (float) (clone $yearlyQ)->where('status', '!=', 'cancelled')->sum('sales_tax_amount'),
+            ],
+        ];
+
+        // 3. Filtered & Sorted Table Query
+        $query = $business->invoices()->with(['customer', 'creator']);
 
         if ($status = $request->get('status')) {
-            $query->where('status', $status);
+            if ($status === 'pending_group') {
+                $query->whereIn('status', ['draft', 'pending', 'needs_reconciliation']);
+            } else {
+                $query->where('status', $status);
+            }
         }
 
         if ($env = $request->get('environment')) {
             $query->where('environment', $env);
         }
 
-        if ($search = $request->get('search')) {
-            $query->where(function ($q) use ($search) {
+        if ($invType = $request->get('invoice_type')) {
+            $query->where('invoice_type', $invType);
+        }
+
+        if ($dateFrom = $request->get('date_from')) {
+            $query->whereDate('invoice_date', '>=', $dateFrom);
+        }
+
+        if ($dateTo = $request->get('date_to')) {
+            $query->whereDate('invoice_date', '<=', $dateTo);
+        }
+
+        if ($search = trim((string) $request->get('search'))) {
+            $numericId = is_numeric(ltrim(str_ireplace('INV-', '', $search), '0')) ? (int) ltrim(str_ireplace('INV-', '', $search), '0') : null;
+            $query->where(function ($q) use ($search, $numericId) {
                 $q->where('invoice_number', 'like', "%{$search}%")
                   ->orWhere('fbr_invoice_number', 'like', "%{$search}%")
+                  ->orWhere('buyer_name', 'like', "%{$search}%")
+                  ->orWhere('buyer_ntn_cnic', 'like', "%{$search}%")
                   ->orWhereHas('customer', function ($cq) use ($search) {
                       $cq->where('name', 'like', "%{$search}%")
                          ->orWhere('ntn_cnic', 'like', "%{$search}%");
                   });
+                if ($numericId) {
+                    $q->orWhere('id', $numericId);
+                }
             });
         }
 
-        $invoices = $query->paginate(15)->withQueryString();
+        $sort = $request->get('sort', 'newest');
+        match ($sort) {
+            'oldest' => $query->orderBy('invoice_date', 'asc')->orderBy('id', 'asc'),
+            'highest_amount' => $query->orderBy('total_invoice_value', 'desc'),
+            'lowest_amount' => $query->orderBy('total_invoice_value', 'asc'),
+            default => $query->orderBy('invoice_date', 'desc')->orderBy('id', 'desc'),
+        };
 
-        return view('tenant.invoices.index', compact('business', 'invoices'));
+        $perPage = in_array((int) $request->get('per_page'), [15, 25, 50, 100], true) ? (int) $request->get('per_page') : 15;
+        $invoices = $query->paginate($perPage)->withQueryString();
+
+        return view('tenant.invoices.index', compact('business', 'invoices', 'summary', 'analytics'));
+    }
+
+    public function cancel(string $uuid)
+    {
+        $business = $this->tenantService->getActiveBusiness();
+        $invoice = $business->invoices()->where('uuid', $uuid)->firstOrFail();
+
+        if ($invoice->isAccepted()) {
+            return back()->with('error', 'Accepted FBR invoices cannot be cancelled directly. Issue a Credit Note instead.');
+        }
+
+        $invoice->update(['status' => 'cancelled']);
+
+        ActivityLog::record('invoice_cancelled', "Cancelled invoice {$invoice->invoice_number}.", [
+            'invoice_id' => $invoice->id,
+            'invoice_number' => $invoice->invoice_number,
+        ], $business->id);
+
+        return back()->with('success', "Invoice {$invoice->invoice_number} has been marked as Cancelled.");
     }
 
     protected function getFormData(): array

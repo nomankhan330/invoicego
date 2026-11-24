@@ -41,11 +41,18 @@ class AuthController extends Controller
                 return back()->withErrors(['email' => 'Your user account has been suspended by administration.']);
             }
 
-            // If user is super admin, redirect to Admin Panel
-            if ($user->is_super_admin) {
-                ActivityLog::record('login', "Super Admin ({$user->email}) logged into InvoiceGO.", [
+            if ($user->status === 'inactive') {
+                Auth::logout();
+                return back()->withErrors(['email' => 'Your account is currently inactive. Please contact administrator to activate your account.']);
+            }
+
+            $user->forceFill(['last_login_at' => now()])->saveQuietly();
+
+            // If user has Admin Panel role (Super Admin / Admin / Support Staff), redirect to Admin Panel
+            if ($user->is_super_admin || in_array($user->admin_role, ['super_admin', 'admin', 'support_staff'], true)) {
+                ActivityLog::record('login', "Admin ({$user->email} - {$user->effectiveAdminRole()}) logged into InvoiceGO.", [
                     'email' => $user->email,
-                    'is_super_admin' => true,
+                    'admin_role' => $user->effectiveAdminRole(),
                 ], null, $user->id);
                 return redirect()->intended('/admin');
             }

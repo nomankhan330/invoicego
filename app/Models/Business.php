@@ -16,9 +16,11 @@ class Business extends Model
     protected $fillable = [
         'uuid',
         'name',
+        'business_type',
         'ntn_cnic',
         'strn',
         'address',
+        'city',
         'province',
         'sector',
         'business_natures',
@@ -39,6 +41,9 @@ class Business extends Model
         'production_connection_status',
         'production_submissions_enabled',
         'current_environment',
+        'fbr_pos_id',
+        'fbr_registration_status',
+        'fbr_integration_status',
         'approved_by',
         'approved_at',
     ];

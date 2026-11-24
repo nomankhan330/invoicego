@@ -6,6 +6,7 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -14,12 +15,17 @@ class User extends Authenticatable implements FilamentUser
     use HasFactory, Notifiable;
 
     protected $fillable = [
+        'user_code',
         'name',
         'email',
+        'username',
         'phone',
+        'cnic',
         'password',
         'is_super_admin',
+        'admin_role',
         'status',
+        'last_login_at',
         'two_factor_secret',
     ];
 
@@ -33,9 +39,21 @@ class User extends Authenticatable implements FilamentUser
     {
         return [
             'email_verified_at' => 'datetime',
+            'last_login_at' => 'datetime',
             'password' => 'hashed',
             'is_super_admin' => 'boolean',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::created(function (User $user) {
+            if (empty($user->user_code)) {
+                $user->forceFill([
+                    'user_code' => 'USR-' . str_pad((string) $user->id, 4, '0', STR_PAD_LEFT),
+                ])->saveQuietly();
+            }
+        });
     }
 
     public function businesses(): BelongsToMany
@@ -45,19 +63,52 @@ class User extends Authenticatable implements FilamentUser
             ->withTimestamps();
     }
 
-    public function supportTickets()
+    public function supportTickets(): HasMany
     {
         return $this->hasMany(SupportTicket::class);
     }
 
-    public function payments()
+    public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
     }
 
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
+
+    public function createdInvoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class, 'created_by');
+    }
+
+    public function effectiveAdminRole(): string
+    {
+        if (!empty($this->admin_role) && $this->admin_role !== 'user') {
+            return $this->admin_role;
+        }
+
+        return $this->is_super_admin ? 'super_admin' : 'user';
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->effectiveAdminRole() === 'super_admin';
+    }
+
+    public function isAdminManager(): bool
+    {
+        return in_array($this->effectiveAdminRole(), ['super_admin', 'admin'], true);
+    }
+
+    public function isSupportStaff(): bool
+    {
+        return $this->effectiveAdminRole() === 'support_staff';
+    }
+
     public function canAccessPanel(Panel $panel): bool
     {
-        // Only Super Admins can access the Filament /admin portal
-        return (bool) $this->is_super_admin;
+        return in_array($this->effectiveAdminRole(), ['super_admin', 'admin', 'support_staff'], true);
     }
 }

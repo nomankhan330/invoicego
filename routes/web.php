@@ -83,6 +83,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::delete('/{uuid}', [InvoiceController::class, 'destroy'])->name('destroy');
         Route::post('/{uuid}/submit', [InvoiceController::class, 'submitToFbr'])->name('submit');
         Route::post('/{uuid}/reconcile', [InvoiceController::class, 'reconcile'])->name('reconcile');
+        Route::post('/{uuid}/cancel', [InvoiceController::class, 'cancel'])->name('cancel');
         Route::get('/{uuid}/print', [InvoiceController::class, 'printA4'])->name('print');
     });
 
