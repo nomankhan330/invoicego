@@ -763,6 +763,8 @@ document.addEventListener('DOMContentLoaded', function () {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
             },
             body: JSON.stringify({
@@ -770,16 +772,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 payload: jsonEditor.value
             })
         })
-        .then(res => res.json())
+        .then(async res => {
+            const data = await res.json().catch(() => null);
+            if (!res.ok) {
+                throw new Error((data && data.message) ? data.message : `HTTP ${res.status}`);
+            }
+            return data;
+        })
         .then(data => {
-            if (data.success) {
+            if (data && data.success) {
                 showAlert('success', '✓ ' + data.message);
             } else {
-                showAlert('danger', 'Validation error: ' + (data.message || 'Unknown error'));
+                showAlert('danger', 'Validation error: ' + ((data && data.message) || 'Unknown error'));
             }
         })
         .catch(err => {
-            showAlert('danger', 'Error connecting to validation service.');
+            showAlert('danger', 'Validation failed: ' + (err.message || 'Error connecting to validation service.'));
         });
     });
 
@@ -802,29 +810,44 @@ document.addEventListener('DOMContentLoaded', function () {
         icon.classList.add('d-none');
         showAlert('info', 'Submitting scenario ' + currentCode + ' to official FBR Sandbox...');
 
-        fetch(`/sandbox-scenarios/${currentCode}/run`, {
+        fetch(`{{ url('/sandbox-scenarios') }}/${encodeURIComponent(currentCode)}/run`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
             },
             body: JSON.stringify({
                 payload: jsonEditor.value
             })
         })
-        .then(res => res.json())
+        .then(async res => {
+            const data = await res.json().catch(() => null);
+            if (!res.ok) {
+                throw new Error((data && data.message) ? data.message : `HTTP ${res.status}`);
+            }
+            return data;
+        })
         .then(data => {
             btn.disabled = false;
             spinner.classList.add('d-none');
             icon.classList.remove('d-none');
 
-            if (data.success) {
+            if (data && data.success) {
                 showAlert('success', '✓ ' + data.message);
 
-                // Update sidebar badge to passed
+                // Update sidebar badge to passed & increment completed count if newly passed
                 const navItem = document.querySelector(`.scenario-nav-item[data-code="${currentCode}"]`);
                 if (navItem) {
+                    const wasPassed = navItem.classList.contains('passed');
                     navItem.classList.add('passed');
+                    if (!wasPassed) {
+                        const countEl = document.getElementById('completedCount');
+                        if (countEl) {
+                            countEl.textContent = String((parseInt(countEl.textContent, 10) || 0) + 1);
+                        }
+                    }
                     const radio = navItem.querySelector('.scenario-radio');
                     if (radio) {
                         radio.innerHTML = '<i class="bi bi-check text-white" style="font-size: 13px; line-height: 1;"></i>';
@@ -853,14 +876,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
                 loadHistory(currentCode);
             } else {
-                showAlert('danger', 'Execution failed: ' + (data.message || 'Error executing scenario.'));
+                showAlert('danger', 'Execution failed: ' + ((data && data.message) || 'Error executing scenario.'));
             }
         })
         .catch(err => {
             btn.disabled = false;
             spinner.classList.add('d-none');
             icon.classList.remove('d-none');
-            showAlert('danger', 'Error connecting to sandbox gateway.');
+            showAlert('danger', 'Sandbox submission failed: ' + (err.message || 'Error connecting to sandbox gateway.'));
         });
     });
 

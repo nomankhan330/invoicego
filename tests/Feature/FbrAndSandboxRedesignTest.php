@@ -253,4 +253,26 @@ class FbrAndSandboxRedesignTest extends TestCase
         $this->assertEquals(0.99, $sn028->sample_payload['items'][0]['salesTaxApplicable']);
         $this->assertEquals('70', $sn028->sample_payload['items'][0]['sroItemSerialNo']);
     }
+
+    public function test_sandbox_scenario_run_endpoint_returns_json_for_fetch_requests(): void
+    {
+        $this->seed(\Database\Seeders\SandboxScenarioSeeder::class);
+
+        $user = User::factory()->create();
+        $business = $this->createBusiness();
+        $user->businesses()->attach($business->id, ['role' => 'owner']);
+
+        $this->actingAs($user);
+        app(TenantServiceInterface::class)->setActiveBusiness($business);
+
+        $response = $this->postJson(route('tenant.sandbox-scenarios.run', 'SN001'), [
+            'payload' => json_encode(['scenarioId' => 'SN001']),
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+        ]);
+        $response->assertJsonPath('result.scenario_code', 'SN001');
+    }
 }

@@ -84,7 +84,7 @@ class SandboxScenarioController extends Controller
             'result' => $result['response']['Status'] ?? 'Success',
         ], $business->id);
 
-        if ($request->expectsJson() || $request->ajax()) {
+        if ($request->expectsJson() || $request->ajax() || $request->isJson()) {
             return response()->json([
                 'success' => true,
                 'message' => "Scenario {$scenario->scenario_code} executed and verified by PRAL sandbox validator!",
