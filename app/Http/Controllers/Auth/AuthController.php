@@ -18,7 +18,20 @@ class AuthController extends Controller
     public function showLogin()
     {
         if (Auth::check()) {
-            return redirect()->route('tenant.dashboard');
+            $user = Auth::user();
+
+            if ($user->is_super_admin || in_array($user->admin_role, ['super_admin', 'admin', 'support_staff'], true)) {
+                return redirect('/admin');
+            }
+
+            if ($this->tenantService->getActiveBusiness()) {
+                return redirect()->route('tenant.dashboard');
+            }
+
+            // User is authenticated but has no linked business; avoid /login -> /dashboard -> /register loop
+            Auth::logout();
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
         }
 
         return view('auth.login');

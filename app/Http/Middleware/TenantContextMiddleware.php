@@ -24,7 +24,22 @@ class TenantContextMiddleware
         $business = $this->tenantService->getActiveBusiness();
 
         if (!$business) {
-            return redirect()->route('register')->with('info', 'Please register or select a business to proceed.');
+            // Admin panel roles without a tenant business belong in /admin, never in a /register redirect loop
+            if ($user->is_super_admin || in_array($user->admin_role, ['super_admin', 'admin', 'support_staff'], true)) {
+                return redirect('/admin');
+            }
+
+            if (\App\Models\SystemSetting::get('enable_public_registration', false)) {
+                return redirect()->route('register')->with('info', 'Please register or select a business to proceed.');
+            }
+
+            \Illuminate\Support\Facades\Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->withErrors([
+                'email' => 'No business account is linked to your profile yet. Please contact administrator.',
+            ]);
         }
 
         // Allow access to status holding routes

@@ -204,4 +204,21 @@ class ScreensRenderingTest extends TestCase
         $csvRes->assertStatus(200);
         $this->assertStringContainsString('text/csv', (string) $csvRes->headers->get('Content-Type'));
     }
+
+    public function test_logged_in_admin_visiting_login_or_dashboard_redirects_to_admin_without_loop(): void
+    {
+        \App\Models\SystemSetting::set('enable_public_registration', '0', 'general', 'boolean');
+
+        $admin = User::create([
+            'name' => 'Super Admin',
+            'email' => 'superadmin.noloop@invoicego.pk',
+            'password' => bcrypt('AdminPass123!'),
+            'is_super_admin' => true,
+            'admin_role' => 'super_admin',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($admin)->get('/login')->assertRedirect('/admin');
+        $this->actingAs($admin)->get('/dashboard')->assertRedirect('/admin');
+    }
 }
