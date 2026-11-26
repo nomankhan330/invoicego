@@ -20,17 +20,40 @@ try {
         }
     }
 
-    // 2. Prepare writable SQLite database in /tmp from pre-seeded template
-    $dbFile = '/tmp/database.sqlite';
-    $seededTemplate = __DIR__ . '/../database/database.sqlite';
+    // 2. Detect Database Connection (External Cloud MySQL / MariaDB / Postgres vs fallback SQLite)
+    $dbUrl = getenv('DB_URL') ?: '';
+    $dbConn = getenv('DB_CONNECTION') ?: '';
+    $dbHost = getenv('DB_HOST') ?: '';
 
-    if (!file_exists($dbFile) || filesize($dbFile) === 0) {
-        if (file_exists($seededTemplate) && filesize($seededTemplate) > 0) {
-            @copy($seededTemplate, $dbFile);
-        } else {
-            @touch($dbFile);
+    if (!$dbConn && $dbUrl) {
+        if (str_starts_with($dbUrl, 'mysql://') || str_starts_with($dbUrl, 'mysql2://')) {
+            $dbConn = 'mysql';
+        } elseif (str_starts_with($dbUrl, 'postgres://') || str_starts_with($dbUrl, 'postgresql://')) {
+            $dbConn = 'pgsql';
         }
-        @chmod($dbFile, 0666);
+    }
+
+    if (!$dbConn && $dbHost && !in_array($dbHost, ['127.0.0.1', 'localhost'], true)) {
+        $dbConn = 'mysql';
+    }
+
+    if (!$dbConn) {
+        $dbConn = 'sqlite';
+    }
+
+    // Prepare writable SQLite database in /tmp ONLY when running in fallback sqlite mode
+    $dbFile = '/tmp/database.sqlite';
+    if ($dbConn === 'sqlite') {
+        $seededTemplate = __DIR__ . '/../database/database.sqlite';
+
+        if (!file_exists($dbFile) || filesize($dbFile) === 0) {
+            if (file_exists($seededTemplate) && filesize($seededTemplate) > 0) {
+                @copy($seededTemplate, $dbFile);
+            } else {
+                @touch($dbFile);
+            }
+            @chmod($dbFile, 0666);
+        }
     }
 
     // 3. Set environment overrides for Vercel
@@ -46,10 +69,11 @@ try {
         'APP_ROUTES_CACHE' => $bootstrapCache . '/routes-v7.php',
         'APP_EVENTS_CACHE' => $bootstrapCache . '/events.php',
         'VIEW_COMPILED_PATH' => '/tmp/storage/framework/views',
-        'SESSION_DRIVER' => 'cookie',
-        'CACHE_STORE' => 'array',
-        'CACHE_DRIVER' => 'array',
+        'SESSION_DRIVER' => getenv('SESSION_DRIVER') ?: 'cookie',
+        'CACHE_STORE' => getenv('CACHE_STORE') ?: 'array',
+        'CACHE_DRIVER' => getenv('CACHE_DRIVER') ?: 'array',
         'LOG_CHANNEL' => 'stderr',
+        'DB_CONNECTION' => $dbConn,
     ];
 
     if (isset($_SERVER['HTTP_HOST'])) {
@@ -57,9 +81,31 @@ try {
         $envOverrides['APP_URL'] = $scheme . '://' . $_SERVER['HTTP_HOST'];
     }
 
-    if (getenv('DB_CONNECTION') === 'sqlite' || !getenv('DB_CONNECTION')) {
-        $envOverrides['DB_CONNECTION'] = 'sqlite';
+    if ($dbConn === 'sqlite') {
         $envOverrides['DB_DATABASE'] = $dbFile;
+    }
+
+    // Auto-configure MySQL TLS CA certificate for Cloud MySQL providers (TiDB Cloud, Aiven, PlanetScale, etc.)
+    if (in_array($dbConn, ['mysql', 'mariadb'], true) && getenv('DB_SSL') !== 'false') {
+        $customPem = getenv('MYSQL_ATTR_SSL_CA_CERT');
+        if ($customPem) {
+            $caPath = '/tmp/mysql-ca.pem';
+            if (!file_exists($caPath)) {
+                @file_put_contents($caPath, str_replace('\n', "\n", $customPem));
+            }
+            $envOverrides['MYSQL_ATTR_SSL_CA'] = $caPath;
+        } elseif (!getenv('MYSQL_ATTR_SSL_CA')) {
+            foreach ([
+                '/etc/ssl/certs/ca-certificates.crt',
+                '/etc/pki/tls/certs/ca-bundle.crt',
+                '/etc/ssl/cert.pem',
+            ] as $sysCa) {
+                if (file_exists($sysCa)) {
+                    $envOverrides['MYSQL_ATTR_SSL_CA'] = $sysCa;
+                    break;
+                }
+            }
+        }
     }
 
     foreach ($envOverrides as $key => $val) {
@@ -75,23 +121,27 @@ try {
     $app = require_once __DIR__ . '/../bootstrap/app.php';
     $app->useStoragePath('/tmp/storage');
 
-    // 5. Ensure database is functional and all latest migrations are applied (once per container/deploy)
-    if (getenv('DB_CONNECTION') === 'sqlite' || !getenv('DB_CONNECTION')) {
-        try {
-            $migrationFiles = scandir(__DIR__ . '/../database/migrations') ?: [];
-            $migrationStamp = '/tmp/.invoicego_migrated_' . md5(implode(',', $migrationFiles));
-            if (!file_exists($migrationStamp)) {
-                $needsSeed = !\Illuminate\Support\Facades\Schema::hasTable('users');
-                $kernel = $app->make(\Illuminate\Contracts\Console\Kernel::class);
-                $kernel->call('migrate', ['--force' => true]);
-                if ($needsSeed) {
-                    $kernel->call('db:seed', ['--force' => true]);
-                }
-                @touch($migrationStamp);
+    // 5. Ensure database schema & initial seed exist (runs once per deploy/container for both Cloud MySQL & SQLite)
+    try {
+        $migrationFiles = scandir(__DIR__ . '/../database/migrations') ?: [];
+        $stampHash = md5($dbConn . '|' . $dbHost . '|' . (getenv('DB_DATABASE') ?: '') . '|' . implode(',', $migrationFiles));
+        $migrationStamp = '/tmp/.invoicego_migrated_' . $stampHash;
+
+        if (!file_exists($migrationStamp)) {
+            $kernel = $app->make(\Illuminate\Contracts\Console\Kernel::class);
+            $kernel->call('migrate', ['--force' => true]);
+
+            $needsSeed = !\Illuminate\Support\Facades\Schema::hasTable('users')
+                || \App\Models\User::count() === 0;
+
+            if ($needsSeed) {
+                $kernel->call('db:seed', ['--force' => true]);
             }
-        } catch (\Throwable $e) {
-            error_log('Vercel cold start db setup: ' . $e->getMessage());
+
+            @touch($migrationStamp);
         }
+    } catch (\Throwable $e) {
+        error_log('Vercel cold start db setup (' . $dbConn . '): ' . $e->getMessage());
     }
 
     // 6. Handle HTTP Request
