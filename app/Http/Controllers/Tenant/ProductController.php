@@ -72,7 +72,10 @@ class ProductController extends Controller
         };
 
         $products = $query->paginate(15)->withQueryString();
-        $hsCodes = HsCode::where('is_active', true)->orderBy('pct_code')->get();
+        $hsCodes = HsCode::where('is_active', true)
+            ->orderBy('pct_code')
+            ->toBase()
+            ->get(['pct_code', 'description']);
 
         $uomList = \App\Constants\FbrLookups::UOM_LIST;
         $saleTypes = array_combine(\App\Constants\FbrLookups::SALE_TYPES, \App\Constants\FbrLookups::SALE_TYPES);

@@ -109,6 +109,14 @@ class BrandLogoSettingsTest extends TestCase
 
     public function test_website_auth_and_tenant_views_use_dynamic_brand_logo_urls(): void
     {
+        // Default mode serves fast Edge CDN static paths
+        $this->get('/')->assertStatus(200)
+            ->assertSee('/images/invoicego-logo.png')
+            ->assertSee('/images/invoicego-logo-dark.png');
+
+        // When custom logo is enabled, all views switch dynamically to /brand/logo/*
+        \App\Models\SystemSetting::set(BrandLogoService::KEY_HAS_CUSTOM, '1', 'general', 'boolean');
+
         $this->get('/')->assertStatus(200)
             ->assertSee('/brand/logo/light')
             ->assertSee('/brand/logo/dark');

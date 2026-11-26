@@ -13,6 +13,7 @@ class BrandLogoService
     public const KEY_DARK_B64 = 'brand_logo_dark_b64';
     public const KEY_DARK_MIME = 'brand_logo_dark_mime';
     public const KEY_VERSION = 'brand_logo_version';
+    public const KEY_HAS_CUSTOM = 'brand_logo_has_custom';
     public const KEY_TRANSPARENT = 'brand_logo_transparent';
     public const KEY_AUTO_DARK = 'brand_logo_auto_dark';
 
@@ -23,18 +24,27 @@ class BrandLogoService
 
     public static function lightUrl(): string
     {
-        return url('/brand/logo/light') . '?v=' . urlencode(self::version());
+        $ver = urlencode(self::version());
+        if (self::hasCustomLogo()) {
+            return url('/brand/logo/light') . '?v=' . $ver;
+        }
+
+        return asset('images/invoicego-logo.png') . '?v=' . $ver;
     }
 
     public static function darkUrl(): string
     {
-        return url('/brand/logo/dark') . '?v=' . urlencode(self::version());
+        $ver = urlencode(self::version());
+        if (self::hasCustomLogo()) {
+            return url('/brand/logo/dark') . '?v=' . $ver;
+        }
+
+        return asset('images/invoicego-logo-dark.png') . '?v=' . $ver;
     }
 
     public static function hasCustomLogo(): bool
     {
-        return !empty(SystemSetting::get(self::KEY_LIGHT_B64))
-            || !empty(SystemSetting::get(self::KEY_DARK_B64));
+        return (bool) SystemSetting::get(self::KEY_HAS_CUSTOM, false);
     }
 
     public static function isTransparentEnabled(): bool
@@ -131,6 +141,10 @@ class BrandLogoService
             $this->syncStaticFileIfWritable(public_path('images/invoicego-logo-dark.png'), $darkBytes, $darkMime);
         }
 
+        if ($lightBytes !== null || $darkBytes !== null) {
+            SystemSetting::set(self::KEY_HAS_CUSTOM, '1', 'general', 'boolean');
+        }
+
         SystemSetting::set(self::KEY_VERSION, (string) time(), 'general', 'string');
     }
 
@@ -144,7 +158,9 @@ class BrandLogoService
             self::KEY_LIGHT_MIME,
             self::KEY_DARK_B64,
             self::KEY_DARK_MIME,
+            self::KEY_HAS_CUSTOM,
         ])->delete();
+        SystemSetting::clearRequestCache();
 
         $defaultLight = public_path('images/invoicego-logo-default.png');
         $defaultDark = public_path('images/invoicego-logo-dark-default.png');

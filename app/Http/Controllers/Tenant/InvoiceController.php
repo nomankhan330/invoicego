@@ -161,7 +161,10 @@ class InvoiceController extends Controller
         $business = $this->tenantService->getActiveBusiness();
         $customers = $business->customers()->orderBy('name')->get();
         $products = $business->products()->where('is_active', true)->orderBy('name')->get();
-        $hsCodes = HsCode::where('is_active', true)->orderBy('pct_code')->get();
+        $hsCodes = HsCode::where('is_active', true)
+            ->orderBy('pct_code')
+            ->toBase()
+            ->get(['pct_code', 'description']);
 
         $pktNow = Carbon::now('Asia/Karachi');
         $minDate = $pktNow->copy()->startOfMonth()->format('Y-m-d');

@@ -70,9 +70,9 @@ try {
     // 3. Set environment overrides for Vercel
     $bootstrapCache = '/tmp/bootstrap/cache';
     $envOverrides = [
-        'APP_ENV' => getenv('APP_ENV') ?: 'production',
-        'APP_DEBUG' => getenv('APP_DEBUG') ?: 'true',
-        'APP_KEY' => getenv('APP_KEY') ?: 'base64:thVoqnDOi6ATwz6gx/uIiEul1sfNELiQx5N4o+HBAHE=',
+        'APP_ENV' => $readEnv('APP_ENV') ?: 'production',
+        'APP_DEBUG' => $readEnv('APP_DEBUG') ?: 'false',
+        'APP_KEY' => $readEnv('APP_KEY') ?: 'base64:thVoqnDOi6ATwz6gx/uIiEul1sfNELiQx5N4o+HBAHE=',
         'APP_STORAGE' => '/tmp/storage',
         'APP_PACKAGES_CACHE' => $bootstrapCache . '/packages.php',
         'APP_SERVICES_CACHE' => $bootstrapCache . '/services.php',
@@ -80,11 +80,12 @@ try {
         'APP_ROUTES_CACHE' => $bootstrapCache . '/routes-v7.php',
         'APP_EVENTS_CACHE' => $bootstrapCache . '/events.php',
         'VIEW_COMPILED_PATH' => '/tmp/storage/framework/views',
-        'SESSION_DRIVER' => getenv('SESSION_DRIVER') ?: 'cookie',
-        'CACHE_STORE' => getenv('CACHE_STORE') ?: 'array',
-        'CACHE_DRIVER' => getenv('CACHE_DRIVER') ?: 'array',
+        'SESSION_DRIVER' => $readEnv('SESSION_DRIVER') ?: 'cookie',
+        'CACHE_STORE' => $readEnv('CACHE_STORE') ?: 'array',
+        'CACHE_DRIVER' => $readEnv('CACHE_DRIVER') ?: 'array',
         'LOG_CHANNEL' => 'stderr',
         'DB_CONNECTION' => $dbConn,
+        'DB_PERSISTENT' => in_array($dbConn, ['mysql', 'mariadb'], true) ? 'true' : 'false',
     ];
 
     if (isset($_SERVER['HTTP_HOST'])) {
@@ -132,27 +133,30 @@ try {
     $app = require_once __DIR__ . '/../bootstrap/app.php';
     $app->useStoragePath('/tmp/storage');
 
-    // 5. Ensure database schema & initial seed exist (runs once per deploy/container for both Cloud MySQL & SQLite)
-    try {
-        $migrationFiles = scandir(__DIR__ . '/../database/migrations') ?: [];
-        $stampHash = md5($dbConn . '|' . $dbHost . '|' . (getenv('DB_DATABASE') ?: '') . '|' . implode(',', $migrationFiles));
-        $migrationStamp = '/tmp/.invoicego_migrated_' . $stampHash;
+    // 5. Auto-migrate ONLY for ephemeral SQLite fallback (or when AUTO_MIGRATE=true).
+    // Skipping Artisan migrate on Cloud MySQL cold starts saves ~1.5-2.5s per new serverless container!
+    if ($dbConn === 'sqlite' || $readEnv('AUTO_MIGRATE') === 'true') {
+        try {
+            $migrationFiles = scandir(__DIR__ . '/../database/migrations') ?: [];
+            $stampHash = md5($dbConn . '|' . $dbHost . '|' . $readEnv('DB_DATABASE') . '|' . implode(',', $migrationFiles));
+            $migrationStamp = '/tmp/.invoicego_migrated_' . $stampHash;
 
-        if (!file_exists($migrationStamp)) {
-            $kernel = $app->make(\Illuminate\Contracts\Console\Kernel::class);
-            $kernel->call('migrate', ['--force' => true]);
+            if (!file_exists($migrationStamp)) {
+                $kernel = $app->make(\Illuminate\Contracts\Console\Kernel::class);
+                $kernel->call('migrate', ['--force' => true]);
 
-            $needsSeed = !\Illuminate\Support\Facades\Schema::hasTable('users')
-                || \App\Models\User::count() === 0;
+                $needsSeed = !\Illuminate\Support\Facades\Schema::hasTable('users')
+                    || \App\Models\User::count() === 0;
 
-            if ($needsSeed) {
-                $kernel->call('db:seed', ['--force' => true]);
+                if ($needsSeed) {
+                    $kernel->call('db:seed', ['--force' => true]);
+                }
+
+                @touch($migrationStamp);
             }
-
-            @touch($migrationStamp);
+        } catch (\Throwable $e) {
+            error_log('Vercel cold start db setup (' . $dbConn . '): ' . $e->getMessage());
         }
-    } catch (\Throwable $e) {
-        error_log('Vercel cold start db setup (' . $dbConn . '): ' . $e->getMessage());
     }
 
     // 6. Handle HTTP Request

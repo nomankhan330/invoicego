@@ -34,6 +34,7 @@ class SystemSettingResource extends Resource
             'brand_logo_dark_b64',
             'brand_logo_dark_mime',
             'brand_logo_version',
+            'brand_logo_has_custom',
             'brand_logo_transparent',
             'brand_logo_auto_dark',
         ]);
