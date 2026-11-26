@@ -237,12 +237,29 @@ class AdminPanelProvider extends PanelProvider
             )
             ->renderHook(
                 \Filament\View\PanelsRenderHook::TOPBAR_START,
-                fn (): string => '
-                    <div class="hidden lg:flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 pl-2">
-                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span style="font-size: 12px;">Times shown in Pakistan Standard Time (Asia/Karachi)</span>
-                    </div>
-                '
+                function (): string {
+                    $dbBadge = '';
+                    if (auth()->user()?->isSuperAdmin()) {
+                        $conn = (string) config('database.default', 'sqlite');
+                        $host = (string) config("database.connections.{$conn}.host", '');
+                        if ($conn === 'mysql') {
+                            $label = str_contains($host, 'tidbcloud') ? 'DB: TiDB Cloud MySQL' : 'DB: MySQL';
+                            $dbBadge = '<span style="display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;margin-left:8px;">● ' . $label . '</span>';
+                        } elseif ($conn === 'pgsql') {
+                            $dbBadge = '<span style="display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;margin-left:8px;">● DB: PostgreSQL</span>';
+                        } else {
+                            $dbBadge = '<span style="display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;margin-left:8px;">● DB: SQLite (Temp)</span>';
+                        }
+                    }
+
+                    return '
+                        <div class="hidden lg:flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 pl-2">
+                            <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span style="font-size: 12px;">Times shown in Pakistan Standard Time (Asia/Karachi)</span>
+                            ' . $dbBadge . '
+                        </div>
+                    ';
+                }
             )
             ->renderHook(
                 \Filament\View\PanelsRenderHook::USER_MENU_BEFORE,

@@ -21,9 +21,20 @@ try {
     }
 
     // 2. Detect Database Connection (External Cloud MySQL / MariaDB / Postgres vs fallback SQLite)
-    $dbUrl = getenv('DB_URL') ?: '';
-    $dbConn = getenv('DB_CONNECTION') ?: '';
-    $dbHost = getenv('DB_HOST') ?: '';
+    $readEnv = static function (string $key): string {
+        if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+            return (string) $_ENV[$key];
+        }
+        if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
+            return (string) $_SERVER[$key];
+        }
+        $val = getenv($key);
+        return ($val !== false && $val !== '') ? (string) $val : '';
+    };
+
+    $dbUrl = $readEnv('DB_URL');
+    $dbConn = $readEnv('DB_CONNECTION');
+    $dbHost = $readEnv('DB_HOST');
 
     if (!$dbConn && $dbUrl) {
         if (str_starts_with($dbUrl, 'mysql://') || str_starts_with($dbUrl, 'mysql2://')) {
@@ -86,15 +97,15 @@ try {
     }
 
     // Auto-configure MySQL TLS CA certificate for Cloud MySQL providers (TiDB Cloud, Aiven, PlanetScale, etc.)
-    if (in_array($dbConn, ['mysql', 'mariadb'], true) && getenv('DB_SSL') !== 'false') {
-        $customPem = getenv('MYSQL_ATTR_SSL_CA_CERT');
+    if (in_array($dbConn, ['mysql', 'mariadb'], true) && $readEnv('DB_SSL') !== 'false') {
+        $customPem = $readEnv('MYSQL_ATTR_SSL_CA_CERT');
         if ($customPem) {
             $caPath = '/tmp/mysql-ca.pem';
             if (!file_exists($caPath)) {
                 @file_put_contents($caPath, str_replace('\n', "\n", $customPem));
             }
             $envOverrides['MYSQL_ATTR_SSL_CA'] = $caPath;
-        } elseif (!getenv('MYSQL_ATTR_SSL_CA')) {
+        } elseif (!$readEnv('MYSQL_ATTR_SSL_CA')) {
             foreach ([
                 '/etc/ssl/certs/ca-certificates.crt',
                 '/etc/pki/tls/certs/ca-bundle.crt',
