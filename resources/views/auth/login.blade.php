@@ -272,7 +272,7 @@
         <div class="login-left-pane">
             <div>
                 <a href="{{ url('/') }}" class="login-brand-badge mb-3">
-                    <img src="{{ asset('images/invoicego-logo.png') }}" alt="InvoiceGO" style="height: 50px; width: auto; object-fit: contain; display: block;">
+                    <img src="{{ \App\Services\BrandLogoService::lightUrl() }}" alt="InvoiceGO" style="height: 44px; width: auto; max-width: 210px; object-fit: contain; display: block;">
                 </a>
 
                 <div style="margin-top: 36px;">
@@ -328,7 +328,7 @@
                     <label for="email" class="form-label small fw-semibold text-dark mb-1">Business Email</label>
                     <div class="input-group-custom">
                         <i class="bi bi-envelope input-icon-left"></i>
-                        <input type="email" class="form-control form-control-custom" id="email" name="email" value="{{ old('email', 'nomanoc1a@gmail.com') }}" placeholder="ahmed.khan@company.pk" required autofocus>
+                        <input type="email" class="form-control form-control-custom" id="email" name="email" value="{{ old('email') }}" placeholder="name@company.pk" required autofocus>
                     </div>
                 </div>
 

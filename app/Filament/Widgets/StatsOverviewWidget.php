@@ -16,8 +16,8 @@ class StatsOverviewWidget extends BaseWidget
 
     protected function getStats(): array
     {
-        $totalUsers = User::count();
-        $activeUsers = User::where('status', 'active')->count();
+        $totalUsers = User::clients()->count();
+        $activeUsers = User::clients()->where('status', 'active')->count();
         $expiredSubscriptions = Subscription::where('status', 'expired')
             ->orWhere(function ($q) {
                 $q->where('expires_at', '<', now());

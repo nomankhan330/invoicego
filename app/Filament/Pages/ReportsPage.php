@@ -33,9 +33,9 @@ class ReportsPage extends Page
 
     public function getViewData(): array
     {
-        $todayRegistrations = User::whereDate('created_at', Carbon::today())->count();
-        $weekRegistrations = User::where('created_at', '>=', Carbon::now()->subDays(7))->count();
-        $monthRegistrations = User::whereMonth('created_at', Carbon::now()->month)->whereYear('created_at', Carbon::now()->year)->count();
+        $todayRegistrations = User::clients()->whereDate('created_at', Carbon::today())->count();
+        $weekRegistrations = User::clients()->where('created_at', '>=', Carbon::now()->subDays(7))->count();
+        $monthRegistrations = User::clients()->whereMonth('created_at', Carbon::now()->month)->whereYear('created_at', Carbon::now()->year)->count();
 
         $activeSubscriptions = Subscription::where('status', 'active')
             ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>=', Carbon::now()))

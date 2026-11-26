@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Business;
 use App\Models\PricingPlan;
 use App\Models\Subscription;
+use App\Models\SystemSetting;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -62,6 +63,9 @@ class CreateUser extends CreateRecord
 
         $subscriptionPlanId = $data['subscription_plan_id'] ?? null;
         $subscriptionPlanFallback = $data['subscription_plan_name'] ?? null;
+        $invoiceLimit = (isset($data['invoice_limit']) && $data['invoice_limit'] !== '' && $data['invoice_limit'] !== null)
+            ? max(0, (int) $data['invoice_limit'])
+            : (int) SystemSetting::get('default_invoice_limit', 50);
 
         $fbrRegStatus = $data['fbr_registration_status'] ?? 'Registered';
         $fbrEnv = $data['fbr_environment'] ?? 'sandbox';
@@ -95,6 +99,7 @@ class CreateUser extends CreateRecord
             $businessProvince,
             $subscriptionPlanId,
             $subscriptionPlanFallback,
+            $invoiceLimit,
             $fbrRegStatus,
             $fbrEnv,
             $fbrPosId,
@@ -122,6 +127,7 @@ class CreateUser extends CreateRecord
                     'approved_by' => $isDraft ? null : auth()->id(),
                     'current_environment' => $fbrEnv,
                     'production_submissions_enabled' => $fbrEnv === 'production',
+                    'invoice_limit' => $invoiceLimit,
                     'fbr_pos_id' => $fbrPosId,
                     'fbr_registration_status' => $fbrRegStatus,
                     'fbr_integration_status' => $fbrIntegrationStatus,

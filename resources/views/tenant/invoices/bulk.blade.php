@@ -21,6 +21,21 @@
     </div>
 </div>
 
+@if (isset($invoiceQuota) && empty($invoiceQuota['unlimited']))
+    <div class="alert {{ $invoiceQuota['reached'] ? 'alert-danger' : 'alert-primary' }} d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 rounded-3">
+        <div class="small">
+            @if ($invoiceQuota['reached'])
+                <strong><i class="bi bi-lock-fill me-1"></i> Invoice Limit Reached ({{ $invoiceQuota['used'] }} / {{ $invoiceQuota['limit'] }}):</strong> You cannot import more invoices. Please contact InvoiceGO admin to increase your limit.
+            @else
+                <strong><i class="bi bi-speedometer2 me-1"></i> Remaining Invoice Quota:</strong> You have used <strong>{{ $invoiceQuota['used'] }} / {{ $invoiceQuota['limit'] }}</strong> invoices. You can bulk-import up to <strong>{{ $invoiceQuota['remaining'] }}</strong> more invoice(s).
+            @endif
+        </div>
+        <span class="badge {{ $invoiceQuota['reached'] ? 'bg-danger' : 'bg-primary' }} rounded-pill px-3 py-2">
+            {{ $invoiceQuota['remaining'] }} Remaining
+        </span>
+    </div>
+@endif
+
 <div class="row g-4">
     <!-- Left Column: Upload Form -->
     <div class="col-lg-6">
@@ -51,9 +66,9 @@
                     </label>
                 </div>
 
-                <button type="submit" class="btn btn-ig-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
-                    <i class="bi bi-upload"></i>
-                    <span>Process & Import Invoices</span>
+                <button type="submit" class="btn btn-ig-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2" @disabled(!empty($invoiceQuota['reached']))>
+                    <i class="bi {{ !empty($invoiceQuota['reached']) ? 'bi-lock-fill' : 'bi-upload' }}"></i>
+                    <span>{{ !empty($invoiceQuota['reached']) ? 'Invoice Limit Reached' : 'Process & Import Invoices' }}</span>
                 </button>
             </form>
         </div>

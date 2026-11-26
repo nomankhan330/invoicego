@@ -71,6 +71,30 @@ class ViewUser extends ViewRecord
                                 return number_format($count);
                             }),
 
+                        Infolists\Components\TextEntry::make('invoice_quota')
+                            ->label('Invoice Quota')
+                            ->badge()
+                            ->state(function (User $record): string {
+                                $biz = $record->businesses()->first();
+                                if (!$biz) {
+                                    return '—';
+                                }
+                                $quota = $biz->getInvoiceQuotaSummary();
+                                return $quota['unlimited']
+                                    ? "{$quota['used']} / Unlimited"
+                                    : "{$quota['used']} / {$quota['limit']} ({$quota['remaining']} left)";
+                            })
+                            ->color(function (User $record): string {
+                                $biz = $record->businesses()->first();
+                                if (!$biz) {
+                                    return 'gray';
+                                }
+                                $quota = $biz->getInvoiceQuotaSummary();
+                                if ($quota['unlimited']) return 'success';
+                                if ($quota['reached']) return 'danger';
+                                return $quota['percent'] >= 80 ? 'warning' : 'primary';
+                            }),
+
                         Infolists\Components\TextEntry::make('created_at')
                             ->label('Account Creation Date')
                             ->dateTime('d M Y, h:i A'),
@@ -79,7 +103,7 @@ class ViewUser extends ViewRecord
                             ->label('Last Login')
                             ->dateTime('d M Y, h:i A')
                             ->placeholder('Never logged in yet'),
-                    ])->columns(5),
+                    ])->columns(6),
 
                 // 2. Owner & Account Information
                 Infolists\Components\Section::make('Owner & Account Information')

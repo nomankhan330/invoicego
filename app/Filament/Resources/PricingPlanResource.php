@@ -20,6 +20,11 @@ class PricingPlanResource extends Resource
     protected static ?string $navigationGroup = 'Users & Billing';
     protected static ?int $navigationSort = 5;
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->isSuperAdmin() ?? false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form

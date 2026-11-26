@@ -40,6 +40,7 @@ class Business extends Model
         'sandbox_connection_status',
         'production_connection_status',
         'production_submissions_enabled',
+        'invoice_limit',
         'current_environment',
         'fbr_pos_id',
         'fbr_registration_status',
@@ -52,6 +53,7 @@ class Business extends Model
         'business_natures' => 'array',
         'is_retailer_registered' => 'boolean',
         'production_submissions_enabled' => 'boolean',
+        'invoice_limit' => 'integer',
         'sandbox_token' => 'encrypted',
         'production_token' => 'encrypted',
         'sandbox_verified_at' => 'datetime',
@@ -88,6 +90,66 @@ class Business extends Model
     public function isRejected(): bool
     {
         return $this->status === 'rejected';
+    }
+
+    /**
+     * Effective invoice creation cap for this business.
+     * 0 = unlimited; positive integer = max non-cancelled invoices allowed.
+     */
+    public function getEffectiveInvoiceLimit(): int
+    {
+        if ($this->invoice_limit !== null) {
+            return max(0, (int) $this->invoice_limit);
+        }
+
+        return max(0, (int) SystemSetting::get('default_invoice_limit', 50));
+    }
+
+    /**
+     * Count of non-cancelled invoices that consume this business's quota.
+     */
+    public function getInvoiceUsageCount(): int
+    {
+        return $this->invoices()
+            ->where('status', '!=', 'cancelled')
+            ->count();
+    }
+
+    public function hasReachedInvoiceLimit(): bool
+    {
+        $limit = $this->getEffectiveInvoiceLimit();
+
+        return $limit > 0 && $this->getInvoiceUsageCount() >= $limit;
+    }
+
+    public function getRemainingInvoicesCount(): ?int
+    {
+        $limit = $this->getEffectiveInvoiceLimit();
+
+        if ($limit === 0) {
+            return null;
+        }
+
+        return max(0, $limit - $this->getInvoiceUsageCount());
+    }
+
+    public function getInvoiceQuotaSummary(): array
+    {
+        $limit = $this->getEffectiveInvoiceLimit();
+        $used = $this->getInvoiceUsageCount();
+        $unlimited = $limit === 0;
+        $remaining = $unlimited ? null : max(0, $limit - $used);
+        $reached = !$unlimited && $used >= $limit;
+        $percent = $unlimited ? 0 : ($limit > 0 ? min(100, (int) round(($used / $limit) * 100)) : 100);
+
+        return [
+            'limit' => $limit,
+            'used' => $used,
+            'remaining' => $remaining,
+            'unlimited' => $unlimited,
+            'reached' => $reached,
+            'percent' => $percent,
+        ];
     }
 
     public function getFbrSandboxTokenAttribute()

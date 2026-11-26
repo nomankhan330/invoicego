@@ -17,6 +17,11 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
+// Dynamic Brand Logo endpoint (serves custom uploaded logo from DB or falls back to default PNG)
+Route::get('/brand/logo/{variant}', function (string $variant) {
+    return app(\App\Services\BrandLogoService::class)->streamResponse($variant);
+})->whereIn('variant', ['light', 'dark'])->name('brand.logo');
+
 // Static images fallback for environments like Vercel
 Route::get('/images/{filename}', function (string $filename) {
     $path = public_path('images/' . $filename);

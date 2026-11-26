@@ -163,7 +163,14 @@
             <h1 class="fw-bold text-dark fs-3 mb-1 font-display text-uppercase" style="letter-spacing: 0.04em;">SALE INVOICES</h1>
             <div class="text-secondary small">Seller details come from your business profile. Fields marked <span class="text-danger">*</span> are required.</div>
         </div>
-        <div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            @if (isset($invoiceQuota) && empty($invoiceQuota['unlimited']))
+                <span class="badge rounded-pill px-3 py-2 fw-semibold {{ $invoiceQuota['reached'] ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-primary-subtle text-primary border border-primary-subtle' }}" style="font-size: 12.5px;">
+                    <i class="bi bi-speedometer2 me-1"></i>
+                    Quota: {{ $invoiceQuota['used'] }} / {{ $invoiceQuota['limit'] }}
+                    ({{ $invoiceQuota['remaining'] }} left)
+                </span>
+            @endif
             @if ($business->production_submissions_enabled && $business->current_environment === 'production')
                 <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-3 py-2 fw-semibold" style="font-size: 13px;">
                     <span class="me-1">●</span> PRODUCTION
@@ -175,6 +182,16 @@
             @endif
         </div>
     </div>
+
+    @if (!empty($invoiceQuota['reached']))
+        <div class="alert alert-danger py-3 px-4 mb-4 rounded-3 shadow-sm d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+                <div class="fw-bold"><i class="bi bi-lock-fill me-1"></i> Invoice Limit Reached ({{ $invoiceQuota['used'] }} / {{ $invoiceQuota['limit'] }})</div>
+                <div class="small mt-1">Your account is capped at {{ $invoiceQuota['limit'] }} invoices. You cannot create invoice #{{ $invoiceQuota['limit'] + 1 }}. Please contact InvoiceGO admin to raise your limit.</div>
+            </div>
+            <a href="{{ route('tenant.invoices.index') }}" class="btn btn-sm btn-outline-danger fw-semibold">Back to Invoices</a>
+        </div>
+    @endif
 
 
     @if ($errors->any())
@@ -426,7 +443,7 @@
         <!-- STICKY ACTION BAR -->
         <div class="action-bar-sticky shadow-sm">
             <a href="{{ route('tenant.invoices.index') }}" class="btn btn-light border px-4 btn-sm fw-medium">Cancel</a>
-            <button type="submit" name="action" value="draft" formnovalidate class="btn btn-outline-secondary px-3 btn-sm fw-medium">
+            <button type="submit" name="action" value="draft" formnovalidate class="btn btn-outline-secondary px-3 btn-sm fw-medium" @disabled(!empty($invoiceQuota['reached']))>
                 <i class="bi bi-file-earmark me-1"></i> Save as draft
             </button>
             <button type="button" id="validateDraftBtn" class="btn btn-outline-primary px-3 btn-sm fw-medium">
@@ -435,8 +452,8 @@
             <button type="button" class="btn btn-outline-secondary px-3 btn-sm fw-medium" disabled title="Save invoice first to download PDF">
                 <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
             </button>
-            <button type="submit" name="submit_to_fbr" value="1" class="btn btn-primary px-4 btn-sm fw-semibold shadow-sm" style="background-color: #2563EB; border-color: #2563EB;">
-                <i class="bi bi-send-fill me-1"></i> Submit to FBR
+            <button type="submit" name="submit_to_fbr" value="1" class="btn btn-primary px-4 btn-sm fw-semibold shadow-sm" style="background-color: #1E50FF; border-color: #1E50FF;" @disabled(!empty($invoiceQuota['reached']))>
+                <i class="bi bi-send-fill me-1"></i> {{ !empty($invoiceQuota['reached']) ? 'Limit Reached' : 'Submit to FBR' }}
             </button>
         </div>
     </form>

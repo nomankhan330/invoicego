@@ -19,6 +19,11 @@ class AnnouncementResource extends Resource
     protected static ?string $navigationGroup = 'System & Support';
     protected static ?int $navigationSort = 2;
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->isSuperAdmin() ?? false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form

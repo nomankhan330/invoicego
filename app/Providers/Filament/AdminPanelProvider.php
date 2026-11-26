@@ -28,7 +28,7 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->brandName('InvoiceGO Admin')
             ->brandLogo(fn () => view('filament.components.brand-logo'))
-            ->brandLogoHeight('2rem')
+            ->brandLogoHeight('2.35rem')
             ->font('Inter')
             ->colors([
                 'primary' => [

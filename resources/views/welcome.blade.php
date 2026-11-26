@@ -1,6 +1,7 @@
 @php
     $registrationEnabled = \App\Models\SystemSetting::get('enable_public_registration', false);
-    $showPricingPlans = \App\Models\SystemSetting::get('show_pricing_plans', true);
+    $showPricingPlans = \App\Models\SystemSetting::get('show_pricing_plans', false);
+    $defaultInvoiceLimit = (int) \App\Models\SystemSetting::get('default_invoice_limit', 50);
     try {
         $pricingPlans = $showPricingPlans ? \App\Models\PricingPlan::active()->ordered()->get() : collect();
     } catch (\Throwable) {
@@ -870,7 +871,7 @@
     <header class="site-navbar">
         <div class="container d-flex align-items-center justify-content-between">
             <a href="{{ url('/') }}" class="site-logo">
-                <img src="{{ asset('images/invoicego-logo.png') }}" alt="InvoiceGO" style="height: 54px; width: auto; object-fit: contain; display: block;">
+                <img src="{{ \App\Services\BrandLogoService::lightUrl() }}" alt="InvoiceGO" style="height: 44px; width: auto; max-width: 210px; object-fit: contain; display: block;">
             </a>
 
             <nav class="d-none d-lg-flex align-items-center gap-1">
@@ -949,6 +950,12 @@
                             <i class="bi bi-check-circle-fill"></i>
                             <span>Instant Setup</span>
                         </div>
+                        @if (!$showPricingPlans && $defaultInvoiceLimit > 0)
+                            <div class="trust-check-item">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>Free Access &middot; Up to {{ number_format($defaultInvoiceLimit) }} Invoices</span>
+                            </div>
+                        @endif
                     </div>
                 </div>
 
@@ -1947,7 +1954,11 @@
 
                 <div class="d-flex flex-wrap align-items-center justify-content-center gap-4 mt-4 text-white-50 small" style="font-size: 13px;">
                     <div><i class="bi bi-check2 text-white me-1"></i> Instant Account Setup</div>
-                    <div><i class="bi bi-check2 text-white me-1"></i> No Credit Card Required</div>
+                    @if (!$showPricingPlans && $defaultInvoiceLimit > 0)
+                        <div><i class="bi bi-check2 text-white me-1"></i> Free Starter Quota (Up to {{ number_format($defaultInvoiceLimit) }} Invoices)</div>
+                    @else
+                        <div><i class="bi bi-check2 text-white me-1"></i> No Credit Card Required</div>
+                    @endif
                     <div><i class="bi bi-check2 text-white me-1"></i> Secure Cloud Platform</div>
                 </div>
             </div>
@@ -1961,7 +1972,7 @@
                 <!-- Col 1: Brand Info -->
                 <div class="col-lg-4 pe-lg-5">
                     <a href="{{ url('/') }}" class="d-inline-block mb-3">
-                        <img src="{{ asset('images/invoicego-logo-dark.png') }}" alt="InvoiceGO" style="height: 60px; width: auto; object-fit: contain; display: block;">
+                        <img src="{{ \App\Services\BrandLogoService::darkUrl() }}" alt="InvoiceGO" style="height: 48px; width: auto; max-width: 230px; object-fit: contain; display: block;">
                     </a>
                     <p class="text-white-50 small mb-2" style="line-height: 1.65;">
                         InvoiceGO is Pakistan's premier digital sales invoicing and FBR integration platform, empowering businesses with streamlined financial workflows and secure cloud compliance.

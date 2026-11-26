@@ -22,8 +22,8 @@
         <div class="d-flex flex-column flex-grow-1">
             <!-- Brand Logo -->
             <div class="d-flex align-items-center mb-3 px-1">
-                <a href="{{ route('tenant.dashboard') }}" class="d-inline-block">
-                    <img src="{{ asset('images/invoicego-logo.png') }}" alt="InvoiceGO" style="height: 36px; width: auto; object-fit: contain;">
+                <a href="{{ route('tenant.dashboard') }}" class="d-inline-block text-decoration-none">
+                    <img src="{{ \App\Services\BrandLogoService::lightUrl() }}" alt="InvoiceGO" style="height: 42px; width: auto; max-width: 195px; object-fit: contain; display: block;">
                 </a>
             </div>
 
@@ -209,12 +209,12 @@
             $activeAnnouncements = \App\Models\Announcement::active()->latest()->take(2)->get();
         @endphp
         @foreach ($activeAnnouncements as $announcement)
-            <div class="alert alert-{{ $announcement->type === 'warning' ? 'warning' : ($announcement->type === 'maintenance' ? 'danger' : 'info') }} alert-dismissible fade show small mb-3 py-2 px-3 d-flex align-items-center gap-2" role="alert">
+            <div class="alert alert-{{ $announcement->type === 'warning' ? 'warning' : ($announcement->type === 'maintenance' ? 'danger' : 'info') }} alert-dismissible fade show small mb-3 py-2 ps-3 pe-5 d-flex align-items-center gap-2" role="alert">
                 <i class="bi bi-megaphone-fill flex-shrink-0"></i>
                 <div class="flex-grow-1">
                     <strong>{{ $announcement->title }}:</strong> {{ $announcement->message }}
                 </div>
-                <button type="button" class="btn-close py-2 ms-auto" data-bs-dismiss="alert"></button>
+                <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endforeach
 

@@ -23,6 +23,21 @@ class BusinessResource extends Resource
     protected static ?string $navigationGroup = 'Users & Billing';
     protected static ?int $navigationSort = 2;
 
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->isAdminManager() ?? false;
+    }
+
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return auth()->user()?->isAdminManager() ?? false;
+    }
+
+    public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return auth()->user()?->isAdminManager() ?? false;
+    }
+
     public static function getNavigationBadge(): ?string
     {
         $pending = Business::where('status', 'pending')->count();
@@ -251,6 +266,14 @@ class BusinessResource extends Resource
                             ->label('Authorize Live Production Submissions')
                             ->default(false),
 
+                        Forms\Components\TextInput::make('invoice_limit')
+                            ->label('Invoice Quota Limit')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default(fn () => (int) \App\Models\SystemSetting::get('default_invoice_limit', 50))
+                            ->helperText('Max invoices this business can create (default 50 — blocks 51st). Set 0 for unlimited.')
+                            ->required(),
+
                         Forms\Components\Textarea::make('rejection_reason')
                             ->label('Rejection / Suspension Reason')
                             ->rows(2)
@@ -316,6 +339,20 @@ class BusinessResource extends Resource
                     ->label('Prod Live')
                     ->boolean(),
 
+                Tables\Columns\TextColumn::make('invoice_quota')
+                    ->label('Invoice Quota')
+                    ->badge()
+                    ->state(function (Business $record): string {
+                        $q = $record->getInvoiceQuotaSummary();
+                        return $q['unlimited'] ? "{$q['used']} / Unlimited" : "{$q['used']} / {$q['limit']}";
+                    })
+                    ->color(function (Business $record): string {
+                        $q = $record->getInvoiceQuotaSummary();
+                        if ($q['unlimited']) return 'success';
+                        if ($q['reached']) return 'danger';
+                        return $q['percent'] >= 80 ? 'warning' : 'primary';
+                    }),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Registered On')
                     ->dateTime('d M Y, H:i')
@@ -339,7 +376,7 @@ class BusinessResource extends Resource
                     ->label('Approve')
                     ->icon('heroicon-o-check-badge')
                     ->color('success')
-                    ->visible(fn (Business $record) => $record->status === 'pending' || $record->status === 'rejected')
+                    ->visible(fn (Business $record) => ($record->status === 'pending' || $record->status === 'rejected') && (auth()->user()?->isAdminManager() ?? false))
                     ->requiresConfirmation()
                     ->action(function (Business $record) {
                         $record->update([
@@ -364,7 +401,7 @@ class BusinessResource extends Resource
                     ->label('Reject')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
-                    ->visible(fn (Business $record) => $record->status === 'pending')
+                    ->visible(fn (Business $record) => $record->status === 'pending' && (auth()->user()?->isAdminManager() ?? false))
                     ->form([
                         Forms\Components\Textarea::make('rejection_reason')
                             ->label('Reason for Rejection')
@@ -391,7 +428,7 @@ class BusinessResource extends Resource
                     ->label(fn (Business $record) => $record->status === 'suspended' ? 'Reactivate' : 'Suspend')
                     ->icon('heroicon-o-no-symbol')
                     ->color('warning')
-                    ->visible(fn (Business $record) => in_array($record->status, ['approved', 'suspended']))
+                    ->visible(fn (Business $record) => in_array($record->status, ['approved', 'suspended']) && (auth()->user()?->isAdminManager() ?? false))
                     ->action(function (Business $record) {
                         $newStatus = $record->status === 'suspended' ? 'approved' : 'suspended';
                         $record->update(['status' => $newStatus]);

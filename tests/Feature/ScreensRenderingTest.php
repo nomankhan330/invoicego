@@ -174,4 +174,34 @@ class ScreensRenderingTest extends TestCase
         $resDark->assertStatus(200);
         $resDark->assertHeader('Content-Type', 'image/png');
     }
+
+    public function test_tenant_fiscal_sales_reports_page_and_csv_export(): void
+    {
+        $user = User::factory()->create();
+        $business = Business::create([
+            'uuid' => (string) Str::uuid(),
+            'name' => 'Report Corp',
+            'ntn_cnic' => '7654321',
+            'address' => 'Lahore',
+            'province' => 'Punjab',
+            'sector' => 'All Other Sectors',
+            'business_natures' => ['Distributor'],
+            'status' => 'approved',
+            'current_environment' => 'sandbox',
+        ]);
+        $user->businesses()->attach($business->id, ['role' => 'owner', 'is_default' => true]);
+
+        $this->actingAs($user);
+        app(TenantServiceInterface::class)->setActiveBusiness($business);
+
+        $res = $this->get('/reports');
+        $res->assertStatus(200);
+        $res->assertSee('Fiscal Sales Reports');
+        $res->assertSee('Production Sales Register (FBR Accepted)');
+        $res->assertSee('Export CSV');
+
+        $csvRes = $this->get('/reports?export=csv');
+        $csvRes->assertStatus(200);
+        $this->assertStringContainsString('text/csv', (string) $csvRes->headers->get('Content-Type'));
+    }
 }

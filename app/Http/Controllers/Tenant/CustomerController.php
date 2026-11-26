@@ -20,12 +20,29 @@ class CustomerController extends Controller
     {
         $business = $this->tenantService->getActiveBusiness();
 
-        $query = $business->customers()->latest();
+        // Dynamic counters (keeps exact "X registered · Y unregistered buyers" string)
+        $baseQuery = $business->customers();
+        $totalCustomers = (clone $baseQuery)->count();
+        $registeredCount = (clone $baseQuery)->where('registration_type', 'registered')->count();
+        $unregisteredCount = (clone $baseQuery)->where('registration_type', 'unregistered')->count();
+        $strnCount = (clone $baseQuery)->whereNotNull('strn')->where('strn', '!=', '')->count();
+        $provincesCount = (clone $baseQuery)->whereNotNull('province')->where('province', '!=', '')->distinct('province')->count('province');
 
-        if ($search = $request->get('search')) {
+        $stats = [
+            'total' => $totalCustomers,
+            'registered' => $registeredCount,
+            'unregistered' => $unregisteredCount,
+            'strn' => $strnCount,
+            'provinces' => $provincesCount,
+        ];
+
+        $query = $business->customers();
+
+        if ($search = trim((string) $request->get('search'))) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('ntn_cnic', 'like', "%{$search}%")
+                  ->orWhere('strn', 'like', "%{$search}%")
                   ->orWhere('phone', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
                   ->orWhere('category', 'like', "%{$search}%");
@@ -40,15 +57,22 @@ class CustomerController extends Controller
             }
         }
 
-        $customers = $query->paginate(15)->withQueryString();
+        if ($provinceFilter = $request->get('province')) {
+            $query->where('province', $provinceFilter);
+        }
 
-        // Dynamic counter matching Screenshot 4: "0 registered · 0 unregistered buyers"
-        $registeredCount = $business->customers()->where('registration_type', 'registered')->count();
-        $unregisteredCount = $business->customers()->where('registration_type', 'unregistered')->count();
+        $sort = $request->get('sort', 'newest');
+        match ($sort) {
+            'name_asc' => $query->orderBy('name'),
+            'name_desc' => $query->orderByDesc('name'),
+            default => $query->latest(),
+        };
+
+        $customers = $query->paginate(15)->withQueryString();
 
         $provinces = array_combine(\App\Constants\FbrLookups::PROVINCES, \App\Constants\FbrLookups::PROVINCES);
 
-        return view('tenant.customers.index', compact('business', 'customers', 'registeredCount', 'unregisteredCount', 'provinces'));
+        return view('tenant.customers.index', compact('business', 'customers', 'stats', 'registeredCount', 'unregisteredCount', 'provinces'));
     }
 
     public function create()

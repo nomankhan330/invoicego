@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Business;
 use App\Models\PricingPlan;
 use App\Models\Subscription;
+use App\Models\SystemSetting;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -29,6 +30,18 @@ class UserResource extends Resource
     protected static ?int $navigationSort = 1;
 
     // RBAC: Only Super Admin & Admin can create, edit, or delete accounts (Support Staff is View-Only)
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        // Only Super Admins can view/manage Admin & Support Staff accounts
+        if (!(auth()->user()?->isSuperAdmin() ?? false)) {
+            $query->clients();
+        }
+
+        return $query;
+    }
+
     public static function canCreate(): bool
     {
         return auth()->user()?->isAdminManager() ?? false;
@@ -203,8 +216,16 @@ class UserResource extends Resource
                             ->visible(fn (string $operation): bool => $operation === 'create')
                             ->maxLength(255),
 
+                        Forms\Components\TextInput::make('invoice_limit')
+                            ->label('Invoice Quota Limit')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default(fn () => (int) SystemSetting::get('default_invoice_limit', 50))
+                            ->helperText('Max invoices allowed (default 50 — user cannot create 51st). Enter 0 for unlimited.')
+                            ->visible(fn (string $operation): bool => $operation === 'create'),
+
                         Forms\Components\Select::make('subscription_plan_id')
-                            ->label('Subscription Plan')
+                            ->label('Subscription Plan (Optional)')
                             ->options(function () {
                                 $plans = PricingPlan::where('is_active', true)->orderBy('sort_order')->get();
                                 if ($plans->isNotEmpty()) {
@@ -214,18 +235,19 @@ class UserResource extends Resource
                             })
                             ->searchable()
                             ->preload()
-                            ->placeholder('Select Plan (Starter / Professional / Enterprise)')
+                            ->placeholder('Leave blank — Subscriptions paused during free rollout')
+                            ->helperText('Optional while free invoice-limit mode is active.')
                             ->visible(fn (string $operation): bool => $operation === 'create' && PricingPlan::where('is_active', true)->exists()),
 
                         Forms\Components\Select::make('subscription_plan_name')
-                            ->label('Subscription Tier')
+                            ->label('Subscription Tier (Optional)')
                             ->options([
                                 'Free' => 'Free',
                                 'Basic' => 'Basic',
                                 'Premium' => 'Premium',
                                 'Enterprise' => 'Enterprise',
                             ])
-                            ->default('Basic')
+                            ->placeholder('Optional — Leave blank for Free Quota Mode')
                             ->visible(fn (string $operation): bool => $operation === 'create' && !PricingPlan::where('is_active', true)->exists()),
 
                         Forms\Components\Select::make('admin_role')
@@ -300,6 +322,8 @@ class UserResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            ->paginated([10, 25, 50, 100])
+            ->striped()
             ->columns([
                 Tables\Columns\TextColumn::make('user_code')
                     ->label('User ID')
@@ -314,6 +338,7 @@ class UserResource extends Resource
                     ->label('Business Name')
                     ->badge()
                     ->color('info')
+                    ->icon('heroicon-m-building-office-2')
                     ->searchable()
                     ->placeholder('No Business Linked'),
 
@@ -321,15 +346,23 @@ class UserResource extends Resource
                     ->label('Owner Name')
                     ->searchable()
                     ->sortable()
-                    ->weight('bold'),
+                    ->weight('bold')
+                    ->description(fn (User $record): string => match ($record->effectiveAdminRole()) {
+                        'super_admin' => 'Super Admin',
+                        'admin' => 'Admin',
+                        'support_staff' => 'Support Staff',
+                        default => $record->username ? '@' . $record->username : 'Business Owner',
+                    }),
 
                 Tables\Columns\TextColumn::make('email')
                     ->label('Email Address')
+                    ->icon('heroicon-m-envelope')
                     ->searchable()
                     ->copyable(),
 
                 Tables\Columns\TextColumn::make('phone')
                     ->label('Mobile Number')
+                    ->icon('heroicon-m-phone')
                     ->searchable()
                     ->placeholder('N/A'),
 
@@ -339,9 +372,43 @@ class UserResource extends Resource
                     ->searchable()
                     ->placeholder('N/A'),
 
+                Tables\Columns\TextColumn::make('invoice_quota_badge')
+                    ->label('Invoice Quota')
+                    ->badge()
+                    ->state(function (User $record): string {
+                        $business = $record->businesses()->first();
+                        if (!$business) {
+                            return '—';
+                        }
+                        $quota = $business->getInvoiceQuotaSummary();
+                        return $quota['unlimited']
+                            ? "{$quota['used']} / Unlimited"
+                            : "{$quota['used']} / {$quota['limit']}";
+                    })
+                    ->color(function (User $record): string {
+                        $business = $record->businesses()->first();
+                        if (!$business) {
+                            return 'gray';
+                        }
+                        $quota = $business->getInvoiceQuotaSummary();
+                        if ($quota['unlimited']) {
+                            return 'success';
+                        }
+                        if ($quota['reached']) {
+                            return 'danger';
+                        }
+                        return $quota['percent'] >= 80 ? 'warning' : 'primary';
+                    }),
+
                 Tables\Columns\TextColumn::make('status')
                     ->label('Account Status')
                     ->badge()
+                    ->icon(fn (string $state): string => match ($state) {
+                        'active' => 'heroicon-m-check-circle',
+                        'suspended' => 'heroicon-m-no-symbol',
+                        'inactive' => 'heroicon-m-clock',
+                        default => 'heroicon-m-minus-circle',
+                    })
                     ->formatStateUsing(fn (string $state) => ucfirst($state))
                     ->color(fn (string $state): string => match ($state) {
                         'active' => 'success',
@@ -353,6 +420,7 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Registration Date')
                     ->dateTime('d M Y')
+                    ->description(fn (User $record) => $record->last_login_at ? 'Last login: ' . $record->last_login_at->diffForHumans() : 'Never logged in')
                     ->sortable(),
             ])
             ->filters([
@@ -464,6 +532,40 @@ class UserResource extends Resource
                             $record->update(['password' => Hash::make($data['new_password'])]);
                             ActivityLog::record('user_password_reset', "Admin reset password for {$record->email}.", ['target_user_id' => $record->id]);
                             Notification::make()->title('Password Reset Successfully')->body("Password for {$record->name} ({$record->email}) has been updated.")->success()->send();
+                        }),
+
+                    Tables\Actions\Action::make('set_invoice_limit')
+                        ->label('Set Invoice Limit')
+                        ->icon('heroicon-o-adjustments-horizontal')
+                        ->color('warning')
+                        ->visible(fn (User $record) => $record->businesses()->exists() && (auth()->user()?->isAdminManager() ?? false))
+                        ->form(fn (User $record) => [
+                            Forms\Components\TextInput::make('invoice_limit')
+                                ->label('Maximum Allowed Invoices')
+                                ->numeric()
+                                ->minValue(0)
+                                ->required()
+                                ->default(fn () => $record->businesses()->first()?->getEffectiveInvoiceLimit() ?? 50)
+                                ->helperText('Default is 50 (blocks 51st invoice). Set to 0 for unlimited.'),
+                        ])
+                        ->action(function (User $record, array $data) {
+                            $business = $record->businesses()->first();
+                            if (!$business) {
+                                Notification::make()->title('No Business Linked')->body('Link a business first before updating invoice limits.')->danger()->send();
+                                return;
+                            }
+                            $newLimit = max(0, (int) $data['invoice_limit']);
+                            $business->update(['invoice_limit' => $newLimit]);
+                            $label = $newLimit === 0 ? 'Unlimited' : "{$newLimit} invoices";
+                            ActivityLog::record('invoice_limit_updated', "Admin updated invoice limit for {$business->name} to {$label}.", [
+                                'business_id' => $business->id,
+                                'invoice_limit' => $newLimit,
+                            ], $business->id);
+                            Notification::make()
+                                ->title('Invoice Limit Updated')
+                                ->body("{$business->name} invoice limit is now set to {$label}.")
+                                ->success()
+                                ->send();
                         }),
 
                     Tables\Actions\Action::make('change_subscription')

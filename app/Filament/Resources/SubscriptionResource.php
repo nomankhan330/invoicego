@@ -22,6 +22,21 @@ class SubscriptionResource extends Resource
     protected static ?string $navigationGroup = 'Users & Billing';
     protected static ?int $navigationSort = 3;
 
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->isAdminManager() ?? false;
+    }
+
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return auth()->user()?->isAdminManager() ?? false;
+    }
+
+    public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return auth()->user()?->isAdminManager() ?? false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form

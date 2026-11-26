@@ -132,8 +132,9 @@ class InvoiceController extends Controller
 
         $perPage = in_array((int) $request->get('per_page'), [15, 25, 50, 100], true) ? (int) $request->get('per_page') : 15;
         $invoices = $query->paginate($perPage)->withQueryString();
+        $invoiceQuota = $business->getInvoiceQuotaSummary();
 
-        return view('tenant.invoices.index', compact('business', 'invoices', 'summary', 'analytics'));
+        return view('tenant.invoices.index', compact('business', 'invoices', 'summary', 'analytics', 'invoiceQuota'));
     }
 
     public function cancel(string $uuid)
@@ -178,6 +179,7 @@ class InvoiceController extends Controller
         $invoiceTypes = \App\Constants\FbrLookups::INVOICE_TYPES;
         $buyerTypes = \App\Constants\FbrLookups::BUYER_TYPES;
         $paymentModes = ['Cash', 'Bank Transfer', 'Cheque', 'Credit Card', 'Debit Card', 'Online / Other'];
+        $invoiceQuota = $business->getInvoiceQuotaSummary();
 
         return compact(
             'business',
@@ -197,7 +199,8 @@ class InvoiceController extends Controller
             'taxRates',
             'invoiceTypes',
             'buyerTypes',
-            'paymentModes'
+            'paymentModes',
+            'invoiceQuota'
         );
     }
 
@@ -209,6 +212,23 @@ class InvoiceController extends Controller
     public function store(Request $request)
     {
         $business = $this->tenantService->getActiveBusiness();
+
+        // Hard server-side invoice quota guard (e.g. blocks 51st invoice when limit is 50)
+        if ($business->hasReachedInvoiceLimit()) {
+            $quota = $business->getInvoiceQuotaSummary();
+            $nextNumber = $quota['limit'] + 1;
+            $message = "Invoice limit reached ({$quota['used']} / {$quota['limit']}). You cannot create invoice #{$nextNumber}. Please contact InvoiceGO admin to increase your invoice limit.";
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $message,
+                    'quota' => $quota,
+                ], 422);
+            }
+
+            return redirect()->route('tenant.invoices.index')->with('error', $message);
+        }
 
         if ($request->filled('customer_id')) {
             $cust = $business->customers()->find($request->customer_id);
@@ -815,7 +835,9 @@ class InvoiceController extends Controller
     public function bulkUpload()
     {
         $business = $this->tenantService->getActiveBusiness();
-        return view('tenant.invoices.bulk', compact('business'));
+        $invoiceQuota = $business->getInvoiceQuotaSummary();
+
+        return view('tenant.invoices.bulk', compact('business', 'invoiceQuota'));
     }
 
     public function downloadSampleTemplate()
@@ -945,6 +967,16 @@ class InvoiceController extends Controller
                 'retail_price' => (float) (trim($row[15] ?? 0) ?: 0),
                 'discount_amount' => (float) (trim($row[16] ?? 0) ?: 0),
             ];
+        }
+
+        $quota = $business->getInvoiceQuotaSummary();
+        if ($quota['reached']) {
+            return back()->with('error', "Invoice limit reached ({$quota['used']} / {$quota['limit']}). You cannot import additional invoices. Please contact InvoiceGO admin to increase your invoice limit.");
+        }
+
+        $incomingCount = count($grouped);
+        if (!$quota['unlimited'] && $incomingCount > $quota['remaining']) {
+            return back()->with('error', "Bulk upload blocked: your file contains {$incomingCount} invoice(s), but you only have {$quota['remaining']} remaining out of your {$quota['limit']}-invoice limit ({$quota['used']} / {$quota['limit']} used).");
         }
 
         $importedCount = 0;

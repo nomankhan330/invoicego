@@ -24,8 +24,9 @@ class DashboardController extends Controller
         $metrics = $this->invoiceService->getDashboardMetrics($business);
         $recentInvoices = $this->invoiceService->getRecentInvoices($business, 5);
         $recentFbrActivity = $this->invoiceService->getRecentFbrActivity($business, 5);
+        $invoiceQuota = $business->getInvoiceQuotaSummary();
 
-        return view('tenant.dashboard', compact('business', 'metrics', 'recentInvoices', 'recentFbrActivity'));
+        return view('tenant.dashboard', compact('business', 'metrics', 'recentInvoices', 'recentFbrActivity', 'invoiceQuota'));
     }
 }
 

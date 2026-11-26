@@ -245,7 +245,7 @@
         <div class="register-left-pane">
             <div>
                 <a href="{{ url('/') }}" class="register-brand-badge mb-3">
-                    <img src="{{ asset('images/invoicego-logo.png') }}" alt="InvoiceGO" style="height: 50px; width: auto; object-fit: contain; display: block;">
+                    <img src="{{ \App\Services\BrandLogoService::lightUrl() }}" alt="InvoiceGO" style="height: 44px; width: auto; max-width: 210px; object-fit: contain; display: block;">
                 </a>
 
                 <div style="margin-top: 36px;">

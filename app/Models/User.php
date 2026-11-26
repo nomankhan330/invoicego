@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -81,6 +82,22 @@ class User extends Authenticatable implements FilamentUser
     public function createdInvoices(): HasMany
     {
         return $this->hasMany(Invoice::class, 'created_by');
+    }
+
+    public function scopeClients(Builder $query): Builder
+    {
+        return $query->where('is_super_admin', false)
+            ->where(function (Builder $q) {
+                $q->whereNull('admin_role')->orWhere('admin_role', 'user');
+            });
+    }
+
+    public function scopeAdminStaff(Builder $query): Builder
+    {
+        return $query->where(function (Builder $q) {
+            $q->where('is_super_admin', true)
+              ->orWhereIn('admin_role', ['super_admin', 'admin', 'support_staff']);
+        });
     }
 
     public function effectiveAdminRole(): string

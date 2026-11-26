@@ -111,14 +111,7 @@
         <div class="d-flex justify-content-between align-items-start mb-3">
             <!-- Brand / Logo -->
             <div class="d-flex align-items-center">
-                <div class="me-2" style="width: 38px; height: 38px; background: linear-gradient(135deg, #0F3B82 0%, #16A34A 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #FFF; font-weight: 900; font-size: 20px;">
-                    <i class="bi bi-receipt-cutoff"></i>
-                </div>
-                <div>
-                    <h4 class="fw-bold mb-0" style="color: #0F3B82; letter-spacing: -0.5px; font-size: 19px;">
-                        DIGITAL <span style="color: #64748B; font-weight: 400;">INVOICING</span>
-                    </h4>
-                </div>
+                <img src="{{ \App\Services\BrandLogoService::lightUrl() }}" alt="InvoiceGO — FBR Compliant Digital Invoicing" style="height: 44px; width: auto; max-width: 210px; object-fit: contain; display: block;">
             </div>
 
             <!-- Header Badge & Invoice Meta -->

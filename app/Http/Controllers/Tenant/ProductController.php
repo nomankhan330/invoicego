@@ -19,9 +19,31 @@ class ProductController extends Controller
     {
         $business = $this->tenantService->getActiveBusiness();
 
-        $query = $business->products()->with('hsCode')->latest();
+        // Business-scoped KPI stats
+        $baseQuery = $business->products();
+        $totalProducts = (clone $baseQuery)->count();
+        $fbrReadyCount = (clone $baseQuery)->where(function ($q) {
+            $q->whereNotNull('hs_code')->where('hs_code', '!=', '')
+              ->orWhereNotNull('hs_code_id');
+        })->count();
+        $avgUnitPrice = (float) ((clone $baseQuery)->avg('unit_price') ?? 0);
+        $sroOrRetailCount = (clone $baseQuery)->where(function ($q) {
+            $q->whereNotNull('sro_schedule_no')->where('sro_schedule_no', '!=', '')
+              ->orWhere('retail_price', '>', 0);
+        })->count();
+        $avgTaxRate = (float) ((clone $baseQuery)->avg('default_tax_rate') ?? 18.0);
 
-        if ($search = $request->get('search')) {
+        $stats = [
+            'total' => $totalProducts,
+            'fbr_ready' => $fbrReadyCount,
+            'avg_price' => $avgUnitPrice,
+            'sro_or_retail' => $sroOrRetailCount,
+            'avg_tax_rate' => $avgTaxRate,
+        ];
+
+        $query = $business->products()->with('hsCode');
+
+        if ($search = trim((string) $request->get('search'))) {
             $query->where(function ($q) use ($search) {
                 $q->where('sku', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%")
@@ -33,6 +55,22 @@ class ProductController extends Controller
             });
         }
 
+        if ($saleTypeFilter = $request->get('sale_type')) {
+            $query->where('sale_type', $saleTypeFilter);
+        }
+
+        if ($request->filled('tax_rate')) {
+            $query->where('default_tax_rate', (float) $request->get('tax_rate'));
+        }
+
+        $sort = $request->get('sort', 'newest');
+        match ($sort) {
+            'price_high' => $query->orderByDesc('unit_price'),
+            'price_low' => $query->orderBy('unit_price'),
+            'sku_asc' => $query->orderBy('sku'),
+            default => $query->latest(),
+        };
+
         $products = $query->paginate(15)->withQueryString();
         $hsCodes = HsCode::where('is_active', true)->orderBy('pct_code')->get();
 
@@ -40,7 +78,7 @@ class ProductController extends Controller
         $saleTypes = array_combine(\App\Constants\FbrLookups::SALE_TYPES, \App\Constants\FbrLookups::SALE_TYPES);
         $sroList = array_merge(['' => 'None / Not Applicable'], array_combine(\App\Constants\FbrLookups::SRO_LIST, \App\Constants\FbrLookups::SRO_LIST));
 
-        return view('tenant.products.index', compact('business', 'products', 'hsCodes', 'uomList', 'saleTypes', 'sroList'));
+        return view('tenant.products.index', compact('business', 'products', 'stats', 'hsCodes', 'uomList', 'saleTypes', 'sroList'));
     }
 
     public function create()

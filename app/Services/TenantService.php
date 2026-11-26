@@ -119,6 +119,7 @@ class TenantService implements TenantServiceInterface
                 'status' => 'pending', // Pending approval by Super Admin
                 'current_environment' => 'sandbox',
                 'production_submissions_enabled' => false,
+                'invoice_limit' => (int) \App\Models\SystemSetting::get('default_invoice_limit', 50),
             ]);
 
             // Link User to Business as Owner

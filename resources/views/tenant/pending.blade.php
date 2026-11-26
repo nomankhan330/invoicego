@@ -15,6 +15,9 @@
         <div class="row justify-content-center">
             <div class="col-md-7 col-lg-6">
                 <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 text-center bg-white">
+                    <div class="mb-4">
+                        <img src="{{ \App\Services\BrandLogoService::lightUrl() }}" alt="InvoiceGO" style="height: 38px; width: auto; max-width: 185px; object-fit: contain; display: inline-block;">
+                    </div>
                     <div class="mx-auto mb-4 bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
                         <i class="bi bi-hourglass-split fs-1 text-warning"></i>
                     </div>

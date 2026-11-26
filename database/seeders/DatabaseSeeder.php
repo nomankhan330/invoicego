@@ -22,63 +22,87 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Super Admin User specified in document: admininvoicego@gmail.com
+        // 1. Role-Based Admin Accounts (Super Admin, Admin, Support Staff)
         $primaryAdmin = User::firstOrCreate(
-            ['email' => 'admininvoicego@gmail.com'],
+            ['email' => 'superadmin@invoicego.pk'],
             [
-                'name' => 'InvoiceGO Super Admin',
-                'phone' => '03001234567',
+                'name' => 'Super Admin',
+                'username' => 'superadmin',
+                'phone' => '03001112233',
                 'password' => Hash::make('AdminPass123!'),
                 'is_super_admin' => true,
+                'admin_role' => 'super_admin',
                 'status' => 'active',
             ]
         );
 
-        // Keep secondary admin for backward test compatibility
-        $superAdmin = User::firstOrCreate(
+        User::firstOrCreate(
             ['email' => 'admin@invoicego.pk'],
             [
-                'name' => 'Super Administrator',
-                'phone' => '03001234567',
+                'name' => 'Admin Manager',
+                'username' => 'admin',
+                'phone' => '03002223344',
                 'password' => Hash::make('AdminPass123!'),
-                'is_super_admin' => true,
+                'is_super_admin' => false,
+                'admin_role' => 'admin',
                 'status' => 'active',
             ]
         );
 
-        // 2. Demo User matching Screenshot 4 (Noman, nomanoc1a@gmail.com)
-        $demoUser = User::firstOrCreate(
-            ['email' => 'nomanoc1a@gmail.com'],
+        User::firstOrCreate(
+            ['email' => 'supportstaff@invoicego.pk'],
             [
-                'name' => 'Noman',
+                'name' => 'Support Staff',
+                'username' => 'supportstaff',
+                'phone' => '03003334455',
+                'password' => Hash::make('AdminPass123!'),
+                'is_super_admin' => false,
+                'admin_role' => 'support_staff',
+                'status' => 'active',
+            ]
+        );
+
+        // 2. Registered Business Owner User: Noman Khan
+        $demoUser = User::firstOrCreate(
+            ['email' => 'nomankhan@invoicego.pk'],
+            [
+                'name' => 'Noman Khan',
+                'username' => 'nomankhan',
                 'phone' => '03219876543',
+                'cnic' => '35201-1234567-1',
                 'password' => Hash::make('Password123!'),
                 'is_super_admin' => false,
+                'admin_role' => 'user',
                 'status' => 'active',
             ]
         );
 
-        // 3. Demo Business matching Screenshot 4 (OC1, NTN 1234125)
+        // 3. Business Account for Noman Khan
         $demoBusiness = Business::firstOrCreate(
             ['ntn_cnic' => '1234125'],
             [
                 'uuid' => (string) Str::uuid(),
-                'name' => 'OC1',
+                'name' => 'Noman Khan Enterprises',
+                'business_type' => 'Company',
                 'strn' => '3277876123456',
                 'address' => 'Plot 42, Industrial Area, Phase 2, Lahore',
+                'city' => 'Lahore',
                 'province' => 'Punjab',
                 'sector' => 'All Other Sectors',
-                'business_natures' => ['Manufacturer', 'Retailer'],
+                'business_natures' => ['Manufacturer', 'Distributor', 'Retailer'],
                 'is_retailer_registered' => true,
                 'status' => 'approved',
                 'current_environment' => 'sandbox',
+                'fbr_registration_status' => 'Registered',
+                'fbr_integration_status' => 'Sandbox Testing',
                 'production_submissions_enabled' => false,
+                'invoice_limit' => 50,
                 'approved_by' => $primaryAdmin->id,
                 'approved_at' => now(),
             ]
         );
 
-        // Link Users to Business as Owner
+        // Link Noman Khan to Noman Khan Enterprises as Owner
         $demoUser->businesses()->syncWithoutDetaching([
             $demoBusiness->id => [
                 'role' => 'owner',
@@ -86,31 +110,19 @@ class DatabaseSeeder extends Seeder
             ]
         ]);
 
-        $primaryAdmin->businesses()->syncWithoutDetaching([
-            $demoBusiness->id => [
-                'role' => 'owner',
-                'is_default' => true,
-            ]
-        ]);
-
-        $superAdmin->businesses()->syncWithoutDetaching([
-            $demoBusiness->id => [
-                'role' => 'owner',
-                'is_default' => true,
-            ]
-        ]);
-
-        // 4. Seed 30-Day Monthly Subscription for Business
+        // 4. Seed 30-Day Monthly Subscription for Noman Khan Enterprises
+        $proPlan = \App\Models\PricingPlan::where('slug', 'professional')->first();
         $subscription = Subscription::firstOrCreate(
             ['business_id' => $demoBusiness->id],
             [
-                'plan_name' => 'Monthly Professional Plan',
+                'pricing_plan_id' => $proPlan?->id,
+                'plan_name' => $proPlan?->name ?? 'Professional',
                 'starts_at' => now(),
                 'expires_at' => now()->addDays(30),
                 'status' => 'active',
                 'monthly_fee' => 5000.00,
                 'auto_renew' => true,
-                'notes' => 'Active 30-day billing cycle for OC1 business.',
+                'notes' => 'Active 30-day billing cycle for Noman Khan Enterprises.',
             ]
         );
 
@@ -236,14 +248,22 @@ class DatabaseSeeder extends Seeder
             'backup_frequency' => 'Daily at 02:00 AM PST',
             'backup_retention_days' => '30',
             'enable_public_registration' => '0',
-            'show_pricing_plans' => '1',
+            'show_pricing_plans' => '0',
             'show_faq_section' => '1',
+            'default_invoice_limit' => '50',
         ];
 
         foreach ($settings as $key => $val) {
+            $settingType = match (true) {
+                in_array($key, ['enable_public_registration', 'show_pricing_plans', 'show_faq_section'], true) => 'boolean',
+                $key === 'default_invoice_limit' => 'integer',
+                default => 'string',
+            };
+            $settingGroup = $key === 'default_invoice_limit' ? 'invoice' : 'general';
+
             SystemSetting::firstOrCreate(
                 ['key' => $key],
-                ['value' => $val, 'group' => 'general', 'type' => in_array($key, ['enable_public_registration', 'show_pricing_plans', 'show_faq_section']) ? 'boolean' : 'string']
+                ['value' => $val, 'group' => $settingGroup, 'type' => $settingType]
             );
         }
 

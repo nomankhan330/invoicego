@@ -15,6 +15,12 @@ class ListSystemSettings extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('brand_logo')
+                ->label('Brand & Logo')
+                ->icon('heroicon-o-photo')
+                ->color('primary')
+                ->url(fn () => \App\Filament\Pages\BrandLogoSettings::getUrl()),
+
             Actions\Action::make('toggle_registration')
                 ->label(fn () => SystemSetting::get('enable_public_registration', false)
                     ? 'Public Registration: ENABLED (Click to Disable)'

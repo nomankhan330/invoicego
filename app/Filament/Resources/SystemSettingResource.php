@@ -21,6 +21,24 @@ class SystemSettingResource extends Resource
     protected static ?string $navigationGroup = 'System & Support';
     protected static ?int $navigationSort = 4;
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->isSuperAdmin() ?? false;
+    }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()->whereNotIn('key', [
+            'brand_logo_light_b64',
+            'brand_logo_light_mime',
+            'brand_logo_dark_b64',
+            'brand_logo_dark_mime',
+            'brand_logo_version',
+            'brand_logo_transparent',
+            'brand_logo_auto_dark',
+        ]);
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -67,8 +85,9 @@ class SystemSettingResource extends Resource
                     ->weight('bold')
                     ->description(fn (SystemSetting $record) => match ($record->key) {
                         'enable_public_registration' => 'Controls whether users can self-register or if admin credentials are required',
-                        'show_pricing_plans' => 'Controls whether the Pricing Plans section is shown on public website',
+                        'show_pricing_plans' => 'Controls whether the Pricing Plans / Subscription section is shown on public website',
                         'show_faq_section' => 'Controls whether the FAQ section is shown on public website',
+                        'default_invoice_limit' => 'Default max invoices per business (e.g. 50 blocks 51st invoice; 0 = unlimited). Shown on public website.',
                         default => null,
                     }),
 
@@ -81,12 +100,18 @@ class SystemSettingResource extends Resource
                         if (in_array($record->key, ['show_pricing_plans', 'show_faq_section'])) {
                             return filter_var($state, FILTER_VALIDATE_BOOLEAN) ? 'Visible' : 'Hidden';
                         }
+                        if ($record->key === 'default_invoice_limit') {
+                            $num = (int) $state;
+                            return $num > 0 ? "{$num} Invoices" : 'Unlimited';
+                        }
                         return Str::limit($state, 50);
                     })
-                    ->badge(fn (SystemSetting $record) => in_array($record->key, ['enable_public_registration', 'show_pricing_plans', 'show_faq_section']))
-                    ->color(fn (SystemSetting $record, $state) => in_array($record->key, ['enable_public_registration', 'show_pricing_plans', 'show_faq_section'])
-                        ? (filter_var($state, FILTER_VALIDATE_BOOLEAN) ? 'success' : 'danger')
-                        : null)
+                    ->badge(fn (SystemSetting $record) => in_array($record->key, ['enable_public_registration', 'show_pricing_plans', 'show_faq_section', 'default_invoice_limit']))
+                    ->color(fn (SystemSetting $record, $state) => match (true) {
+                        in_array($record->key, ['enable_public_registration', 'show_pricing_plans', 'show_faq_section']) => filter_var($state, FILTER_VALIDATE_BOOLEAN) ? 'success' : 'danger',
+                        $record->key === 'default_invoice_limit' => 'primary',
+                        default => null,
+                    })
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('group')
