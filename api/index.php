@@ -44,7 +44,7 @@ try {
         }
     }
 
-    if (!$dbConn && $dbHost && !in_array($dbHost, ['127.0.0.1', 'localhost'], true)) {
+    if ((!$dbConn || $dbConn === 'sqlite') && $dbHost && !in_array($dbHost, ['127.0.0.1', 'localhost'], true)) {
         $dbConn = 'mysql';
     }
 
