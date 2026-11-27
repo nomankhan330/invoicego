@@ -353,9 +353,11 @@ class AdminPanelAndSpecificationTest extends TestCase
         $createPage->assertStatus(200);
         $createPage->assertSee('Owner Account Details');
         $createPage->assertSee('Business Profile');
+        $createPage->assertSee('Sector (For Sandbox Testing Only)');
+        $createPage->assertDontSee('Registered as a retailer in sales tax profile');
         $createPage->assertSee('Approval Status');
 
-        // 2. Submit CreateBusiness Livewire form with new Owner + Business (exact same fields as website /register)
+        // 2. Submit CreateBusiness Livewire form with new Owner + Business (multi-checkbox Sector & Business Nature)
         \Livewire\Livewire::test(\App\Filament\Resources\BusinessResource\Pages\CreateBusiness::class)
             ->fillForm([
                 'owner_mode' => 'create_new',
@@ -368,9 +370,8 @@ class AdminPanelAndSpecificationTest extends TestCase
                 'ntn_cnic' => '4455667',
                 'strn' => '3277876999888',
                 'province' => 'Punjab',
-                'sector' => 'Fast Moving Consumer Goods (FMCG)',
+                'sector' => ['FMCG', 'Services'],
                 'business_natures' => ['Distributor', 'Wholesaler'],
-                'is_retailer_registered' => false,
                 'address' => 'Plot 15, Gulberg III, Lahore',
                 'status' => 'approved',
                 'current_environment' => 'sandbox',
@@ -384,6 +385,7 @@ class AdminPanelAndSpecificationTest extends TestCase
 
         $this->assertNotNull($owner);
         $this->assertNotNull($business);
+        $this->assertEquals('FMCG, Services', $business->sector);
         $this->assertEquals('approved', $business->status);
         $this->assertTrue($business->users()->where('users.id', $owner->id)->exists());
         $this->assertEquals('owner', $business->users()->where('users.id', $owner->id)->first()->pivot->role);

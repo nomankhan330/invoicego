@@ -49,7 +49,7 @@ class ActivityLogResource extends Resource
                             ->disabled(),
 
                         Forms\Components\TextInput::make('ip_address')
-                            ->label('IP Address')
+                            ->label('Public IP Address')
                             ->disabled(),
 
                         Forms\Components\Textarea::make('description')
@@ -90,12 +90,12 @@ class ActivityLogResource extends Resource
                     ->label('Event Action')
                     ->badge()
                     ->color(fn (string $state): string => match (strtolower($state)) {
-                        'login', 'auth' => 'info',
-                        'fbr_submission' => 'success',
-                        'user_created', 'invoice_created' => 'primary',
-                        'warning' => 'warning',
-                        'error', 'suspension', 'failed' => 'danger',
-                        default => 'secondary',
+                        'login', 'login_2fa', 'logout', 'auth' => 'info',
+                        'fbr_submission', 'sandbox_scenario_run', 'user_activated', 'business_approved', 'two_factor_enabled' => 'success',
+                        'user_created', 'invoice_created', 'business_profile_updated', 'account_security_updated', 'email_notifications_updated', 'brand_logo_updated' => 'primary',
+                        'warning', 'invoice_limit_updated', 'two_factor_disabled' => 'warning',
+                        'error', 'suspension', 'user_suspended', 'failed', 'sandbox_scenario_failed' => 'danger',
+                        default => 'gray',
                     }),
 
                 Tables\Columns\TextColumn::make('description')
@@ -104,8 +104,12 @@ class ActivityLogResource extends Resource
                     ->limit(45),
 
                 Tables\Columns\TextColumn::make('ip_address')
-                    ->label('IP Address')
+                    ->label('Public IP Address')
+                    ->badge()
+                    ->color('gray')
                     ->fontFamily('mono')
+                    ->searchable()
+                    ->copyable()
                     ->placeholder('127.0.0.1'),
             ])
             ->filters([
@@ -113,8 +117,13 @@ class ActivityLogResource extends Resource
                     ->options([
                         'login' => 'User Login',
                         'logout' => 'User Logout',
+                        'business_profile_updated' => 'Business Profile Updated',
+                        'account_security_updated' => 'Account & Security Updated',
                         'invoice_created' => 'Invoice Created',
                         'fbr_submission' => 'FBR Submission',
+                        'sandbox_scenario_run' => 'Sandbox Scenario Passed',
+                        'invoice_limit_updated' => 'Monthly Quota Updated',
+                        'brand_logo_updated' => 'Brand Logo Updated',
                         'user_activated' => 'User Activated',
                         'user_suspended' => 'User Suspended',
                     ]),

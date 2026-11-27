@@ -213,4 +213,86 @@ class InvoiceLimitTest extends TestCase
         $resUpdated->assertStatus(200);
         $resUpdated->assertSee('Up to 75 Invoices');
     }
+
+    public function test_monthly_quota_cycle_from_approval_date_27_nov_to_27_dec_auto_renews(): void
+    {
+        try {
+            // 1. User registered & approved on 27 November 2026 (PKT)
+            \Carbon\Carbon::setTestNow(\Carbon\Carbon::create(2026, 11, 27, 13, 0, 0, 'Asia/Karachi'));
+
+            [$user, $business] = $this->makeTenantUser(50);
+            $business->update(['approved_at' => now()]);
+
+            $quotaDay1 = $business->fresh()->getInvoiceQuotaSummary();
+            $this->assertEquals('27 Nov 2026', $quotaDay1['cycle_start']);
+            $this->assertEquals('27 Dec 2026', $quotaDay1['renews_on']);
+            $this->assertEquals(0, $quotaDay1['used']);
+            $this->assertEquals(50, $quotaDay1['remaining']);
+
+            // 2. User creates 50 invoices during Cycle 1 (e.g. on 10 Dec 2026)
+            \Carbon\Carbon::setTestNow(\Carbon\Carbon::create(2026, 12, 10, 15, 0, 0, 'Asia/Karachi'));
+            $this->seedInvoicesForBusiness($business, $user, 50);
+
+            $this->actingAs($user);
+            app(TenantServiceInterface::class)->setActiveBusiness($business);
+
+            // 3. On 26 Dec 2026 (still inside Cycle 1), 51st invoice MUST be strictly blocked
+            \Carbon\Carbon::setTestNow(\Carbon\Carbon::create(2026, 12, 26, 23, 30, 0, 'Asia/Karachi'));
+            $this->assertTrue($business->fresh()->hasReachedInvoiceLimit());
+
+            $blockedRes = $this->post('/invoices', [
+                'action' => 'draft',
+                'invoice_type' => 'standard',
+                'invoice_date' => '2026-12-26',
+                'buyer_name' => 'Blocked Buyer 51',
+                'buyer_province' => 'Punjab',
+                'buyer_address' => 'Lahore',
+                'buyer_type' => 'unregistered',
+                'items' => [[
+                    'hs_code' => '0101.2100',
+                    'product_description' => 'Blocked Item',
+                    'uom' => 'NOS',
+                    'quantity' => 1,
+                    'unit_price' => 1000,
+                    'tax_rate' => '18%',
+                ]],
+            ]);
+            $blockedRes->assertRedirect(route('tenant.invoices.index'));
+            $blockedRes->assertSessionHas('error');
+            $this->assertStringContainsString('27 Dec 2026', session('error'));
+
+            // 4. On 27 Dec 2026 (exact 1 month later!), Cycle 1 finishes and Cycle 2 AUTO-RENEWS to 0/50!
+            \Carbon\Carbon::setTestNow(\Carbon\Carbon::create(2026, 12, 27, 9, 0, 0, 'Asia/Karachi'));
+            $quotaRenewed = $business->fresh()->getInvoiceQuotaSummary();
+            $this->assertEquals('27 Dec 2026', $quotaRenewed['cycle_start']);
+            $this->assertEquals('27 Jan 2027', $quotaRenewed['renews_on']);
+            $this->assertEquals(0, $quotaRenewed['used']);
+            $this->assertEquals(50, $quotaRenewed['remaining']);
+            $this->assertFalse($quotaRenewed['reached']);
+
+            // User can immediately create a fresh invoice in the new monthly cycle!
+            $renewedRes = $this->post('/invoices', [
+                'action' => 'draft',
+                'invoice_type' => 'standard',
+                'invoice_date' => '2026-12-27',
+                'buyer_name' => 'New Month Buyer 1',
+                'buyer_province' => 'Punjab',
+                'buyer_address' => 'Lahore',
+                'buyer_type' => 'unregistered',
+                'items' => [[
+                    'hs_code' => '0101.2100',
+                    'product_description' => 'Renewed Cycle Item',
+                    'uom' => 'NOS',
+                    'quantity' => 1,
+                    'unit_price' => 2500,
+                    'tax_rate' => '18%',
+                ]],
+            ]);
+            $renewedRes->assertRedirect();
+            $this->assertEquals(1, $business->fresh()->getInvoiceUsageCount());
+            $this->assertEquals(49, $business->fresh()->getRemainingInvoicesCount());
+        } finally {
+            \Carbon\Carbon::setTestNow();
+        }
+    }
 }

@@ -88,7 +88,7 @@ class SystemSettingResource extends Resource
                         'enable_public_registration' => 'Controls whether users can self-register or if admin credentials are required',
                         'show_pricing_plans' => 'Controls whether the Pricing Plans / Subscription section is shown on public website',
                         'show_faq_section' => 'Controls whether the FAQ section is shown on public website',
-                        'default_invoice_limit' => 'Default max invoices per business (e.g. 50 blocks 51st invoice; 0 = unlimited). Shown on public website.',
+                        'default_invoice_limit' => 'Monthly max invoices per business (e.g. 50/month; auto-renews monthly from approval date; 0 = unlimited).',
                         default => null,
                     }),
 
@@ -103,7 +103,7 @@ class SystemSettingResource extends Resource
                         }
                         if ($record->key === 'default_invoice_limit') {
                             $num = (int) $state;
-                            return $num > 0 ? "{$num} Invoices" : 'Unlimited';
+                            return $num > 0 ? "{$num} Invoices / Month" : 'Unlimited';
                         }
                         return Str::limit($state, 50);
                     })

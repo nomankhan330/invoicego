@@ -339,10 +339,10 @@
                 <i class="bi bi-exclamation-octagon-fill fs-4"></i>
                 <div>
                     <div class="fw-bold">Invoice Limit Reached ({{ $invoiceQuota['used'] }} / {{ $invoiceQuota['limit'] }})</div>
-                    <div class="small">You have used all {{ $invoiceQuota['limit'] }} allowed invoices. Creating invoice #{{ $invoiceQuota['limit'] + 1 }} is blocked. Please contact InvoiceGO admin to increase your limit.</div>
+                    <div class="small">You have used all {{ $invoiceQuota['limit'] }} monthly invoices for <strong>{{ $invoiceQuota['period_label'] }}</strong>. Creating invoice #{{ $invoiceQuota['limit'] + 1 }} is blocked until your quota auto-renews on <strong>{{ $invoiceQuota['renews_on'] }}</strong>.</div>
                 </div>
             </div>
-            <span class="badge bg-danger px-3 py-2 rounded-pill">0 Remaining</span>
+            <span class="badge bg-danger px-3 py-2 rounded-pill">Renews {{ $invoiceQuota['renews_on'] }}</span>
         </div>
     @elseif (empty($invoiceQuota['unlimited']))
         @php
@@ -352,7 +352,7 @@
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
                 <div class="d-flex align-items-center flex-wrap gap-2">
                     <span class="badge rounded-pill px-2 py-1" style="background: #EFF6FF; color: #1E50FF; border: 1px solid #BFDBFE; font-weight: 700; font-size: 11.5px;">
-                        <i class="bi bi-speedometer2 me-1"></i> Invoice Quota
+                        <i class="bi bi-speedometer2 me-1"></i> Monthly Quota
                     </span>
                     <span class="fw-bold text-dark small">
                         {{ number_format($invoiceQuota['used']) }} / {{ number_format($invoiceQuota['limit']) }} Invoices Used
@@ -360,7 +360,7 @@
                     <span class="text-muted small">({{ $invoiceQuota['percent'] }}%)</span>
                 </div>
                 <div class="small text-muted">
-                    <strong class="text-primary">{{ number_format($invoiceQuota['remaining']) }}</strong> remaining (1–{{ number_format($invoiceQuota['limit']) }} limit &middot; cancelled invoices don't count)
+                    <strong class="text-primary">{{ number_format($invoiceQuota['remaining']) }}</strong> remaining &middot; Cycle: <strong class="text-dark">{{ $invoiceQuota['period_label'] }}</strong> &middot; Auto-renews <strong class="text-dark">{{ $invoiceQuota['renews_on'] }}</strong> ({{ $invoiceQuota['days_left'] }}d left)
                 </div>
             </div>
             <div class="progress" style="height: 8px; background-color: #E2E8F0; border-radius: 999px;">

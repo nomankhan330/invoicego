@@ -47,6 +47,8 @@ Route::get('/images/{filename}', function (string $filename) {
 // 2. Screen 2: Sign-in & Auth
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+Route::get('/two-factor-challenge', [AuthController::class, 'showTwoFactorChallenge'])->name('two-factor.challenge');
+Route::post('/two-factor-challenge', [AuthController::class, 'verifyTwoFactorChallenge'])->name('two-factor.verify');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // 3. Screen 3: Business Account Registration
@@ -140,5 +142,12 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::prefix('settings')->name('tenant.settings')->group(function () {
         Route::get('/', [SettingsController::class, 'index']);
         Route::post('/', [SettingsController::class, 'update'])->name('.update');
+        Route::post('/account', [SettingsController::class, 'updateAccount'])->name('.account');
+        Route::post('/notifications', [SettingsController::class, 'updateNotifications'])->name('.notifications');
+        Route::post('/two-factor/setup', [SettingsController::class, 'startTwoFactorSetup'])->name('.two-factor.setup');
+        Route::post('/two-factor/cancel', [SettingsController::class, 'cancelTwoFactorSetup'])->name('.two-factor.cancel');
+        Route::post('/two-factor/confirm', [SettingsController::class, 'confirmTwoFactor'])->name('.two-factor.confirm');
+        Route::post('/two-factor/disable', [SettingsController::class, 'disableTwoFactor'])->name('.two-factor.disable');
+        Route::post('/two-factor/recovery-codes', [SettingsController::class, 'regenerateRecoveryCodes'])->name('.two-factor.recovery-codes');
     });
 });

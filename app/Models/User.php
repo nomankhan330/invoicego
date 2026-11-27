@@ -28,12 +28,16 @@ class User extends Authenticatable implements FilamentUser
         'status',
         'last_login_at',
         'two_factor_secret',
+        'two_factor_recovery_codes',
+        'two_factor_confirmed_at',
+        'email_notifications_enabled',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
         'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     protected function casts(): array
@@ -41,9 +45,18 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
+            'two_factor_confirmed_at' => 'datetime',
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'encrypted:array',
+            'email_notifications_enabled' => 'boolean',
             'password' => 'hashed',
             'is_super_admin' => 'boolean',
         ];
+    }
+
+    public function hasTwoFactorEnabled(): bool
+    {
+        return !empty($this->two_factor_secret) && $this->two_factor_confirmed_at !== null;
     }
 
     protected static function booted(): void

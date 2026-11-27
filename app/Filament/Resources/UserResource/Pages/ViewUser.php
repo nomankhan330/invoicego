@@ -72,7 +72,7 @@ class ViewUser extends ViewRecord
                             }),
 
                         Infolists\Components\TextEntry::make('invoice_quota')
-                            ->label('Invoice Quota')
+                            ->label('Monthly Invoice Quota')
                             ->badge()
                             ->state(function (User $record): string {
                                 $biz = $record->businesses()->first();
@@ -82,7 +82,7 @@ class ViewUser extends ViewRecord
                                 $quota = $biz->getInvoiceQuotaSummary();
                                 return $quota['unlimited']
                                     ? "{$quota['used']} / Unlimited"
-                                    : "{$quota['used']} / {$quota['limit']} ({$quota['remaining']} left)";
+                                    : "{$quota['used']} / {$quota['limit']} ({$quota['remaining']} left · Renews {$quota['renews_on']})";
                             })
                             ->color(function (User $record): string {
                                 $biz = $record->businesses()->first();
@@ -241,10 +241,11 @@ class ViewUser extends ViewRecord
                                 }
 
                                 $rows = $logs->map(function ($log) {
-                                    $when = e($log->created_at?->format('d M Y, H:i') ?? '');
+                                    $when = e($log->created_at?->timezone('Asia/Karachi')->format('d M Y, h:i A') ?? '');
                                     $action = e(strtoupper(str_replace('_', ' ', $log->action)));
                                     $desc = e($log->description);
-                                    return "<div style='padding:6px 0;border-bottom:1px solid rgba(148,163,184,0.2);font-size:13px;'><strong>[{$when}]</strong> <span style='color:#1E50FF;font-weight:600;'>{$action}</span> — {$desc}</div>";
+                                    $ip = e($log->ip_address ?: '127.0.0.1');
+                                    return "<div style='padding:6px 0;border-bottom:1px solid rgba(148,163,184,0.2);font-size:13px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;'><strong>[{$when}]</strong> <span style='color:#1E50FF;font-weight:600;'>{$action}</span> <span>— {$desc}</span> <span style='margin-left:auto;font-family:monospace;font-size:11.5px;background:rgba(100,116,139,0.12);color:#475569;padding:2px 8px;border-radius:999px;'>IP: {$ip}</span></div>";
                                 })->implode('');
 
                                 return "<div>{$rows}</div>";

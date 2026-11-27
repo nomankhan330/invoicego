@@ -165,10 +165,10 @@
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
             @if (isset($invoiceQuota) && empty($invoiceQuota['unlimited']))
-                <span class="badge rounded-pill px-3 py-2 fw-semibold {{ $invoiceQuota['reached'] ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-primary-subtle text-primary border border-primary-subtle' }}" style="font-size: 12.5px;">
+                <span class="badge rounded-pill px-3 py-2 fw-semibold {{ $invoiceQuota['reached'] ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-primary-subtle text-primary border border-primary-subtle' }}" style="font-size: 12.5px;" title="Cycle: {{ $invoiceQuota['period_label'] }}">
                     <i class="bi bi-speedometer2 me-1"></i>
-                    Quota: {{ $invoiceQuota['used'] }} / {{ $invoiceQuota['limit'] }}
-                    ({{ $invoiceQuota['remaining'] }} left)
+                    Monthly Quota: {{ $invoiceQuota['used'] }} / {{ $invoiceQuota['limit'] }}
+                    ({{ $invoiceQuota['remaining'] }} left &middot; Renews {{ $invoiceQuota['renews_on'] }})
                 </span>
             @endif
             @if ($business->production_submissions_enabled && $business->current_environment === 'production')
@@ -187,7 +187,7 @@
         <div class="alert alert-danger py-3 px-4 mb-4 rounded-3 shadow-sm d-flex align-items-center justify-content-between flex-wrap gap-2">
             <div>
                 <div class="fw-bold"><i class="bi bi-lock-fill me-1"></i> Invoice Limit Reached ({{ $invoiceQuota['used'] }} / {{ $invoiceQuota['limit'] }})</div>
-                <div class="small mt-1">Your account is capped at {{ $invoiceQuota['limit'] }} invoices. You cannot create invoice #{{ $invoiceQuota['limit'] + 1 }}. Please contact InvoiceGO admin to raise your limit.</div>
+                <div class="small mt-1">Your account is capped at {{ $invoiceQuota['limit'] }} invoices per month ({{ $invoiceQuota['period_label'] }}). You cannot create invoice #{{ $invoiceQuota['limit'] + 1 }} until your quota automatically renews on <strong>{{ $invoiceQuota['renews_on'] }}</strong>.</div>
             </div>
             <a href="{{ route('tenant.invoices.index') }}" class="btn btn-sm btn-outline-danger fw-semibold">Back to Invoices</a>
         </div>

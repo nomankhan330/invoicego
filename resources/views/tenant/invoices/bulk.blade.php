@@ -25,9 +25,9 @@
     <div class="alert {{ $invoiceQuota['reached'] ? 'alert-danger' : 'alert-primary' }} d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 rounded-3">
         <div class="small">
             @if ($invoiceQuota['reached'])
-                <strong><i class="bi bi-lock-fill me-1"></i> Invoice Limit Reached ({{ $invoiceQuota['used'] }} / {{ $invoiceQuota['limit'] }}):</strong> You cannot import more invoices. Please contact InvoiceGO admin to increase your limit.
+                <strong><i class="bi bi-lock-fill me-1"></i> Monthly Invoice Limit Reached ({{ $invoiceQuota['used'] }} / {{ $invoiceQuota['limit'] }}):</strong> You cannot import more invoices for {{ $invoiceQuota['period_label'] }}. Your quota auto-renews on <strong>{{ $invoiceQuota['renews_on'] }}</strong>.
             @else
-                <strong><i class="bi bi-speedometer2 me-1"></i> Remaining Invoice Quota:</strong> You have used <strong>{{ $invoiceQuota['used'] }} / {{ $invoiceQuota['limit'] }}</strong> invoices. You can bulk-import up to <strong>{{ $invoiceQuota['remaining'] }}</strong> more invoice(s).
+                <strong><i class="bi bi-speedometer2 me-1"></i> Monthly Invoice Quota ({{ $invoiceQuota['period_label'] }}):</strong> You have used <strong>{{ $invoiceQuota['used'] }} / {{ $invoiceQuota['limit'] }}</strong> invoices. You can bulk-import up to <strong>{{ $invoiceQuota['remaining'] }}</strong> more invoice(s) before auto-renewal on <strong>{{ $invoiceQuota['renews_on'] }}</strong>.
             @endif
         </div>
         <span class="badge {{ $invoiceQuota['reached'] ? 'bg-danger' : 'bg-primary' }} rounded-pill px-3 py-2">

@@ -216,11 +216,11 @@ class InvoiceController extends Controller
     {
         $business = $this->tenantService->getActiveBusiness();
 
-        // Hard server-side invoice quota guard (e.g. blocks 51st invoice when limit is 50)
+        // Hard server-side monthly invoice quota guard (e.g. blocks 51st invoice in current month until renewal date)
         if ($business->hasReachedInvoiceLimit()) {
             $quota = $business->getInvoiceQuotaSummary();
             $nextNumber = $quota['limit'] + 1;
-            $message = "Invoice limit reached ({$quota['used']} / {$quota['limit']}). You cannot create invoice #{$nextNumber}. Please contact InvoiceGO admin to increase your invoice limit.";
+            $message = "Monthly invoice limit reached ({$quota['used']} / {$quota['limit']} for {$quota['period_label']}). You cannot create invoice #{$nextNumber}. Your quota will automatically renew to {$quota['limit']} invoices on {$quota['renews_on']}.";
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -974,12 +974,12 @@ class InvoiceController extends Controller
 
         $quota = $business->getInvoiceQuotaSummary();
         if ($quota['reached']) {
-            return back()->with('error', "Invoice limit reached ({$quota['used']} / {$quota['limit']}). You cannot import additional invoices. Please contact InvoiceGO admin to increase your invoice limit.");
+            return back()->with('error', "Monthly invoice limit reached ({$quota['used']} / {$quota['limit']} for {$quota['period_label']}). You cannot import additional invoices until your quota auto-renews on {$quota['renews_on']}.");
         }
 
         $incomingCount = count($grouped);
         if (!$quota['unlimited'] && $incomingCount > $quota['remaining']) {
-            return back()->with('error', "Bulk upload blocked: your file contains {$incomingCount} invoice(s), but you only have {$quota['remaining']} remaining out of your {$quota['limit']}-invoice limit ({$quota['used']} / {$quota['limit']} used).");
+            return back()->with('error', "Bulk upload blocked: your file contains {$incomingCount} invoice(s), but you only have {$quota['remaining']} remaining out of your {$quota['limit']}/month limit ({$quota['used']} / {$quota['limit']} used; renews {$quota['renews_on']}).");
         }
 
         $importedCount = 0;

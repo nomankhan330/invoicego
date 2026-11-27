@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Dashboard') — InvoiceGO</title>
+    @include('partials.favicon')
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +13,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{{ asset('css/invoicego.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/invoicego.css') }}?v=2">
     @stack('styles')
 </head>
 <body>
@@ -132,10 +133,17 @@
             <!-- ACCOUNT Section -->
             <div class="nav-section-title">ACCOUNT</div>
             <nav class="d-flex flex-column gap-1">
-                <a href="{{ route('tenant.settings') }}" class="nav-link-ig {{ request()->routeIs('tenant.settings') ? 'active' : '' }}">
+                <a href="{{ route('tenant.settings') }}" class="nav-link-ig {{ request()->routeIs('tenant.settings*') ? 'active' : '' }}">
                     <i class="bi bi-gear"></i>
                     <span>Settings</span>
                 </a>
+                <form method="POST" action="{{ route('logout') }}" class="m-0">
+                    @csrf
+                    <button type="submit" class="nav-link-ig w-100 border-0 bg-transparent text-start text-danger" style="cursor: pointer;">
+                        <i class="bi bi-box-arrow-right text-danger"></i>
+                        <span>Logout</span>
+                    </button>
+                </form>
             </nav>
         </div>
 
@@ -192,15 +200,25 @@
 
         <!-- Flash Messages -->
         @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show small mb-4 py-2 px-3" role="alert">
-                <i class="bi bi-check-circle-fill me-1 text-success"></i> {{ session('success') }}
-                <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
+            <div class="alert alert-success fade show small mb-3 py-2 px-3 d-flex align-items-center justify-content-between gap-3" role="alert" style="border-radius: 10px;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
+                    <span>{{ session('success') }}</span>
+                </div>
+                <button type="button" class="ig-alert-dismiss" data-bs-dismiss="alert" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
             </div>
         @endif
         @if (session('error'))
-            <div class="alert alert-danger alert-dismissible fade show small mb-4 py-2 px-3" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-1 text-danger"></i> {{ session('error') }}
-                <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
+            <div class="alert alert-danger fade show small mb-3 py-2 px-3 d-flex align-items-center justify-content-between gap-3" role="alert" style="border-radius: 10px;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-triangle-fill text-danger flex-shrink-0"></i>
+                    <span>{{ session('error') }}</span>
+                </div>
+                <button type="button" class="ig-alert-dismiss" data-bs-dismiss="alert" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
             </div>
         @endif
 
@@ -209,12 +227,16 @@
             $activeAnnouncements = \App\Models\Announcement::active()->latest()->take(2)->get();
         @endphp
         @foreach ($activeAnnouncements as $announcement)
-            <div class="alert alert-{{ $announcement->type === 'warning' ? 'warning' : ($announcement->type === 'maintenance' ? 'danger' : 'info') }} alert-dismissible fade show small mb-3 py-2 ps-3 pe-5 d-flex align-items-center gap-2" role="alert">
-                <i class="bi bi-megaphone-fill flex-shrink-0"></i>
-                <div class="flex-grow-1">
-                    <strong>{{ $announcement->title }}:</strong> {{ $announcement->message }}
+            <div class="alert alert-{{ $announcement->type === 'warning' ? 'warning' : ($announcement->type === 'maintenance' ? 'danger' : 'info') }} fade show small mb-3 py-2 px-3 d-flex align-items-center justify-content-between gap-3" role="alert" style="border-radius: 10px;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-megaphone-fill flex-shrink-0"></i>
+                    <div>
+                        <strong>{{ $announcement->title }}:</strong> {{ $announcement->message }}
+                    </div>
                 </div>
-                <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                <button type="button" class="ig-alert-dismiss" data-bs-dismiss="alert" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
             </div>
         @endforeach
 

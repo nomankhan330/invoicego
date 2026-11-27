@@ -25,9 +25,10 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
-    protected static ?string $navigationLabel = 'User Management';
+    protected static ?string $navigationLabel = 'Admin & Staff';
     protected static ?string $navigationGroup = 'Users & Billing';
     protected static ?int $navigationSort = 1;
+    protected static bool $shouldRegisterNavigation = false;
 
     // RBAC: Only Super Admin & Admin can create, edit, or delete accounts (Support Staff is View-Only)
     public static function getEloquentQuery(): Builder
@@ -217,11 +218,11 @@ class UserResource extends Resource
                             ->maxLength(255),
 
                         Forms\Components\TextInput::make('invoice_limit')
-                            ->label('Invoice Quota Limit')
+                            ->label('Monthly Invoice Quota Limit')
                             ->numeric()
                             ->minValue(0)
                             ->default(fn () => (int) SystemSetting::get('default_invoice_limit', 50))
-                            ->helperText('Max invoices allowed (default 50 — user cannot create 51st). Enter 0 for unlimited.')
+                            ->helperText('Max invoices per month (default 50/month; auto-renews monthly from approval date). Enter 0 for unlimited.')
                             ->visible(fn (string $operation): bool => $operation === 'create'),
 
                         Forms\Components\Select::make('subscription_plan_id')
@@ -373,7 +374,7 @@ class UserResource extends Resource
                     ->placeholder('N/A'),
 
                 Tables\Columns\TextColumn::make('invoice_quota_badge')
-                    ->label('Invoice Quota')
+                    ->label('Monthly Quota')
                     ->badge()
                     ->state(function (User $record): string {
                         $business = $record->businesses()->first();
@@ -383,7 +384,15 @@ class UserResource extends Resource
                         $quota = $business->getInvoiceQuotaSummary();
                         return $quota['unlimited']
                             ? "{$quota['used']} / Unlimited"
-                            : "{$quota['used']} / {$quota['limit']}";
+                            : "{$quota['used']} / {$quota['limit']} /mo";
+                    })
+                    ->description(function (User $record): ?string {
+                        $business = $record->businesses()->first();
+                        if (!$business) {
+                            return null;
+                        }
+                        $quota = $business->getInvoiceQuotaSummary();
+                        return $quota['unlimited'] ? 'No monthly cap' : "Renews {$quota['renews_on']}";
                     })
                     ->color(function (User $record): string {
                         $business = $record->businesses()->first();
@@ -541,12 +550,12 @@ class UserResource extends Resource
                         ->visible(fn (User $record) => $record->businesses()->exists() && (auth()->user()?->isAdminManager() ?? false))
                         ->form(fn (User $record) => [
                             Forms\Components\TextInput::make('invoice_limit')
-                                ->label('Maximum Allowed Invoices')
+                                ->label('Monthly Invoice Limit')
                                 ->numeric()
                                 ->minValue(0)
                                 ->required()
                                 ->default(fn () => $record->businesses()->first()?->getEffectiveInvoiceLimit() ?? 50)
-                                ->helperText('Default is 50 (blocks 51st invoice). Set to 0 for unlimited.'),
+                                ->helperText('Default is 50/month (auto-renews monthly from approval date; blocks 51st in same month). Set 0 for unlimited.'),
                         ])
                         ->action(function (User $record, array $data) {
                             $business = $record->businesses()->first();

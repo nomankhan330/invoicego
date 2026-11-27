@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="igBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1855E2"/>
+      <stop offset="55%" stop-color="#1E50FF"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#igBg)"/>
+  <!-- Subtle folded invoice corner highlight -->
+  <path d="M46 2 L62 18 L52 18 C48.7 18 46 15.3 46 12 Z" fill="#FFFFFF" fill-opacity="0.16"/>
+  <!-- Crisp geometric "I" -->
+  <rect x="13" y="19" width="7.2" height="26" rx="3.4" fill="#FFFFFF"/>
+  <!-- Crisp geometric "G" -->
+  <path d="M48.5 26.2 C46.4 21.8 41.9 19 36.2 19 C28.2 19 23.2 24.4 23.2 32 C23.2 39.7 28.2 45.2 36.3 45.2 C43.8 45.2 49.4 40.2 49.4 32.5 L49.4 30.2 L36.4 30.2 C34.8 30.2 33.6 31.3 33.6 32.9 C33.6 34.4 34.8 35.6 36.4 35.6 L42.4 35.6 C41.6 38.4 39.4 39.8 36.4 39.8 C32.3 39.8 29.8 36.7 29.8 32 C29.8 27.3 32.3 24.3 36.3 24.3 C39.3 24.3 41.2 25.5 42.3 27.8 C43.1 29.3 45.1 29.8 46.7 29 C48.2 28.3 49.1 27.5 48.5 26.2 Z" fill="#FFFFFF"/>
+  <!-- Subtle accent dot under I -->
+  <circle cx="16.6" cy="14" r="2.6" fill="#93C5FD"/>
+</svg>

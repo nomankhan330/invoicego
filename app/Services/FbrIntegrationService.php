@@ -523,6 +523,7 @@ class FbrIntegrationService implements FbrIntegrationServiceInterface
             ]);
 
             $this->logSubmission($invoice, $endpoint, $payload, $parsed['raw'], $statusCode, 'rejected', implode('; ', $errors));
+            app(NotificationAlertService::class)->notifyFbrSubmissionIssue($business, $invoice, implode('; ', $errors));
 
             return [
                 'success' => false,
@@ -541,6 +542,7 @@ class FbrIntegrationService implements FbrIntegrationServiceInterface
             ]);
 
             $this->logSubmission($invoice, $endpoint, $payload, ['exception' => $e->getMessage()], 504, 'network_error', $errMsg);
+            app(NotificationAlertService::class)->notifyFbrSubmissionIssue($business, $invoice, $errMsg);
 
             return [
                 'success' => false,

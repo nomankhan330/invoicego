@@ -117,6 +117,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InvoiceGO — Smart Digital Invoicing Simplified for Pakistani Businesses</title>
+    @include('partials.favicon')
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -953,7 +954,7 @@
                         @if (!$showPricingPlans && $defaultInvoiceLimit > 0)
                             <div class="trust-check-item">
                                 <i class="bi bi-check-circle-fill"></i>
-                                <span>Free Access &middot; Up to {{ number_format($defaultInvoiceLimit) }} Invoices</span>
+                                <span>Free Access &middot; Up to {{ number_format($defaultInvoiceLimit) }} Invoices / Month</span>
                             </div>
                         @endif
                     </div>
@@ -1955,7 +1956,7 @@
                 <div class="d-flex flex-wrap align-items-center justify-content-center gap-4 mt-4 text-white-50 small" style="font-size: 13px;">
                     <div><i class="bi bi-check2 text-white me-1"></i> Instant Account Setup</div>
                     @if (!$showPricingPlans && $defaultInvoiceLimit > 0)
-                        <div><i class="bi bi-check2 text-white me-1"></i> Free Starter Quota (Up to {{ number_format($defaultInvoiceLimit) }} Invoices)</div>
+                        <div><i class="bi bi-check2 text-white me-1"></i> Free Starter Quota (Up to {{ number_format($defaultInvoiceLimit) }} Invoices / Month)</div>
                     @else
                         <div><i class="bi bi-check2 text-white me-1"></i> No Credit Card Required</div>
                     @endif

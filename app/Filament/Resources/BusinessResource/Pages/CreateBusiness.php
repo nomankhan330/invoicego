@@ -40,6 +40,10 @@ class CreateBusiness extends CreateRecord
         return DB::transaction(function () use ($data, $ownerMode, $ownerName, $ownerPhone, $ownerEmail, $ownerPassword, $existingOwnerId) {
             $data['uuid'] = (string) Str::uuid();
             $data['ntn_cnic'] = preg_replace('/\D/', '', (string) ($data['ntn_cnic'] ?? ''));
+            if (is_array($data['sector'] ?? null)) {
+                $data['sector'] = implode(', ', array_filter($data['sector']));
+            }
+            $data['is_retailer_registered'] = (bool) ($data['is_retailer_registered'] ?? false);
             if (!isset($data['invoice_limit']) || $data['invoice_limit'] === '' || $data['invoice_limit'] === null) {
                 $data['invoice_limit'] = (int) \App\Models\SystemSetting::get('default_invoice_limit', 50);
             }

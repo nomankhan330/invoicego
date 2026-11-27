@@ -260,9 +260,9 @@
 
         <div class="d-flex align-items-center flex-wrap gap-2">
             @if (isset($invoiceQuota) && empty($invoiceQuota['unlimited']))
-                <a href="{{ route('tenant.invoices.index') }}" class="text-decoration-none badge rounded-pill px-3 py-2 fw-semibold {{ $invoiceQuota['reached'] ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-primary-subtle text-primary border border-primary-subtle' }}" style="font-size: 12.5px;" title="Invoice quota usage">
+                <a href="{{ route('tenant.invoices.index') }}" class="text-decoration-none badge rounded-pill px-3 py-2 fw-semibold {{ $invoiceQuota['reached'] ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-primary-subtle text-primary border border-primary-subtle' }}" style="font-size: 12.5px;" title="Monthly cycle: {{ $invoiceQuota['period_label'] }} · Auto-renews {{ $invoiceQuota['renews_on'] }}">
                     <i class="bi bi-speedometer2 me-1"></i>
-                    {{ $invoiceQuota['used'] }} / {{ $invoiceQuota['limit'] }} Invoices
+                    {{ $invoiceQuota['used'] }} / {{ $invoiceQuota['limit'] }} Invoices / mo
                 </a>
             @endif
             @if (empty($invoiceQuota['reached']))

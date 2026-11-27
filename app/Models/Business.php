@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -93,8 +94,8 @@ class Business extends Model
     }
 
     /**
-     * Effective invoice creation cap for this business.
-     * 0 = unlimited; positive integer = max non-cancelled invoices allowed.
+     * Effective monthly invoice creation cap for this business.
+     * 0 = unlimited; positive integer = max non-cancelled invoices allowed per monthly cycle.
      */
     public function getEffectiveInvoiceLimit(): int
     {
@@ -106,23 +107,68 @@ class Business extends Model
     }
 
     /**
-     * Count of non-cancelled invoices that consume this business's quota.
+     * Calculate this business's active rolling 1-month quota cycle anchored to its approval/registration date.
+     * Example: Approved on 27 Nov 2026 -> Cycle 1 is [27 Nov 2026, 27 Dec 2026); on 27 Dec 2026 it auto-renews to [27 Dec 2026, 27 Jan 2027).
      */
-    public function getInvoiceUsageCount(): int
+    public function getCurrentQuotaCycle(?Carbon $now = null): array
     {
+        $tz = 'Asia/Karachi';
+        $current = ($now ? $now->copy() : Carbon::now($tz))->timezone($tz);
+        $anchorSource = $this->approved_at ?? $this->created_at ?? $current;
+        $anchor = $anchorSource->copy()->timezone($tz)->startOfDay();
+
+        if ($current->lt($anchor)) {
+            $cycleStart = $anchor->copy();
+            $cycleEnd = $anchor->copy()->addMonthsNoOverflow(1);
+        } else {
+            $monthsElapsed = (($current->year - $anchor->year) * 12) + ($current->month - $anchor->month);
+            if ($monthsElapsed < 0) {
+                $monthsElapsed = 0;
+            }
+
+            $cycleStart = $anchor->copy()->addMonthsNoOverflow($monthsElapsed);
+            if ($cycleStart->gt($current)) {
+                $monthsElapsed = max(0, $monthsElapsed - 1);
+                $cycleStart = $anchor->copy()->addMonthsNoOverflow($monthsElapsed);
+            }
+
+            $cycleEnd = $anchor->copy()->addMonthsNoOverflow($monthsElapsed + 1);
+        }
+
+        return [
+            'start' => $cycleStart,
+            'end' => $cycleEnd,
+            'start_utc' => $cycleStart->copy()->utc(),
+            'end_utc' => $cycleEnd->copy()->utc(),
+            'start_label' => $cycleStart->format('d M Y'),
+            'end_label' => $cycleEnd->format('d M Y'),
+            'renews_on' => $cycleEnd->format('d M Y'),
+            'days_left' => max(0, (int) $current->copy()->startOfDay()->diffInDays($cycleEnd, false)),
+        ];
+    }
+
+    /**
+     * Count of non-cancelled invoices created within this business's current monthly cycle.
+     */
+    public function getInvoiceUsageCount(?Carbon $now = null): int
+    {
+        $cycle = $this->getCurrentQuotaCycle($now);
+
         return $this->invoices()
             ->where('status', '!=', 'cancelled')
+            ->where('created_at', '>=', $cycle['start_utc'])
+            ->where('created_at', '<', $cycle['end_utc'])
             ->count();
     }
 
-    public function hasReachedInvoiceLimit(): bool
+    public function hasReachedInvoiceLimit(?Carbon $now = null): bool
     {
         $limit = $this->getEffectiveInvoiceLimit();
 
-        return $limit > 0 && $this->getInvoiceUsageCount() >= $limit;
+        return $limit > 0 && $this->getInvoiceUsageCount($now) >= $limit;
     }
 
-    public function getRemainingInvoicesCount(): ?int
+    public function getRemainingInvoicesCount(?Carbon $now = null): ?int
     {
         $limit = $this->getEffectiveInvoiceLimit();
 
@@ -130,13 +176,14 @@ class Business extends Model
             return null;
         }
 
-        return max(0, $limit - $this->getInvoiceUsageCount());
+        return max(0, $limit - $this->getInvoiceUsageCount($now));
     }
 
-    public function getInvoiceQuotaSummary(): array
+    public function getInvoiceQuotaSummary(?Carbon $now = null): array
     {
+        $cycle = $this->getCurrentQuotaCycle($now);
         $limit = $this->getEffectiveInvoiceLimit();
-        $used = $this->getInvoiceUsageCount();
+        $used = $this->getInvoiceUsageCount($now);
         $unlimited = $limit === 0;
         $remaining = $unlimited ? null : max(0, $limit - $used);
         $reached = !$unlimited && $used >= $limit;
@@ -149,6 +196,11 @@ class Business extends Model
             'unlimited' => $unlimited,
             'reached' => $reached,
             'percent' => $percent,
+            'cycle_start' => $cycle['start_label'],
+            'cycle_end' => $cycle['end_label'],
+            'renews_on' => $cycle['renews_on'],
+            'days_left' => $cycle['days_left'],
+            'period_label' => "{$cycle['start_label']} – {$cycle['end_label']}",
         ];
     }
 

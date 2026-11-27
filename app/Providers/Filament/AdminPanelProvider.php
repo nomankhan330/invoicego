@@ -27,6 +27,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->brandName('InvoiceGO Admin')
+            ->favicon(asset('favicon.svg') . '?v=2')
             ->brandLogo(fn () => view('filament.components.brand-logo'))
             ->brandLogoHeight('2.35rem')
             ->font('Inter')

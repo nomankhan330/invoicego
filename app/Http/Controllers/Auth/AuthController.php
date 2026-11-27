@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Business;
+use App\Models\User;
 use App\Services\Contracts\TenantServiceInterface;
+use App\Services\TwoFactorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -59,34 +61,126 @@ class AuthController extends Controller
                 return back()->withErrors(['email' => 'Your account is currently inactive. Please contact administrator to activate your account.']);
             }
 
-            $user->forceFill(['last_login_at' => now()])->saveQuietly();
+            // If Two-Factor Authentication is enabled, hold login in session until TOTP/recovery code is verified
+            if ($user->hasTwoFactorEnabled()) {
+                Auth::logout();
+                $request->session()->put('two_factor:login_id', $user->id);
+                $request->session()->put('two_factor:remember', $request->boolean('remember'));
 
-            // If user has Admin Panel role (Super Admin / Admin / Support Staff), redirect to Admin Panel
-            if ($user->is_super_admin || in_array($user->admin_role, ['super_admin', 'admin', 'support_staff'], true)) {
-                ActivityLog::record('login', "Admin ({$user->email} - {$user->effectiveAdminRole()}) logged into InvoiceGO.", [
-                    'email' => $user->email,
-                    'admin_role' => $user->effectiveAdminRole(),
-                ], null, $user->id);
-                return redirect()->intended('/admin');
+                return redirect()->route('two-factor.challenge');
             }
 
-            $business = $this->tenantService->getActiveBusiness();
-
-            ActivityLog::record('login', "User {$user->email} logged in successfully.", [
-                'email' => $user->email,
-                'business_id' => $business?->id,
-            ], $business?->id, $user->id);
-
-            if ($business && $business->isPending()) {
-                return redirect()->route('tenant.pending');
-            }
-
-            return redirect()->intended(route('tenant.dashboard'));
+            return $this->completeAuthenticatedRedirect($user);
         }
 
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',
         ])->onlyInput('email');
+    }
+
+    public function showTwoFactorChallenge(Request $request)
+    {
+        if (!$request->session()->has('two_factor:login_id')) {
+            return redirect()->route('login');
+        }
+
+        return view('auth.two-factor-challenge');
+    }
+
+    public function verifyTwoFactorChallenge(Request $request, TwoFactorService $twoFactor)
+    {
+        $userId = $request->session()->get('two_factor:login_id');
+        if (!$userId) {
+            return redirect()->route('login')->withErrors([
+                'email' => 'Your two-factor sign-in session expired. Please sign in again.',
+            ]);
+        }
+
+        $user = User::find($userId);
+        if (!$user || !$user->hasTwoFactorEnabled()) {
+            $request->session()->forget(['two_factor:login_id', 'two_factor:remember']);
+            return redirect()->route('login');
+        }
+
+        $request->validate([
+            'code' => ['required', 'string', 'max:32'],
+        ]);
+
+        $inputCode = trim((string) $request->input('code'));
+        $verifiedVia = null;
+
+        if ($twoFactor->verifyCode((string) $user->two_factor_secret, $inputCode)) {
+            $verifiedVia = 'totp';
+        } else {
+            // Check single-use recovery codes (case-insensitive)
+            $normalizedRecovery = strtoupper(preg_replace('/\s+/', '', $inputCode));
+            $recoveryCodes = is_array($user->two_factor_recovery_codes) ? $user->two_factor_recovery_codes : [];
+            $matchedIndex = null;
+
+            foreach ($recoveryCodes as $idx => $storedCode) {
+                if (hash_equals(strtoupper($storedCode), $normalizedRecovery)) {
+                    $matchedIndex = $idx;
+                    break;
+                }
+            }
+
+            if ($matchedIndex !== null) {
+                unset($recoveryCodes[$matchedIndex]);
+                $user->forceFill([
+                    'two_factor_recovery_codes' => array_values($recoveryCodes),
+                ])->save();
+                $verifiedVia = 'recovery_code';
+            }
+        }
+
+        if ($verifiedVia === null) {
+            return back()->withErrors([
+                'code' => 'The authentication code or recovery code is invalid. Please try again.',
+            ]);
+        }
+
+        $remember = (bool) $request->session()->pull('two_factor:remember', false);
+        $request->session()->forget('two_factor:login_id');
+
+        Auth::login($user, $remember);
+        $request->session()->regenerate();
+
+        return $this->completeAuthenticatedRedirect($user, $verifiedVia);
+    }
+
+    protected function completeAuthenticatedRedirect(User $user, ?string $twoFactorMethod = null)
+    {
+        $user->forceFill(['last_login_at' => now()])->saveQuietly();
+
+        $action = $twoFactorMethod ? 'login_2fa' : 'login';
+        $methodSuffix = $twoFactorMethod === 'recovery_code'
+            ? ' (2FA Recovery Code)'
+            : ($twoFactorMethod === 'totp' ? ' (2FA Verified)' : '');
+
+        // If user has Admin Panel role (Super Admin / Admin / Support Staff), redirect to Admin Panel
+        if ($user->is_super_admin || in_array($user->admin_role, ['super_admin', 'admin', 'support_staff'], true)) {
+            ActivityLog::record($action, "Admin ({$user->email} - {$user->effectiveAdminRole()}) logged into InvoiceGO{$methodSuffix}.", [
+                'email' => $user->email,
+                'admin_role' => $user->effectiveAdminRole(),
+                'two_factor_method' => $twoFactorMethod,
+            ], null, $user->id);
+
+            return redirect()->intended('/admin');
+        }
+
+        $business = $this->tenantService->getActiveBusiness();
+
+        ActivityLog::record($action, "User {$user->email} logged in successfully{$methodSuffix}.", [
+            'email' => $user->email,
+            'business_id' => $business?->id,
+            'two_factor_method' => $twoFactorMethod,
+        ], $business?->id, $user->id);
+
+        if ($business && $business->isPending()) {
+            return redirect()->route('tenant.pending');
+        }
+
+        return redirect()->intended(route('tenant.dashboard'));
     }
 
     public function showRegister()

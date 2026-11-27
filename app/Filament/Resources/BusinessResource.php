@@ -19,9 +19,9 @@ class BusinessResource extends Resource
     protected static ?string $model = Business::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
-    protected static ?string $navigationLabel = 'Businesses & Approvals';
+    protected static ?string $navigationLabel = 'Businesses & Approval';
     protected static ?string $navigationGroup = 'Users & Billing';
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 1;
 
     public static function canCreate(): bool
     {
@@ -65,14 +65,22 @@ class BusinessResource extends Resource
     public static function sectorsOptions(): array
     {
         return [
-            'All Other Sectors' => 'All Other Sectors',
-            'Steel' => 'Steel',
-            'Fast Moving Consumer Goods (FMCG)' => 'Fast Moving Consumer Goods (FMCG)',
+            'Potassium Chlorate' => 'Potassium Chlorate',
+            'Cement or Concrete Blocks' => 'Cement or Concrete Blocks',
+            'Mobile' => 'Mobile',
+            'Wholesale / Retails' => 'Wholesale / Retails',
+            'Pharmaceuticals' => 'Pharmaceuticals',
+            'CNG Stations' => 'CNG Stations',
+            'Automobile' => 'Automobile',
+            'Services' => 'Services',
+            'Gas Distribution' => 'Gas Distribution',
+            'Electricity Distribution' => 'Electricity Distribution',
+            'Petroleum' => 'Petroleum',
+            'Telecom' => 'Telecom',
             'Textile' => 'Textile',
-            'Pharmaceutical' => 'Pharmaceutical',
-            'Automotive' => 'Automotive',
-            'Electronics' => 'Electronics',
-            'Chemicals' => 'Chemicals',
+            'FMCG' => 'FMCG',
+            'Steel' => 'Steel',
+            'All Other Sectors' => 'All Other Sectors',
         ];
     }
 
@@ -81,9 +89,9 @@ class BusinessResource extends Resource
         return [
             'Manufacturer' => 'Manufacturer',
             'Importer' => 'Importer',
+            'Exporter' => 'Exporter',
             'Distributor' => 'Distributor',
             'Wholesaler' => 'Wholesaler',
-            'Exporter' => 'Exporter',
             'Retailer' => 'Retailer',
             'Service Provider' => 'Service Provider',
             'Other' => 'Other',
@@ -96,13 +104,13 @@ class BusinessResource extends Resource
             ->schema([
                 // SECTION 1: Owner Account Details (Exact match to Website /register flow)
                 Forms\Components\Section::make('Owner Account Details')
-                    ->description('Register a new owner login account (same as website registration) or link an existing user to this business.')
+                    ->description('Create a new business account with owner login or link an existing registered business user.')
                     ->schema([
                         Forms\Components\Radio::make('owner_mode')
-                            ->label('Owner Assignment')
+                            ->label('Account Setup')
                             ->options([
-                                'create_new' => 'Create New Owner Account (User + Business together)',
-                                'link_existing' => 'Link Existing User Account',
+                                'create_new' => 'Create New Business Account',
+                                'link_existing' => 'Link Existing Business Account',
                             ])
                             ->default('create_new')
                             ->inline()
@@ -153,25 +161,30 @@ class BusinessResource extends Resource
                             ->required(fn (string $operation, Get $get): bool => $operation === 'create' && $get('owner_mode') === 'create_new')
                             ->visible(fn (string $operation, Get $get): bool => $operation === 'create' && $get('owner_mode') === 'create_new'),
 
-                        // Field when linking an existing User on Create
+                        // Field when linking an existing registered business user on Create (excludes Super Admin, Admin & Support Staff)
                         Forms\Components\Select::make('existing_owner_id')
-                            ->label('Select Existing User (Owner)')
-                            ->options(fn () => User::orderBy('name')->get()->mapWithKeys(fn (User $u) => [$u->id => "{$u->name} ({$u->email})"]))
+                            ->label('Select Existing Registered User')
+                            ->options(fn () => User::clients()->orderBy('name')->get()->mapWithKeys(fn (User $u) => [$u->id => "{$u->name} ({$u->email})"]))
                             ->searchable()
                             ->preload()
+                            ->helperText('Only registered business users are listed here (Admin & Staff accounts are excluded).')
                             ->required(fn (string $operation, Get $get): bool => $operation === 'create' && $get('owner_mode') === 'link_existing')
                             ->visible(fn (string $operation, Get $get): bool => $operation === 'create' && $get('owner_mode') === 'link_existing')
                             ->columnSpanFull(),
 
-                        // Field on Edit: Manage linked Users / Owners
+                        // Field on Edit: Manage linked Business Users / Owners (excludes Admin & Staff)
                         Forms\Components\Select::make('users')
-                            ->label('Linked Owner / Users')
-                            ->relationship('users', 'name')
+                            ->label('Linked Business Owner / Users')
+                            ->relationship(
+                                name: 'users',
+                                titleAttribute: 'name',
+                                modifyQueryUsing: fn (\Illuminate\Database\Eloquent\Builder $query) => $query->clients()->orderBy('name'),
+                            )
                             ->getOptionLabelFromRecordUsing(fn (User $record) => "{$record->name} ({$record->email})")
                             ->multiple()
                             ->searchable()
                             ->preload()
-                            ->helperText('Users linked here can log in and manage this business in the tenant portal.')
+                            ->helperText('Only registered business users can be linked to manage this business in the tenant portal.')
                             ->visible(fn (string $operation): bool => $operation === 'edit')
                             ->columnSpanFull(),
                     ])->columns(2),
@@ -209,27 +222,41 @@ class BusinessResource extends Resource
                             ->options(self::provincesOptions())
                             ->default('Punjab')
                             ->searchable()
-                            ->required(),
-
-                        Forms\Components\Select::make('sector')
-                            ->label('Sector')
-                            ->options(self::sectorsOptions())
-                            ->default('All Other Sectors')
-                            ->helperText('Select one sector (IRIS standard)')
-                            ->searchable()
-                            ->required(),
-
-                        Forms\Components\CheckboxList::make('business_natures')
-                            ->label('Business Nature (select one or more)')
-                            ->options(self::businessNaturesOptions())
-                            ->columns(4)
                             ->required()
                             ->columnSpanFull(),
 
-                        Forms\Components\Toggle::make('is_retailer_registered')
-                            ->label('Registered as a retailer in sales tax profile')
-                            ->helperText('Required for Tier-1 POS scenarios SN026–SN028.')
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\CheckboxList::make('business_natures')
+                                    ->label('Business Nature')
+                                    ->options(self::businessNaturesOptions())
+                                    ->columns(1)
+                                    ->required()
+                                    ->columnSpan(1),
+
+                                Forms\Components\CheckboxList::make('sector')
+                                    ->label('Sector (For Sandbox Testing Only)')
+                                    ->options(self::sectorsOptions())
+                                    ->default(['All Other Sectors'])
+                                    ->columns(3)
+                                    ->required()
+                                    ->formatStateUsing(function ($state): array {
+                                        if (is_array($state)) {
+                                            return array_values(array_filter($state));
+                                        }
+                                        if (empty($state)) {
+                                            return [];
+                                        }
+                                        return array_values(array_filter(array_map('trim', explode(',', (string) $state))));
+                                    })
+                                    ->dehydrateStateUsing(fn ($state): string => is_array($state) ? implode(', ', array_filter($state)) : (string) $state)
+                                    ->helperText('* If your business nature & sector is different, please select appropriate business nature and sector.')
+                                    ->columnSpan(2),
+                            ])
                             ->columnSpanFull(),
+
+                        Forms\Components\Hidden::make('is_retailer_registered')
+                            ->default(false),
 
                         Forms\Components\Textarea::make('address')
                             ->label('Business Address')
@@ -267,11 +294,11 @@ class BusinessResource extends Resource
                             ->default(false),
 
                         Forms\Components\TextInput::make('invoice_limit')
-                            ->label('Invoice Quota Limit')
+                            ->label('Monthly Invoice Quota Limit')
                             ->numeric()
                             ->minValue(0)
                             ->default(fn () => (int) \App\Models\SystemSetting::get('default_invoice_limit', 50))
-                            ->helperText('Max invoices this business can create (default 50 — blocks 51st). Set 0 for unlimited.')
+                            ->helperText('Max invoices per month (default 50/month; auto-renews monthly from approval date). Set 0 for unlimited.')
                             ->required(),
 
                         Forms\Components\Textarea::make('rejection_reason')
@@ -340,11 +367,15 @@ class BusinessResource extends Resource
                     ->boolean(),
 
                 Tables\Columns\TextColumn::make('invoice_quota')
-                    ->label('Invoice Quota')
+                    ->label('Monthly Quota')
                     ->badge()
                     ->state(function (Business $record): string {
                         $q = $record->getInvoiceQuotaSummary();
-                        return $q['unlimited'] ? "{$q['used']} / Unlimited" : "{$q['used']} / {$q['limit']}";
+                        return $q['unlimited'] ? "{$q['used']} / Unlimited" : "{$q['used']} / {$q['limit']} /mo";
+                    })
+                    ->description(function (Business $record): ?string {
+                        $q = $record->getInvoiceQuotaSummary();
+                        return $q['unlimited'] ? 'No monthly cap' : "Renews {$q['renews_on']}";
                     })
                     ->color(function (Business $record): string {
                         $q = $record->getInvoiceQuotaSummary();
@@ -367,7 +398,13 @@ class BusinessResource extends Resource
                         'suspended' => 'Suspended',
                     ]),
                 Tables\Filters\SelectFilter::make('sector')
-                    ->options(self::sectorsOptions()),
+                    ->options(self::sectorsOptions())
+                    ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data): \Illuminate\Database\Eloquent\Builder {
+                        if (empty($data['value'])) {
+                            return $query;
+                        }
+                        return $query->where('sector', 'like', '%' . $data['value'] . '%');
+                    }),
                 Tables\Filters\SelectFilter::make('province')
                     ->options(self::provincesOptions()),
             ])
@@ -424,26 +461,105 @@ class BusinessResource extends Resource
                             ->send();
                     }),
 
-                Tables\Actions\Action::make('toggle_suspend')
-                    ->label(fn (Business $record) => $record->status === 'suspended' ? 'Reactivate' : 'Suspend')
-                    ->icon('heroicon-o-no-symbol')
-                    ->color('warning')
-                    ->visible(fn (Business $record) => in_array($record->status, ['approved', 'suspended']) && (auth()->user()?->isAdminManager() ?? false))
-                    ->action(function (Business $record) {
-                        $newStatus = $record->status === 'suspended' ? 'approved' : 'suspended';
-                        $record->update(['status' => $newStatus]);
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\EditAction::make()
+                        ->label('Edit Business & Owner')
+                        ->visible(fn () => auth()->user()?->isAdminManager() ?? false),
 
-                        ActivityLog::record('business_status_changed', "Business '{$record->name}' status changed to {$newStatus}.", [
-                            'status' => $newStatus,
-                        ], $record->id);
+                    Tables\Actions\Action::make('set_invoice_limit')
+                        ->label('Set Monthly Invoice Limit')
+                        ->icon('heroicon-o-adjustments-horizontal')
+                        ->color('warning')
+                        ->visible(fn () => auth()->user()?->isAdminManager() ?? false)
+                        ->form(fn (Business $record) => [
+                            Forms\Components\TextInput::make('invoice_limit')
+                                ->label('Monthly Invoice Limit')
+                                ->numeric()
+                                ->minValue(0)
+                                ->required()
+                                ->default(fn () => $record->getEffectiveInvoiceLimit())
+                                ->helperText('Default is 50/month (auto-renews monthly from approval date). Enter 0 for unlimited.'),
+                        ])
+                        ->action(function (Business $record, array $data) {
+                            $newLimit = max(0, (int) $data['invoice_limit']);
+                            $record->update(['invoice_limit' => $newLimit]);
+                            $label = $newLimit === 0 ? 'Unlimited' : "{$newLimit} invoices/month";
+                            ActivityLog::record('invoice_limit_updated', "Admin updated monthly invoice limit for '{$record->name}' to {$label}.", [
+                                'business_id' => $record->id,
+                                'invoice_limit' => $newLimit,
+                            ], $record->id);
+                            Notification::make()
+                                ->title('Monthly Limit Updated')
+                                ->body("{$record->name} is now set to {$label}.")
+                                ->success()
+                                ->send();
+                        }),
 
-                        Notification::make()
-                            ->title("Business status changed to {$newStatus}")
-                            ->warning()
-                            ->send();
-                    }),
+                    Tables\Actions\Action::make('reset_owner_password')
+                        ->label('Reset Owner Password')
+                        ->icon('heroicon-o-key')
+                        ->color('gray')
+                        ->visible(fn (Business $record) => $record->users()->exists() && (auth()->user()?->isAdminManager() ?? false))
+                        ->form([
+                            Forms\Components\TextInput::make('new_password')
+                                ->label('New Owner Password')
+                                ->password()
+                                ->revealable()
+                                ->required()
+                                ->minLength(8)
+                                ->default(fn () => \Illuminate\Support\Str::password(12, true, true, true, false))
+                                ->helperText('Click the eye icon to copy the password and share with the owner.'),
+                        ])
+                        ->action(function (Business $record, array $data) {
+                            $owner = $record->users()->first();
+                            if (!$owner) {
+                                Notification::make()->title('No Owner Linked')->danger()->send();
+                                return;
+                            }
+                            $owner->update(['password' => \Illuminate\Support\Facades\Hash::make($data['new_password'])]);
+                            ActivityLog::record('user_password_reset', "Admin reset password for owner {$owner->email} ({$record->name}).", [
+                                'target_user_id' => $owner->id,
+                                'business_id' => $record->id,
+                            ], $record->id);
+                            Notification::make()
+                                ->title('Owner Password Reset')
+                                ->body("Password updated for {$owner->name} ({$owner->email}).")
+                                ->success()
+                                ->send();
+                        }),
 
-                Tables\Actions\EditAction::make(),
+                    Tables\Actions\Action::make('view_invoices')
+                        ->label('View Invoices')
+                        ->icon('heroicon-o-document-text')
+                        ->color('info')
+                        ->url(fn (Business $record) => InvoiceResource::getUrl('index', [
+                            'tableFilters' => ['business_id' => ['value' => $record->id]],
+                        ])),
+
+                    Tables\Actions\Action::make('toggle_suspend')
+                        ->label(fn (Business $record) => $record->status === 'suspended' ? 'Reactivate Business' : 'Suspend Business')
+                        ->icon('heroicon-o-no-symbol')
+                        ->color('warning')
+                        ->visible(fn (Business $record) => in_array($record->status, ['approved', 'suspended']) && (auth()->user()?->isAdminManager() ?? false))
+                        ->requiresConfirmation()
+                        ->action(function (Business $record) {
+                            $newStatus = $record->status === 'suspended' ? 'approved' : 'suspended';
+                            $record->update(['status' => $newStatus]);
+
+                            ActivityLog::record('business_status_changed', "Business '{$record->name}' status changed to {$newStatus}.", [
+                                'status' => $newStatus,
+                            ], $record->id);
+
+                            Notification::make()
+                                ->title("Business status changed to {$newStatus}")
+                                ->warning()
+                                ->send();
+                        }),
+
+                    Tables\Actions\DeleteAction::make()
+                        ->visible(fn () => auth()->user()?->isAdminManager() ?? false)
+                        ->requiresConfirmation(),
+                ])->label('Manage')->icon('heroicon-m-ellipsis-vertical')->button()->size('sm'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
